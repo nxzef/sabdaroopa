@@ -28,17 +28,6 @@ object AppModule {
         )
             .createFromAsset("app_database.db")
             .fallbackToDestructiveMigration()
-            .addCallback(object : RoomDatabase.Callback() {
-                override fun onCreate(db: SupportSQLiteDatabase) {
-                    super.onCreate(db)
-                    Log.d("db", "Database Successfully created.")
-                }
-
-                override fun onOpen(db: SupportSQLiteDatabase) {
-                    super.onOpen(db)
-                    Log.d("db", "Database Opened.")
-                }
-            })
             .build()
     }
 
