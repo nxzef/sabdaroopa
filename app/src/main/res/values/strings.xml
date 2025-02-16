@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Siddharoopa</string>
     <string name="general_category">साधारण शब्द विभागः</string>
+    <string name="specific_category">विशॆष शब्द विभागः</string>
 </resources>
