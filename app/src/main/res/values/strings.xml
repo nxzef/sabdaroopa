@@ -29,7 +29,7 @@
     <string name="see_all">See all</string>
 
 
-    <!-- Table labels -->
+    <!-- Table labels examples -->
     <string name="general_vowel">राम, हरि, पति, सखि, रमा, मति, नदी, फल, वारि, शुचि</string>
     <string name="general_consonant">चलमुच्, वणिज्, राज्, मरुत्, सीमन्, सरित्, शरत्, जगत्, ददत्</string>
     <string name="specific_vowel">निर्जर, प्रधी, वातप्रमी, क्रॊष्ड, सुधी, सॆनानी, मास, जरा, अजर</string>
