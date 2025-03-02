@@ -35,6 +35,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
     kotlinOptions {
         jvmTarget = "1.8"
     }
@@ -80,5 +83,9 @@ dependencies {
 
     // Gson
     implementation(libs.gson)
+
+    // Animation
+    implementation(libs.androidx.animation)
+    implementation(libs.androidx.animation.core)
 
 }

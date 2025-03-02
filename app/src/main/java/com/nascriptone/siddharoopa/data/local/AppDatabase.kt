@@ -2,9 +2,17 @@ package com.nascriptone.siddharoopa.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.nascriptone.siddharoopa.data.model.Sabda
+import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
+import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
+import com.nascriptone.siddharoopa.data.model.entity.GeneralSabda
+import com.nascriptone.siddharoopa.data.model.entity.SpecificSabda
 
-@Database(entities = [Sabda::class], version = 1, exportSchema = false)
+@Database(
+    entities = [GeneralSabda::class, SpecificSabda::class],
+    version = 1,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun SabdaDao(): SabdaDao
+    abstract fun generalSabdaDao(): GeneralSabdaDao
+    abstract fun specificSabdaDao(): SpecificSabdaDao
 }

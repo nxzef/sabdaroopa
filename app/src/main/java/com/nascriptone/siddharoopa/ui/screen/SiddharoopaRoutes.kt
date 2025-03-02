@@ -1,6 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen
 
-enum class SiddharoopaScreen {
+enum class SiddharoopaRoutes {
     Home,
-    Search
+    Category
 }
