@@ -24,7 +24,6 @@
     <string name="consonant_skt">हलन्त</string>
 
 
-
     <!-- Buttons -->
     <string name="see_all">See all</string>
 
@@ -34,5 +33,24 @@
     <string name="general_consonant">चलमुच्, वणिज्, राज्, मरुत्, सीमन्, सरित्, शरत्, जगत्, ददत्</string>
     <string name="specific_vowel">निर्जर, प्रधी, वातप्रमी, क्रॊष्ड, सुधी, सॆनानी, मास, जरा, अजर</string>
     <string name="specific_consonant">प्राञ्च्, प्रत्यञ्च्, उदञ्च्, तिर्यञ्च्, सुपाद्, पुषन्, अर्वन्, अनर्वन्, तुरासाह्, सजुष्, उष्णिह्</string>
+
+
+    <!-- Vibakti -->
+
+    <string name="vibakti">विभक्ति</string>
+    <string name="nominative">प्रथमा</string>
+    <string name="vocative">सं प्रथमा</string>
+    <string name="accusative">द्वितीया</string>
+    <string name="instrumental">तृतीया</string>
+    <string name="dative">चतुर्थी</string>
+    <string name="ablative">पञ्चमी</string>
+    <string name="genitive">षष्ठी</string>
+    <string name="locative">सप्तमी</string>
+
+    <!-- vajana -->
+
+    <string name="single">एकवचन</string>
+    <string name="dual">द्विवचन</string>
+    <string name="plural">बहुवचन</string>
 
 </resources>

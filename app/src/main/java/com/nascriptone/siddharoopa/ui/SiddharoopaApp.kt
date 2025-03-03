@@ -36,6 +36,7 @@ import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
+import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -97,7 +98,14 @@ fun SiddharoopaApp(
             ) {
                 CategoryScreen(
                     viewModel = viewModel,
+                    navHostController = navHostController,
                     categoryScreenState = categoryScreenState
+                )
+            }
+
+            composable(SiddharoopaRoutes.Table.name) {
+                TableScreen(
+                    viewModel = viewModel
                 )
             }
         }

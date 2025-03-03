@@ -5,6 +5,7 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 
 data class CategoryScreenState(
     val screenTitle: String = "",
+    val selectedTable: String = "",
     val result: DataFetchState = DataFetchState.Loading
 )
 

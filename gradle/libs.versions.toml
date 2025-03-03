@@ -11,9 +11,9 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 kotlinxSerializationJson = "1.7.3"
 lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.10.0"
+activityCompose = "1.10.1"
 composeBom = "2025.02.00"
-navVersion = "2.8.7"
+navVersion = "2.8.8"
 roomVersion = "2.6.1"
 
 [libraries]
