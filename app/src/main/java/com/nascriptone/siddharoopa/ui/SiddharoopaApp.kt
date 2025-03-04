@@ -1,14 +1,8 @@
 package com.nascriptone.siddharoopa.ui
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -20,13 +14,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -37,8 +34,10 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
+import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SiddharoopaApp(
     modifier: Modifier = Modifier,
@@ -46,7 +45,9 @@ fun SiddharoopaApp(
     navHostController: NavHostController = rememberNavController()
 ) {
 
-    val categoryScreenState by viewModel.categoryUIState.collectAsState()
+    val categoryScreenState by viewModel.categoryUIState.collectAsStateWithLifecycle()
+    val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
+
 
     val backStackEntry by navHostController.currentBackStackEntryAsState()
     val currentRoute by remember(backStackEntry) {
@@ -56,16 +57,21 @@ fun SiddharoopaApp(
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
 
     Scaffold(
         topBar = {
             AppTopBar(
                 navHostController = navHostController,
                 currentRoute = currentRoute,
-                categoryScreenTitle = categoryScreenState.screenTitle
+                homeBarScrollBehavior = scrollBehavior,
+                categoryScreenTitle = categoryScreenState.selectedCategory?.title,
+                tableScreenTitle = tableUIState.title
             )
         },
         modifier = modifier
+            .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
         NavHost(
             navController = navHostController,
@@ -82,20 +88,7 @@ fun SiddharoopaApp(
                     navHostController = navHostController
                 )
             }
-            composable(
-                SiddharoopaRoutes.Category.name,
-                enterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        initialOffset = { w -> w / 3 }
-                    )
-                },
-                exitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right
-                    )
-                }
-            ) {
+            composable(SiddharoopaRoutes.Category.name) {
                 CategoryScreen(
                     viewModel = viewModel,
                     navHostController = navHostController,
@@ -105,6 +98,7 @@ fun SiddharoopaApp(
 
             composable(SiddharoopaRoutes.Table.name) {
                 TableScreen(
+                    tableUIState = tableUIState,
                     viewModel = viewModel
                 )
             }
@@ -117,19 +111,20 @@ fun SiddharoopaApp(
 fun AppTopBar(
     navHostController: NavHostController,
     currentRoute: SiddharoopaRoutes,
-    categoryScreenTitle: String,
+    categoryScreenTitle: String?,
+    tableScreenTitle: String,
+    homeBarScrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
 
 
     AnimatedVisibility(
         visible = currentRoute == SiddharoopaRoutes.Home,
-        enter = slideInHorizontally(initialOffsetX = { -it / 8 }) + fadeIn(),
-        exit = slideOutHorizontally(targetOffsetX = { -it / 8 }) + fadeOut()
 
-    ) {
+        ) {
         TopAppBar(
             title = { Text("Siddharoopa") },
+            scrollBehavior = homeBarScrollBehavior,
             actions = {
                 IconButton(onClick = {}) {
                     Icon(Icons.Rounded.Search, null)
@@ -144,13 +139,20 @@ fun AppTopBar(
 
     AnimatedVisibility(
         visible = currentRoute == SiddharoopaRoutes.Category,
-        enter = slideInHorizontally(
-            animationSpec = spring()
-        ) { it / 3 } + fadeIn(),
-        exit = slideOutHorizontally { it / 3 } + fadeOut()
     ) {
         CategoryScreenTopBar(
-            title = categoryScreenTitle,
+            title = categoryScreenTitle ?: "",
+            onBackPress = {
+                navHostController.navigateUp()
+            }
+        )
+    }
+
+    AnimatedVisibility(
+        visible = currentRoute == SiddharoopaRoutes.Table
+    ) {
+        TableScreenTopBar(
+            title = tableScreenTitle,
             onBackPress = {
                 navHostController.navigateUp()
             }

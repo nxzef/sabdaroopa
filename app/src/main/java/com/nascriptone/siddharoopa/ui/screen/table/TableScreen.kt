@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -23,6 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,19 +37,44 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun TableScreen(
-    viewModel: SiddharoopaViewModel, modifier: Modifier = Modifier
+    tableUIState: TableScreenState,
+    viewModel: SiddharoopaViewModel,
+    modifier: Modifier = Modifier
 ) {
+    val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
+    var isFetched by rememberSaveable { mutableStateOf(false) }
 
-    val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.parseStringToDeclension()
+        if (!isFetched) {
+            viewModel.parseStringToDeclension()
+            isFetched = true
+        }
+    }
+
+    DisposableEffect(Unit) {
+
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_DESTROY) {
+                viewModel.resetTableState()
+                isFetched = false
+            }
+        }
+
+        lifecycleOwner.value.lifecycle.removeObserver(observer)
+
+        onDispose {
+            lifecycleOwner.value.lifecycle.addObserver(observer)
+        }
+
     }
 
     Surface(
@@ -62,12 +94,6 @@ fun TableScreen(
             )
         }
     }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.resetTableState()
-        }
-    }
 }
 
 
@@ -77,13 +103,16 @@ fun DeclensionTable(
 ) {
     Surface {
         Column(
-            modifier = modifier.padding(horizontal = 12.dp),
+            modifier = modifier
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 24.dp)
                     .border(
                         BorderStroke(DividerDefaults.Thickness, DividerDefaults.color),
                         RoundedCornerShape(16.dp)

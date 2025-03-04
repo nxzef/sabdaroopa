@@ -1,16 +1,18 @@
 package com.nascriptone.siddharoopa.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
-import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,8 +37,6 @@ class SiddharoopaViewModel @Inject constructor(
         MutableStateFlow(CategoryScreenState())
     val categoryUIState: StateFlow<CategoryScreenState> = _categoryUIState.asStateFlow()
 
-    private val _homeUIState = MutableStateFlow(HomeScreenState())
-    val homeUIState: StateFlow<HomeScreenState> = _homeUIState.asStateFlow()
 
     private val _tableUIState = MutableStateFlow(TableScreenState())
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
@@ -45,23 +45,43 @@ class SiddharoopaViewModel @Inject constructor(
         return context.getString(resId)
     }
 
-
-    fun updateSelectedCategory(category: TableCategory, title: String) {
-        _homeUIState.update {
+    fun changeOption(sound: Sound) {
+        _categoryUIState.update {
             it.copy(
-                selectedCategory = category,
-                categoryTitle = title
+                selectedSound = sound
+            )
+        }
+    }
+
+    fun resetTableState() {
+        _tableUIState.value = TableScreenState()
+    }
+
+
+    fun resetCategoryState() {
+        _categoryUIState.value = CategoryScreenState()
+    }
+
+
+    fun updateSelectedCategory(
+        selectedCategory: CategoryViewType,
+        selectedSound: Sound
+    ) {
+        _categoryUIState.update {
+            it.copy(
+                selectedCategory = selectedCategory,
+                selectedSound = selectedSound
             )
         }
     }
 
     fun parseStringToDeclension() {
-        viewModelScope.launch(Dispatchers.IO) {  // Switch to background thread
+        viewModelScope.launch(Dispatchers.IO) {
             _tableUIState.update { it.copy(result = StringParse.Loading) }
 
             val result = runCatching {
                 val declension = Gson().fromJson(
-                    categoryUIState.value.selectedTable,
+                    tableUIState.value.selectedTable,
                     Declension::class.java
                 )
                 val declensionTable = createDeclensionTable(declension)
@@ -74,14 +94,10 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-
-    fun resetTableState() {
-        _tableUIState.value = TableScreenState()
-    }
-
-    fun updateSelectedTable(table: String) {
-        _categoryUIState.update {
+    fun updateSelectedTable(table: String, name: String) {
+        _tableUIState.update {
             it.copy(
+                title = name,
                 selectedTable = table.trimIndent()
             )
         }
@@ -147,27 +163,34 @@ class SiddharoopaViewModel @Inject constructor(
 
 
     fun fetchSabda() {
-        val title = homeUIState.value.categoryTitle
-        val category = homeUIState.value.selectedCategory
+        val category = categoryUIState.value.selectedCategory?.category
 
-        _categoryUIState.update {
-            it.copy(screenTitle = title, result = DataFetchState.Loading)
-        }
+        if (categoryUIState.value.isDataFetched) return
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            _categoryUIState.update {
+                it.copy(
+                    result = DataFetchState.Loading
+                )
+            }
+
             val result = try {
-                DataFetchState.Success(
-                    data = when (category) {
+                val data = category?.let {
+                    when (it) {
                         TableCategory.General -> repository.getAllGeneralSabda()
                         TableCategory.Specific -> repository.getAllSpecificSabda()
                     }
-                )
+                } ?: throw IllegalArgumentException("Invalid category")
+
+                DataFetchState.Success(data)
             } catch (e: Exception) {
-                DataFetchState.Error(e.message.toString())
+                Log.e("fetchSabda", "Error fetching data", e)
+                DataFetchState.Error(e.message ?: "Unknown error occurred")
             }
-            _categoryUIState.update {
-                it.copy(screenTitle = title, result = result)
-            }
+
+            _categoryUIState.update { it.copy(result = result, isDataFetched = true) }
         }
     }
+
+
 }

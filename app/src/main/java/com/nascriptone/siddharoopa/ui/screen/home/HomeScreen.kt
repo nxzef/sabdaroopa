@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,6 +29,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.uiobj.CategoryOptionType
+import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
@@ -40,17 +44,26 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
+    val vowSound = Sound(
+        eng = stringResource(R.string.vowel_eng),
+        skt = stringResource(R.string.vowel_skt)
+    )
+    val conSound = Sound(
+        eng = stringResource(R.string.consonant_eng),
+        skt = stringResource(R.string.consonant_skt)
+    )
+
     val categoryViewList: List<CategoryViewType> = listOf(
         CategoryViewType(
             title = stringResource(R.string.general_category),
             category = TableCategory.General,
             options = listOf(
                 CategoryOptionType(
-                    title = stringResource(R.string.vowel_skt),
+                    sound = vowSound,
                     displayWord = stringResource(R.string.general_vowel)
                 ),
                 CategoryOptionType(
-                    title = stringResource(R.string.consonant_skt),
+                    sound = conSound,
                     displayWord = stringResource(R.string.general_consonant)
                 )
             )
@@ -60,16 +73,21 @@ fun HomeScreen(
             category = TableCategory.Specific,
             options = listOf(
                 CategoryOptionType(
-                    title = stringResource(R.string.vowel_skt),
+                    sound = vowSound,
                     displayWord = stringResource(R.string.specific_vowel)
                 ),
                 CategoryOptionType(
-                    title = stringResource(R.string.consonant_skt),
+                    sound = conSound,
                     displayWord = stringResource(R.string.specific_consonant)
                 )
             )
         )
     )
+
+
+    LaunchedEffect(Unit) {
+        viewModel.resetCategoryState()
+    }
 
     Surface {
         Column(
@@ -85,10 +103,10 @@ fun HomeScreen(
                 ) {
                     view.options.forEach { option ->
                         CategoryOption(
-                            title = option.title,
+                            title = option.sound.skt,
                             displayWord = option.displayWord,
                             onCardClick = {
-                                viewModel.updateSelectedCategory(view.category, view.title)
+                                viewModel.updateSelectedCategory(view, option.sound)
                                 navHostController.navigate(SiddharoopaRoutes.Category.name) {
                                     launchSingleTop = true
                                 }
@@ -118,8 +136,9 @@ fun CategoryView(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineMedium,
         )
+        Spacer(Modifier.height(4.dp))
         content()
     }
 }
@@ -146,6 +165,7 @@ fun CategoryOption(
                 text = title,
                 style = MaterialTheme.typography.headlineMedium
             )
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = displayWord,
                 style = MaterialTheme.typography.bodyLarge,
@@ -166,17 +186,6 @@ fun CategoryOption(
         }
     }
 }
-
-data class CategoryOptionType(
-    val title: String,
-    val displayWord: String
-)
-
-data class CategoryViewType(
-    val title: String,
-    val category: TableCategory,
-    val options: List<CategoryOptionType>
-)
 
 
 @Preview

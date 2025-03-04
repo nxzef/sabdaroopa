@@ -22,6 +22,8 @@
     <!-- Vowels/Consonants -->
     <string name="vowel_skt">अजन्त</string>
     <string name="consonant_skt">हलन्त</string>
+    <string name="vowel_eng">vowels</string>
+    <string name="consonant_eng">consonants</string>
 
 
     <!-- Buttons -->
@@ -52,5 +54,10 @@
     <string name="single">एकवचन</string>
     <string name="dual">द्विवचन</string>
     <string name="plural">बहुवचन</string>
+
+
+    <!-- General words -->
+
+    <string name="sabda">शब्दः</string>
 
 </resources>

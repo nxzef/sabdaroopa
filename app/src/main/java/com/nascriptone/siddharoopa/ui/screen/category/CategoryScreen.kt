@@ -15,10 +15,6 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,6 +25,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
@@ -43,8 +40,11 @@ fun CategoryScreen(
 ) {
 
     LaunchedEffect(Unit) {
-        viewModel.fetchSabda()
+        if (!categoryScreenState.isDataFetched) {
+            viewModel.fetchSabda()
+        }
     }
+
 
     when (val result = categoryScreenState.result) {
         is DataFetchState.Loading -> {
@@ -62,6 +62,7 @@ fun CategoryScreen(
         is DataFetchState.Success -> {
             CategoryScreenContent(
                 result.data,
+                sound = categoryScreenState.selectedSound,
                 viewModel = viewModel,
                 navHostController = navHostController,
                 modifier = modifier
@@ -73,23 +74,24 @@ fun CategoryScreen(
 @Composable
 fun CategoryScreenContent(
     data: List<Sabda>,
+    sound: Sound?,
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
-    val antas: Set<String> = data.map { it.anta }.toSet()
+    val filteredData = data.filter { sabda -> sabda.sound == sound?.eng }
 
-    var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
-    var selectedSegmentIndex by rememberSaveable { mutableIntStateOf(0) }
-    val tabItems: List<String> = listOf(
-        stringResource(R.string.vowel_skt),
-        stringResource(R.string.consonant_skt)
-    )
-    val segmentItems: List<String> = listOf(
-        "Masculine",
-        "Feminine",
-        "Neuter"
+
+    val tabItems: List<Sound> = listOf(
+        Sound(
+            eng = stringResource(R.string.vowel_eng),
+            skt = stringResource(R.string.vowel_skt)
+        ),
+        Sound(
+            eng = stringResource(R.string.consonant_eng),
+            skt = stringResource(R.string.consonant_skt)
+        )
     )
 
     Surface {
@@ -100,17 +102,17 @@ fun CategoryScreenContent(
         ) {
 
             TabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier = Modifier.padding(vertical = 8.dp)
+                selectedTabIndex = tabItems.indexOf(sound),
+                modifier = Modifier.padding(top = 8.dp)
             ) {
-                tabItems.forEachIndexed { index, label ->
+                tabItems.forEach { item ->
                     Tab(
-                        selected = index == selectedTabIndex,
+                        selected = sound?.eng == item.eng,
                         onClick = {
-                            selectedTabIndex = index
+                            viewModel.changeOption(item)
                         },
                         text = {
-                            Text(label, style = MaterialTheme.typography.titleLarge)
+                            Text(item.skt, style = MaterialTheme.typography.titleLarge)
                         },
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -119,12 +121,13 @@ fun CategoryScreenContent(
 
             LazyColumn(
                 modifier = modifier
+                    .weight(1F)
             ) {
-                items(data) { sabda ->
+                items(filteredData) { sabda ->
                     SabdaItem(
                         sabda = sabda,
                         onClick = {
-                            viewModel.updateSelectedTable(sabda.declension)
+                            viewModel.updateSelectedTable(sabda.declension, sabda.word)
                             navHostController.navigate(SiddharoopaRoutes.Table.name)
                         }
                     )
@@ -149,9 +152,6 @@ fun SabdaItem(
         supportingContent = {
             Text(sabda.anta)
         },
-        overlineContent = {
-            Text(sabda.translit)
-        },
         modifier = modifier
             .clickable(onClick = onClick)
     )
@@ -162,6 +162,6 @@ fun SabdaItem(
 @Composable
 fun CategoryScreenPreview() {
     SiddharoopaTheme {
-        CategoryScreenContent(listOf(), hiltViewModel(), rememberNavController())
+        CategoryScreenContent(listOf(), Sound("", ""), hiltViewModel(), rememberNavController())
     }
 }

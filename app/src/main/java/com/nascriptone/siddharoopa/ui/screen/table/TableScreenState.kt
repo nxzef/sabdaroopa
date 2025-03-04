@@ -1,6 +1,8 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
 data class TableScreenState(
+    val title: String = "",
+    val selectedTable: String = "",
     val result: StringParse = StringParse.Loading
 )
 
