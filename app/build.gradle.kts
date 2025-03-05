@@ -88,4 +88,7 @@ dependencies {
     implementation(libs.androidx.animation)
     implementation(libs.androidx.animation.core)
 
+    // Splash Screen
+    implementation(libs.androidx.core.splashscreen)
+
 }

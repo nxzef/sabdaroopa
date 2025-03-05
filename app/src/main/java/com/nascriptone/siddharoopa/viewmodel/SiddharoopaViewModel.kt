@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
@@ -58,11 +59,6 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun resetCategoryState() {
-        _categoryUIState.value = CategoryScreenState()
-    }
-
-
     fun updateSelectedCategory(
         selectedCategory: CategoryViewType,
         selectedSound: Sound
@@ -70,7 +66,9 @@ class SiddharoopaViewModel @Inject constructor(
         _categoryUIState.update {
             it.copy(
                 selectedCategory = selectedCategory,
-                selectedSound = selectedSound
+                selectedSound = selectedSound,
+                isDataFetched = it.lastFetchedCategory == selectedCategory.title,
+                lastFetchedCategory = selectedCategory.title
             )
         }
     }
@@ -81,7 +79,7 @@ class SiddharoopaViewModel @Inject constructor(
 
             val result = runCatching {
                 val declension = Gson().fromJson(
-                    tableUIState.value.selectedTable,
+                    tableUIState.value.selectedSabda?.declension,
                     Declension::class.java
                 )
                 val declensionTable = createDeclensionTable(declension)
@@ -94,11 +92,10 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun updateSelectedTable(table: String, name: String) {
+    fun updateSelectedTable(selectedSabda: Sabda) {
         _tableUIState.update {
             it.copy(
-                title = name,
-                selectedTable = table.trimIndent()
+                selectedSabda = selectedSabda
             )
         }
     }
@@ -163,9 +160,9 @@ class SiddharoopaViewModel @Inject constructor(
 
 
     fun fetchSabda() {
-        val category = categoryUIState.value.selectedCategory?.category
-
         if (categoryUIState.value.isDataFetched) return
+
+        val category = categoryUIState.value.selectedCategory?.category
 
         viewModelScope.launch(Dispatchers.IO) {
             _categoryUIState.update {

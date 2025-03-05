@@ -67,7 +67,7 @@ fun SiddharoopaApp(
                 currentRoute = currentRoute,
                 homeBarScrollBehavior = scrollBehavior,
                 categoryScreenTitle = categoryScreenState.selectedCategory?.title,
-                tableScreenTitle = tableUIState.title
+                tableScreenTitle = tableUIState.selectedSabda?.word
             )
         },
         modifier = modifier
@@ -112,7 +112,7 @@ fun AppTopBar(
     navHostController: NavHostController,
     currentRoute: SiddharoopaRoutes,
     categoryScreenTitle: String?,
-    tableScreenTitle: String,
+    tableScreenTitle: String?,
     homeBarScrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
@@ -152,7 +152,7 @@ fun AppTopBar(
         visible = currentRoute == SiddharoopaRoutes.Table
     ) {
         TableScreenTopBar(
-            title = tableScreenTitle,
+            title = tableScreenTitle ?: "",
             onBackPress = {
                 navHostController.navigateUp()
             }

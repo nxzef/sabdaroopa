@@ -1,12 +1,26 @@
 package com.nascriptone.siddharoopa.ui.screen.category
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,20 +29,22 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Suggestion
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -40,9 +56,7 @@ fun CategoryScreen(
 ) {
 
     LaunchedEffect(Unit) {
-        if (!categoryScreenState.isDataFetched) {
-            viewModel.fetchSabda()
-        }
+        viewModel.fetchSabda()
     }
 
 
@@ -80,6 +94,8 @@ fun CategoryScreenContent(
     modifier: Modifier = Modifier
 ) {
 
+    var selectedGenderFilter by rememberSaveable { mutableStateOf("All") }
+
     val filteredData = data.filter { sabda -> sabda.sound == sound?.eng }
 
 
@@ -91,6 +107,25 @@ fun CategoryScreenContent(
         Sound(
             eng = stringResource(R.string.consonant_eng),
             skt = stringResource(R.string.consonant_skt)
+        )
+    )
+
+    val genderSuggestions: Set<Suggestion> = setOf(
+        Suggestion(
+            eng = stringResource(R.string.all_eng),
+            skt = stringResource(R.string.all_skt)
+        ),
+        Suggestion(
+            eng = stringResource(R.string.masculine_eng),
+            skt = stringResource(R.string.masculine_skt)
+        ),
+        Suggestion(
+            eng = stringResource(R.string.feminine_eng),
+            skt = stringResource(R.string.feminine_skt)
+        ),
+        Suggestion(
+            eng = stringResource(R.string.neuter_eng),
+            skt = stringResource(R.string.neuter_skt)
         )
     )
 
@@ -119,15 +154,57 @@ fun CategoryScreenContent(
                 }
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Spacer(Modifier.width(12.dp))
+                genderSuggestions.forEach { suggestion ->
+                    val selected = selectedGenderFilter == suggestion.eng
+                    FilterChip(
+                        selected = selected,
+                        label = {
+                            Text(
+                                suggestion.skt,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.W600
+                            )
+                        },
+                        onClick = {
+                            selectedGenderFilter = suggestion.eng
+                        },
+                        leadingIcon = {
+                            AnimatedVisibility(
+                                visible = selected
+                            ) {
+                                Icon(Icons.Rounded.Check, null)
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 6.dp, vertical = 8.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+            }
+            HorizontalDivider()
+
             LazyColumn(
                 modifier = modifier
                     .weight(1F)
             ) {
+
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+
                 items(filteredData) { sabda ->
                     SabdaItem(
                         sabda = sabda,
                         onClick = {
-                            viewModel.updateSelectedTable(sabda.declension, sabda.word)
+                            viewModel.updateSelectedTable(sabda)
                             navHostController.navigate(SiddharoopaRoutes.Table.name)
                         }
                     )
@@ -145,23 +222,28 @@ fun SabdaItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val genderInSkt = when (sabda.gender) {
+        stringResource(R.string.masculine_eng).lowercase() -> stringResource(R.string.masculine_skt)
+        stringResource(R.string.feminine_eng).lowercase() -> stringResource(R.string.feminine_skt)
+        else -> stringResource(R.string.neuter_skt)
+    }
+
+    val sabdaInSkt = stringResource(R.string.sabda)
+    val supportingText = "${sabda.anta} $genderInSkt ${sabda.word} $sabdaInSkt"
+
     ListItem(
         headlineContent = {
-            Text(sabda.word)
+            Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
         },
         supportingContent = {
-            Text(sabda.anta)
+            Text(
+                supportingText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .6F)
+            )
         },
         modifier = modifier
             .clickable(onClick = onClick)
     )
-}
-
-
-@Preview
-@Composable
-fun CategoryScreenPreview() {
-    SiddharoopaTheme {
-        CategoryScreenContent(listOf(), Sound("", ""), hiltViewModel(), rememberNavController())
-    }
 }

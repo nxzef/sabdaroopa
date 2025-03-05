@@ -84,11 +84,6 @@ fun HomeScreen(
         )
     )
 
-
-    LaunchedEffect(Unit) {
-        viewModel.resetCategoryState()
-    }
-
     Surface {
         Column(
             modifier = modifier

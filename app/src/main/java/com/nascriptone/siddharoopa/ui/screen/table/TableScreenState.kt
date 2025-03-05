@@ -1,8 +1,9 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
+
 data class TableScreenState(
-    val title: String = "",
-    val selectedTable: String = "",
+    val selectedSabda: Sabda? = null,
     val result: StringParse = StringParse.Loading
 )
 

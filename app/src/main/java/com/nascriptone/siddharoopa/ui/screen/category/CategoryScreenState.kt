@@ -8,6 +8,7 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 data class CategoryScreenState(
     val selectedCategory: CategoryViewType? = null,
     val selectedSound: Sound? = null,
+    val lastFetchedCategory: String = "",
     val isDataFetched: Boolean = false,
     val result: DataFetchState = DataFetchState.Loading
 )
