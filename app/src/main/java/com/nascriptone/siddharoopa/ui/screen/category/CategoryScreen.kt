@@ -29,10 +29,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -44,6 +41,7 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.model.uiobj.Suggestion
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
@@ -75,8 +73,9 @@ fun CategoryScreen(
 
         is DataFetchState.Success -> {
             CategoryScreenContent(
-                result.data,
-                sound = categoryScreenState.selectedSound,
+                data = categoryScreenState.filteredData,
+                currentSound = categoryScreenState.selectedSound,
+                currentGender = categoryScreenState.selectedGender,
                 viewModel = viewModel,
                 navHostController = navHostController,
                 modifier = modifier
@@ -88,15 +87,12 @@ fun CategoryScreen(
 @Composable
 fun CategoryScreenContent(
     data: List<Sabda>,
-    sound: Sound?,
+    currentSound: Sound?,
+    currentGender: Gender?,
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-
-    var selectedGenderFilter by rememberSaveable { mutableStateOf("All") }
-
-    val filteredData = data.filter { sabda -> sabda.sound == sound?.eng }
 
 
     val tabItems: List<Sound> = listOf(
@@ -110,24 +106,25 @@ fun CategoryScreenContent(
         )
     )
 
-    val genderSuggestions: Set<Suggestion> = setOf(
-        Suggestion(
-            eng = stringResource(R.string.all_eng),
-            skt = stringResource(R.string.all_skt)
-        ),
-        Suggestion(
-            eng = stringResource(R.string.masculine_eng),
-            skt = stringResource(R.string.masculine_skt)
-        ),
-        Suggestion(
-            eng = stringResource(R.string.feminine_eng),
-            skt = stringResource(R.string.feminine_skt)
-        ),
-        Suggestion(
-            eng = stringResource(R.string.neuter_eng),
-            skt = stringResource(R.string.neuter_skt)
+    val genderSuggestions: Set<Suggestion> = remember {
+        setOf(
+            Suggestion(
+                skt = R.string.all_skt
+            ),
+            Suggestion(
+                gender = Gender.Masculine,
+                skt = R.string.masculine_skt
+            ),
+            Suggestion(
+                gender = Gender.Feminine,
+                skt = R.string.feminine_skt
+            ),
+            Suggestion(
+                gender = Gender.Neuter,
+                skt = R.string.neuter_skt
+            )
         )
-    )
+    }
 
     Surface {
         Column(
@@ -137,14 +134,14 @@ fun CategoryScreenContent(
         ) {
 
             TabRow(
-                selectedTabIndex = tabItems.indexOf(sound),
+                selectedTabIndex = tabItems.indexOf(currentSound),
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 tabItems.forEach { item ->
                     Tab(
-                        selected = sound?.eng == item.eng,
+                        selected = currentSound?.eng == item.eng,
                         onClick = {
-                            viewModel.changeOption(item)
+                            viewModel.updateSoundFilter(item)
                         },
                         text = {
                             Text(item.skt, style = MaterialTheme.typography.titleLarge)
@@ -163,18 +160,19 @@ fun CategoryScreenContent(
             ) {
                 Spacer(Modifier.width(12.dp))
                 genderSuggestions.forEach { suggestion ->
-                    val selected = selectedGenderFilter == suggestion.eng
+                    val gender = suggestion.gender
+                    val selected = currentGender == gender
                     FilterChip(
                         selected = selected,
                         label = {
                             Text(
-                                suggestion.skt,
+                                text = stringResource(suggestion.skt),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.W600
                             )
                         },
                         onClick = {
-                            selectedGenderFilter = suggestion.eng
+                            viewModel.updateGenderFilter(gender)
                         },
                         leadingIcon = {
                             AnimatedVisibility(
@@ -200,7 +198,7 @@ fun CategoryScreenContent(
                     Spacer(Modifier.height(16.dp))
                 }
 
-                items(filteredData) { sabda ->
+                items(data) { sabda ->
                     SabdaItem(
                         sabda = sabda,
                         onClick = {

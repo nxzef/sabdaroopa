@@ -11,6 +11,7 @@ import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.repository.AppRepository
+import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
@@ -46,22 +47,34 @@ class SiddharoopaViewModel @Inject constructor(
         return context.getString(resId)
     }
 
-    fun changeOption(sound: Sound) {
+    fun resetTableState() {
+        _tableUIState.value = TableScreenState()
+    }
+
+    fun updateSoundFilter(sound: Sound) {
         _categoryUIState.update {
             it.copy(
                 selectedSound = sound
             )
         }
+
+        applyFilter()
     }
 
-    fun resetTableState() {
-        _tableUIState.value = TableScreenState()
+    fun updateGenderFilter(gender: Gender?) {
+        _categoryUIState.update {
+            it.copy(
+                selectedGender = gender
+            )
+        }
+
+        applyFilter()
     }
 
 
     fun updateSelectedCategory(
         selectedCategory: CategoryViewType,
-        selectedSound: Sound
+        selectedSound: Sound,
     ) {
         _categoryUIState.update {
             it.copy(
@@ -72,6 +85,7 @@ class SiddharoopaViewModel @Inject constructor(
             )
         }
     }
+
 
     fun parseStringToDeclension() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -158,9 +172,33 @@ class SiddharoopaViewModel @Inject constructor(
         )
     }
 
+    private fun applyFilter() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val data =
+                (categoryUIState.value.result as? DataFetchState.Success)?.data ?: emptyList()
+
+
+            val filteredData = data.filter { sabda ->
+                listOfNotNull(
+                    categoryUIState.value.selectedSound?.let { sabda.sound == it.eng.lowercase() },
+                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }
+                ).all { it }
+            }
+
+            _categoryUIState.update {
+                it.copy(
+                    filteredData = filteredData
+                )
+            }
+        }
+    }
+
 
     fun fetchSabda() {
-        if (categoryUIState.value.isDataFetched) return
+        if (categoryUIState.value.isDataFetched) {
+            applyFilter()
+            return
+        }
 
         val category = categoryUIState.value.selectedCategory?.category
 
@@ -186,6 +224,7 @@ class SiddharoopaViewModel @Inject constructor(
             }
 
             _categoryUIState.update { it.copy(result = result, isDataFetched = true) }
+            applyFilter()
         }
     }
 

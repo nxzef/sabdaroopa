@@ -1,6 +1,8 @@
 package com.nascriptone.siddharoopa.data.model.uiobj
 
+import com.nascriptone.siddharoopa.ui.screen.Gender
+
 data class Suggestion(
-    val eng: String,
-    val skt: String,
+    val gender: Gender? = null,
+    val skt: Int,
 )

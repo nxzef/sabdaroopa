@@ -85,7 +85,7 @@ fun SiddharoopaApp(
             composable(SiddharoopaRoutes.Home.name) {
                 HomeScreen(
                     viewModel = viewModel,
-                    navHostController = navHostController
+                    navHostController = navHostController,
                 )
             }
             composable(SiddharoopaRoutes.Category.name) {
