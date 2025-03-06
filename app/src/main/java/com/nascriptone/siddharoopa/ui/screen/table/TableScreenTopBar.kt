@@ -2,8 +2,6 @@ package com.nascriptone.siddharoopa.ui.screen.table
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,14 +28,6 @@ fun TableScreenTopBar(
         navigationIcon = {
             IconButton(onClick = onBackPress) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
-            }
-        },
-        actions = {
-            IconButton(onClick = {}) {
-                Icon(Icons.Rounded.FavoriteBorder, null)
-            }
-            IconButton(onClick = {}) {
-                Icon(Icons.Rounded.MoreVert, null)
             }
         },
         modifier = modifier

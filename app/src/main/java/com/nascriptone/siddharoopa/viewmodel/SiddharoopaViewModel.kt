@@ -106,10 +106,11 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun updateSelectedTable(selectedSabda: Sabda) {
+    fun updateSelectedTable(selectedSabda: Sabda, sabdaDetails: String) {
         _tableUIState.update {
             it.copy(
-                selectedSabda = selectedSabda
+                selectedSabda = selectedSabda,
+                selectedSabdaDetails = sabdaDetails
             )
         }
     }

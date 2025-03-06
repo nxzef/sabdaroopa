@@ -4,6 +4,7 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 
 data class TableScreenState(
     val selectedSabda: Sabda? = null,
+    val selectedSabdaDetails: String = "",
     val result: StringParse = StringParse.Loading
 )
 

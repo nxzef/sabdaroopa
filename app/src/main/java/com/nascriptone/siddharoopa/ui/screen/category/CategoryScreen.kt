@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -135,7 +134,6 @@ fun CategoryScreenContent(
 
             TabRow(
                 selectedTabIndex = tabItems.indexOf(currentSound),
-                modifier = Modifier.padding(top = 8.dp)
             ) {
                 tabItems.forEach { item ->
                     Tab(
@@ -158,7 +156,7 @@ fun CategoryScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(24.dp))
                 genderSuggestions.forEach { suggestion ->
                     val gender = suggestion.gender
                     val selected = currentGender == gender
@@ -185,27 +183,26 @@ fun CategoryScreenContent(
                             .padding(horizontal = 6.dp, vertical = 8.dp)
                     )
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(24.dp))
             }
-            HorizontalDivider()
 
             LazyColumn(
                 modifier = modifier
                     .weight(1F)
             ) {
 
-                item {
-                    Spacer(Modifier.height(16.dp))
-                }
-
                 items(data) { sabda ->
                     SabdaItem(
                         sabda = sabda,
-                        onClick = {
-                            viewModel.updateSelectedTable(sabda)
+                        onClick = { details ->
+                            viewModel.updateSelectedTable(sabda, details)
                             navHostController.navigate(SiddharoopaRoutes.Table.name)
                         }
                     )
+                }
+
+                item {
+                    Spacer(Modifier.height(52.dp))
                 }
             }
 
@@ -217,7 +214,7 @@ fun CategoryScreenContent(
 @Composable
 fun SabdaItem(
     sabda: Sabda,
-    onClick: () -> Unit,
+    onClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -242,6 +239,6 @@ fun SabdaItem(
             )
         },
         modifier = modifier
-            .clickable(onClick = onClick)
+            .clickable(onClick = { onClick(supportingText) })
     )
 }

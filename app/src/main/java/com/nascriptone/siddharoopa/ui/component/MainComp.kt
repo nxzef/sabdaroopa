@@ -17,7 +17,8 @@ fun CurrentState(
     content: @Composable () -> Unit
 ) {
     Surface(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
     ) {
         Box(
             contentAlignment = contentAlignment

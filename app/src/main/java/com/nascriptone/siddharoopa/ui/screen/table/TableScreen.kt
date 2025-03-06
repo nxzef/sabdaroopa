@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -76,21 +77,33 @@ fun TableScreen(
 
     }
 
-    Surface(
-        modifier = modifier
-    ) {
-        when (val result = tableUIState.result) {
-            is StringParse.Loading -> CurrentState {
-                CircularProgressIndicator()
+
+    Surface {
+        Column(
+            modifier = modifier
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+
+            when (val result = tableUIState.result) {
+                is StringParse.Loading -> CurrentState(
+                    modifier = Modifier.weight(1F)
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                is StringParse.Error -> CurrentState(
+                    modifier = Modifier.weight(1F)
+                ) {
+                    Text(result.msg)
+                }
+
+                is StringParse.Success -> DeclensionTable(
+                    result.declensionTable,
+                    sabdaDetails = tableUIState.selectedSabdaDetails
+                )
             }
 
-            is StringParse.Error -> CurrentState {
-                Text(result.msg)
-            }
-
-            is StringParse.Success -> DeclensionTable(
-                result.declensionTable
-            )
         }
     }
 }
@@ -98,55 +111,55 @@ fun TableScreen(
 
 @Composable
 fun DeclensionTable(
-    declensionTable: List<List<String>>, modifier: Modifier = Modifier
+    declensionTable: List<List<String>>,
+    sabdaDetails: String,
+    modifier: Modifier = Modifier
 ) {
-    Surface {
-        Column(
-            modifier = modifier
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
 
+    Spacer(Modifier.height(16.dp))
 
-            Column(
+    Text(
+        sabdaDetails,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(16.dp)
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 24.dp)
+            .border(
+                BorderStroke(DividerDefaults.Thickness, DividerDefaults.color),
+                RoundedCornerShape(16.dp)
+            )
+    ) {
+
+        declensionTable.forEachIndexed { rowIndex, row ->
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 24.dp)
-                    .border(
-                        BorderStroke(DividerDefaults.Thickness, DividerDefaults.color),
-                        RoundedCornerShape(16.dp)
-                    )
+                    .height(42.dp)
             ) {
 
-                declensionTable.forEachIndexed { rowIndex, row ->
+                row.forEachIndexed { cellIndex, cell ->
 
-                    Row(
+                    TableCell(
+                        cell = cell,
+                        cellIndex = cellIndex,
+                        rowIndex = rowIndex,
+                        row = row,
+                        declensionTable = declensionTable,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(42.dp)
-                    ) {
-
-                        row.forEachIndexed { cellIndex, cell ->
-
-                            TableCell(
-                                cell = cell,
-                                cellIndex = cellIndex,
-                                rowIndex = rowIndex,
-                                row = row,
-                                declensionTable = declensionTable,
-                                modifier = Modifier
-                                    .weight(1F)
-                            )
-                        }
-                    }
-                    if (rowIndex != declensionTable.lastIndex) {
-                        HorizontalDivider()
-                    }
+                            .weight(1F)
+                    )
                 }
-
             }
-
+            if (rowIndex != declensionTable.lastIndex) {
+                HorizontalDivider()
+            }
         }
+
     }
 }
 
@@ -187,7 +200,7 @@ fun TableCell(
             fontWeight = separationValuesForHeader(
                 cellIndex,
                 rowIndex,
-                FontWeight.Bold,
+                FontWeight.W700,
                 LocalTextStyle.current.fontWeight
             )
         )
