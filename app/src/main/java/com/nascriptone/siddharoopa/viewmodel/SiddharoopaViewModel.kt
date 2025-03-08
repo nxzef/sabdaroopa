@@ -15,6 +15,7 @@ import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
+import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,6 +36,9 @@ class SiddharoopaViewModel @Inject constructor(
 ) :
     ViewModel() {
 
+    private val _homeUIState = MutableStateFlow(HomeScreenState())
+    val homeUIState: StateFlow<HomeScreenState> = _homeUIState.asStateFlow()
+
     private val _categoryUIState =
         MutableStateFlow(CategoryScreenState())
     val categoryUIState: StateFlow<CategoryScreenState> = _categoryUIState.asStateFlow()
@@ -45,6 +49,37 @@ class SiddharoopaViewModel @Inject constructor(
 
     private fun getStringFromResources(resId: Int): String {
         return context.getString(resId)
+    }
+
+
+    fun updateQuery(query: String) {
+        _homeUIState.update { currentState ->
+            currentState.copy(
+                textFieldData = currentState.textFieldData.copy(
+                    text = query
+                )
+            )
+        }
+    }
+
+    fun clearQuery() {
+        _homeUIState.update { currentState ->
+            currentState.copy(
+                textFieldData = currentState.textFieldData.copy(
+                    text = ""
+                )
+            )
+        }
+    }
+
+    fun updateTextFieldExpanded(expanded: Boolean) {
+        _homeUIState.update { currentState ->
+            currentState.copy(
+                textFieldData = currentState.textFieldData.copy(
+                    isSearchViewExpanded = expanded
+                )
+            )
+        }
     }
 
     fun resetTableState() {
