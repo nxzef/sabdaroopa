@@ -156,7 +156,7 @@ fun CategoryScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Spacer(Modifier.width(24.dp))
+                Spacer(Modifier.width(16.dp))
                 genderSuggestions.forEach { suggestion ->
                     val gender = suggestion.gender
                     val selected = currentGender == gender
@@ -183,7 +183,7 @@ fun CategoryScreenContent(
                             .padding(horizontal = 6.dp, vertical = 8.dp)
                     )
                 }
-                Spacer(Modifier.width(24.dp))
+                Spacer(Modifier.width(16.dp))
             }
 
             LazyColumn(

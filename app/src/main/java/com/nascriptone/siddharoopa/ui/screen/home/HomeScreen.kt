@@ -21,25 +21,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryOptionType
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
+    homeUIState: HomeScreenState,
     modifier: Modifier = Modifier
 ) {
 
@@ -84,14 +83,13 @@ fun HomeScreen(
         )
     )
 
+
     Surface {
         Column(
             modifier = modifier
                 .verticalScroll(rememberScrollState())
+                .semantics { traversalIndex = 1f }
         ) {
-
-            Spacer(modifier = Modifier.height(20.dp))
-
             categoryViewList.forEach { view ->
                 CategoryView(
                     title = view.title
@@ -113,10 +111,9 @@ fun HomeScreen(
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(40.dp))
-
         }
+
     }
 
 }
@@ -181,17 +178,6 @@ fun CategoryOption(
                 Spacer(Modifier.width(12.dp))
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, null)
             }
-        }
-    }
-}
-
-
-@Preview
-@Composable
-fun HomeScreenPreview() {
-    Surface {
-        SiddharoopaTheme {
-            HomeScreen(viewModel = hiltViewModel(), rememberNavController())
         }
     }
 }

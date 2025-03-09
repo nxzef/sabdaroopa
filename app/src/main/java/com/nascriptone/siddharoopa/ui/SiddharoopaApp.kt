@@ -18,12 +18,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.nascriptone.siddharoopa.ui.component.TopSearchBar
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
-import com.nascriptone.siddharoopa.ui.screen.home.TextFieldData
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -48,15 +46,12 @@ fun SiddharoopaApp(
     }
 
 
-
     Scaffold(
         topBar = {
             AppTopBar(
-                viewModel = viewModel,
                 navHostController = navHostController,
                 currentRoute = currentRoute,
                 categoryScreenTitle = categoryScreenState.selectedCategory?.title,
-                textFieldData = homeUiState.textFieldData,
                 tableScreenTitle = tableUIState.selectedSabda?.word
             )
         },
@@ -75,6 +70,7 @@ fun SiddharoopaApp(
                 HomeScreen(
                     viewModel = viewModel,
                     navHostController = navHostController,
+                    homeUIState = homeUiState,
                 )
             }
             composable(SiddharoopaRoutes.Category.name) {
@@ -97,25 +93,14 @@ fun SiddharoopaApp(
 
 @Composable
 fun AppTopBar(
-    viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
     currentRoute: SiddharoopaRoutes,
     categoryScreenTitle: String?,
-    textFieldData: TextFieldData,
     tableScreenTitle: String?,
 ) {
 
     val onBackPress: () -> Unit = {
         navHostController.navigateUp()
-    }
-
-    AnimatedVisibility(
-        visible = currentRoute == SiddharoopaRoutes.Home
-    ) {
-        TopSearchBar(
-            viewModel = viewModel,
-            textFieldData = textFieldData,
-        )
     }
 
     AnimatedVisibility(
