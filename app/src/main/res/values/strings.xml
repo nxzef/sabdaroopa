@@ -59,9 +59,9 @@
     <!-- Gender Skt / Eng -->
 
     <string name="all_skt">सर्व</string>
-    <string name="masculine_skt">पुल्लिङ्ग</string>
-    <string name="feminine_skt">स्त्रीलिङ्ग</string>
-    <string name="neuter_skt"> नपुंसकलिङ्ग</string>
+    <string name="masculine_skt">पुल्लिङ्गः</string>
+    <string name="feminine_skt">स्त्रीलिङ्गः</string>
+    <string name="neuter_skt"> नपुंसकलिङ्गः</string>
 
     <string name="all_eng">All</string>
     <string name="masculine_eng">Masculine</string>

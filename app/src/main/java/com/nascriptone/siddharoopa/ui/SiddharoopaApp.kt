@@ -22,6 +22,9 @@ import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
+import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
+import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
+import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -87,6 +90,9 @@ fun SiddharoopaApp(
                     viewModel = viewModel
                 )
             }
+            composable(SiddharoopaRoutes.Settings.name) {
+                SettingsScreen()
+            }
         }
     }
 }
@@ -103,8 +109,14 @@ fun AppTopBar(
         navHostController.navigateUp()
     }
 
+    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Home) {
+        HomeTopBar(
+            navHostController = navHostController
+        )
+    }
+
     AnimatedVisibility(
-        visible = currentRoute == SiddharoopaRoutes.Category,
+        currentRoute == SiddharoopaRoutes.Category,
     ) {
         CategoryScreenTopBar(
             title = categoryScreenTitle ?: "",
@@ -113,10 +125,16 @@ fun AppTopBar(
     }
 
     AnimatedVisibility(
-        visible = currentRoute == SiddharoopaRoutes.Table
+        currentRoute == SiddharoopaRoutes.Table
     ) {
         TableScreenTopBar(
             title = tableScreenTitle ?: "",
+            onBackPress = onBackPress
+        )
+    }
+
+    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Settings) {
+        SettingsTopBar(
             onBackPress = onBackPress
         )
     }

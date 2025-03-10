@@ -225,7 +225,7 @@ fun SabdaItem(
     }
 
     val sabdaInSkt = stringResource(R.string.sabda)
-    val supportingText = "${sabda.anta} $genderInSkt ${sabda.word} $sabdaInSkt"
+    val supportingText = "${sabda.anta} $genderInSkt \"${sabda.word}\" $sabdaInSkt"
 
     ListItem(
         headlineContent = {
@@ -235,7 +235,7 @@ fun SabdaItem(
             Text(
                 supportingText,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .6F)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
             )
         },
         modifier = modifier

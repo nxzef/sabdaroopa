@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Siddharoopa" parent="android:Theme.Material.Light.NoActionBar" >
-<!--        <item name="android:windowSplashScreenIconBackgroundColor">@color/white</item>-->
+    <style name="Theme.Siddharoopa" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/baseline_menu_book_b24</item>
     </style>
 </resources>
