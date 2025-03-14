@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <style name="Theme.Siddharoopa" parent="Theme.SplashScreen">
-        <item name="android:windowSplashScreenBackground">@color/black</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/baseline_menu_book_w24</item>
-        <item name="android:windowSplashScreenAnimationDuration">1000</item>
-    </style>
-</resources>

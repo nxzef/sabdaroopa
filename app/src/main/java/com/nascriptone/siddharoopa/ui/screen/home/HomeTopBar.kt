@@ -16,8 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 
@@ -30,44 +28,43 @@ fun HomeTopBar(
 
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
 
-    Box {
-        TopAppBar(
-            title = {
-                Text("Siddharoopa")
-            },
-            actions = {
+    TopAppBar(
+        title = {
+            Text("Siddharoopa")
+        },
+        actions = {
+            Box {
                 IconButton(onClick = {
                     menuExpanded = !menuExpanded
                 }) {
                     Icon(Icons.Rounded.MoreVert, null)
                 }
-            },
-            modifier = modifier
-        )
-        DropdownMenu(
-            menuExpanded,
-            onDismissRequest = {
-                menuExpanded = !menuExpanded
-            },
-            modifier = Modifier,
-            offset = DpOffset(x = 300.dp, y = 0.dp)
-        ) {
-            DropdownMenuItem(
-                text = {
-                    Text("Favorites")
-                },
-                onClick = {}
-            )
-            DropdownMenuItem(
-                text = {
-                    Text("Settings")
-                },
-                onClick = {
-                    navHostController.navigate(SiddharoopaRoutes.Settings.name)
-                    menuExpanded = !menuExpanded
+                DropdownMenu(
+                    menuExpanded,
+                    onDismissRequest = {
+                        menuExpanded = !menuExpanded
+                    },
+                    modifier = Modifier,
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text("Favorites")
+                        },
+                        onClick = {}
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text("Settings")
+                        },
+                        onClick = {
+                            navHostController.navigate(SiddharoopaRoutes.Settings.name)
+                            menuExpanded = !menuExpanded
+                        }
+                    )
                 }
-            )
-        }
-    }
+            }
+        },
+        modifier = modifier
+    )
 
 }
