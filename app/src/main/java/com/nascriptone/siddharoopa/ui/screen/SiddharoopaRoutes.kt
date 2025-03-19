@@ -4,5 +4,6 @@ enum class SiddharoopaRoutes {
     Home,
     Category,
     Table,
-    Settings
+    Settings,
+    Prayer
 }

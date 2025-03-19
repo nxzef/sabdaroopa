@@ -23,6 +23,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
+import com.nascriptone.siddharoopa.ui.screen.prayer.PrayerScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
@@ -69,6 +70,9 @@ fun SiddharoopaApp(
                 .fillMaxSize()
                 .padding(it)
         ) {
+            composable(SiddharoopaRoutes.Prayer.name) {
+                PrayerScreen()
+            }
             composable(SiddharoopaRoutes.Home.name) {
                 HomeScreen(
                     viewModel = viewModel,
