@@ -10,6 +10,6 @@ data class TableScreenState(
 
 sealed class StringParse {
     data object Loading : StringParse()
-    data class Success(val declensionTable: List<List<String>>) : StringParse()
+    data class Success(val declensionTable: List<List<String?>>) : StringParse()
     data class Error(val msg: String) : StringParse()
 }

@@ -111,7 +111,7 @@ fun TableScreen(
 
 @Composable
 fun DeclensionTable(
-    declensionTable: List<List<String>>,
+    declensionTable: List<List<String?>>,
     sabdaDetails: String,
     modifier: Modifier = Modifier
 ) {
@@ -165,11 +165,11 @@ fun DeclensionTable(
 
 @Composable
 fun TableCell(
-    cell: String,
-    row: List<String>,
+    cell: String?,
+    row: List<String?>,
     rowIndex: Int,
     cellIndex: Int,
-    declensionTable: List<List<String>>,
+    declensionTable: List<List<String?>>,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -193,17 +193,19 @@ fun TableCell(
             ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            cell,
-            overflow = TextOverflow.Ellipsis,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = separationValuesForHeader(
-                cellIndex,
-                rowIndex,
-                FontWeight.W700,
-                LocalTextStyle.current.fontWeight
+        if (cell != null) {
+            Text(
+                cell,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = separationValuesForHeader(
+                    cellIndex,
+                    rowIndex,
+                    FontWeight.W700,
+                    LocalTextStyle.current.fontWeight
+                )
             )
-        )
+        }
     }
     if (cellIndex != row.lastIndex) {
         VerticalDivider()

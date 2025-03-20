@@ -16,7 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
+import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +32,7 @@ fun HomeTopBar(
 
     TopAppBar(
         title = {
-            Text("Siddharoopa")
+            Text(stringResource(R.string.app_name))
         },
         actions = {
             Box {

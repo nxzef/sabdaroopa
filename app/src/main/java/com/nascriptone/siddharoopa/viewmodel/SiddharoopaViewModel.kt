@@ -52,36 +52,6 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun updateQuery(query: String) {
-        _homeUIState.update { currentState ->
-            currentState.copy(
-                textFieldData = currentState.textFieldData.copy(
-                    text = query
-                )
-            )
-        }
-    }
-
-    fun clearQuery() {
-        _homeUIState.update { currentState ->
-            currentState.copy(
-                textFieldData = currentState.textFieldData.copy(
-                    text = ""
-                )
-            )
-        }
-    }
-
-    fun updateTextFieldExpanded(expanded: Boolean) {
-        _homeUIState.update { currentState ->
-            currentState.copy(
-                textFieldData = currentState.textFieldData.copy(
-                    isSearchViewExpanded = expanded
-                )
-            )
-        }
-    }
-
     fun resetTableState() {
         _tableUIState.value = TableScreenState()
     }
@@ -150,7 +120,7 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    private fun createDeclensionTable(declension: Declension): List<List<String>> {
+    private fun createDeclensionTable(declension: Declension): List<List<String?>> {
         val vibakti = getStringFromResources(R.string.vibakti)
         val single = getStringFromResources(R.string.single)
         val dual = getStringFromResources(R.string.dual)
@@ -159,51 +129,51 @@ class SiddharoopaViewModel @Inject constructor(
             listOf(vibakti, single, dual, plural),
             listOf(
                 getStringFromResources(R.string.nominative),
-                declension.nominative.single,
-                declension.nominative.dual,
-                declension.nominative.plural
+                declension.nominative?.single,
+                declension.nominative?.dual,
+                declension.nominative?.plural
             ),
             listOf(
                 getStringFromResources(R.string.vocative),
-                declension.vocative.single,
-                declension.vocative.dual,
-                declension.vocative.plural
+                declension.vocative?.single,
+                declension.vocative?.dual,
+                declension.vocative?.plural
             ),
             listOf(
                 getStringFromResources(R.string.accusative),
-                declension.accusative.single,
-                declension.accusative.dual,
-                declension.accusative.plural
+                declension.accusative?.single,
+                declension.accusative?.dual,
+                declension.accusative?.plural
             ),
             listOf(
                 getStringFromResources(R.string.instrumental),
-                declension.instrumental.single,
-                declension.instrumental.dual,
-                declension.instrumental.plural
+                declension.instrumental?.single,
+                declension.instrumental?.dual,
+                declension.instrumental?.plural
             ),
             listOf(
                 getStringFromResources(R.string.dative),
-                declension.dative.single,
-                declension.dative.dual,
-                declension.dative.plural
+                declension.dative?.single,
+                declension.dative?.dual,
+                declension.dative?.plural
             ),
             listOf(
                 getStringFromResources(R.string.ablative),
-                declension.ablative.single,
-                declension.ablative.dual,
-                declension.ablative.plural
+                declension.ablative?.single,
+                declension.ablative?.dual,
+                declension.ablative?.plural
             ),
             listOf(
                 getStringFromResources(R.string.genitive),
-                declension.genitive.single,
-                declension.genitive.dual,
-                declension.genitive.plural
+                declension.genitive?.single,
+                declension.genitive?.dual,
+                declension.genitive?.plural
             ),
             listOf(
                 getStringFromResources(R.string.locative),
-                declension.locative.single,
-                declension.locative.dual,
-                declension.locative.plural
+                declension.locative?.single,
+                declension.locative?.dual,
+                declension.locative?.plural
             )
         )
     }
