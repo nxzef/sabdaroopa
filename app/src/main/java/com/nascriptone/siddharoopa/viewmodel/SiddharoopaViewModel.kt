@@ -1,7 +1,6 @@
 package com.nascriptone.siddharoopa.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -16,6 +15,8 @@ import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
+import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
+import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,8 +48,21 @@ class SiddharoopaViewModel @Inject constructor(
     private val _tableUIState = MutableStateFlow(TableScreenState())
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
 
+    private val _settingsScreen = MutableStateFlow(SettingsScreenState())
+    val settingsUIState: StateFlow<SettingsScreenState> = _settingsScreen.asStateFlow()
+
+
     private fun getStringFromResources(resId: Int): String {
         return context.getString(resId)
+    }
+
+
+    fun updateTheme(theme: Theme) {
+        _settingsScreen.update {
+            it.copy(
+                currentTheme = theme
+            )
+        }
     }
 
 
@@ -59,7 +73,8 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateSoundFilter(sound: Sound) {
         _categoryUIState.update {
             it.copy(
-                selectedSound = sound
+                selectedSound = sound,
+                selectedGender = null
             )
         }
 
@@ -85,6 +100,7 @@ class SiddharoopaViewModel @Inject constructor(
             it.copy(
                 selectedCategory = selectedCategory,
                 selectedSound = selectedSound,
+                selectedGender = null,
                 isDataFetched = it.lastFetchedCategory == selectedCategory.title,
                 lastFetchedCategory = selectedCategory.title
             )
@@ -225,7 +241,6 @@ class SiddharoopaViewModel @Inject constructor(
 
                 DataFetchState.Success(data)
             } catch (e: Exception) {
-                Log.e("fetchSabda", "Error fetching data", e)
                 DataFetchState.Error(e.message ?: "Unknown error occurred")
             }
 

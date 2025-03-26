@@ -73,4 +73,11 @@
 
     <string name="sabda">शब्दः</string>
 
+    <!-- Settings Screen -->
+
+    <string name="choose_theme">Choose theme</string>
+    <string name="system_default">System default</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+
 </resources>

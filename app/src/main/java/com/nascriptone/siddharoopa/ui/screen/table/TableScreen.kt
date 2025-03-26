@@ -187,7 +187,7 @@ fun TableCell(
                 color = separationValuesForHeader(
                     cellIndex,
                     rowIndex,
-                    MaterialTheme.colorScheme.surfaceContainerHighest,
+                    MaterialTheme.colorScheme.surfaceContainerHigh,
                     MaterialTheme.colorScheme.surfaceContainerLow
                 )
             ),
