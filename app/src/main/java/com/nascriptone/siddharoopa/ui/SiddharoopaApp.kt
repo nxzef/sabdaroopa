@@ -73,8 +73,6 @@ fun SiddharoopaApp(
                 NavHost(
                     navController = navHostController,
                     startDestination = SiddharoopaRoutes.Home.name,
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None },
                     modifier = modifier
                         .fillMaxSize()
                         .padding(it)
