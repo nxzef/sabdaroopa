@@ -25,7 +25,6 @@ object AppModule {
             "app_database.db"
         )
             .createFromAsset("app_database.db")
-            .fallbackToDestructiveMigration()
             .build()
     }
 
