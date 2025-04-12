@@ -63,7 +63,7 @@ fun SettingsScreen(
                 isDialogOpen = false
             },
             onDone = {
-                viewModel.updateTheme(it)
+                viewModel.changeTheme(it)
             },
             currentTheme = settingsUIState.currentTheme,
             modifier = Modifier

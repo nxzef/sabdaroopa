@@ -10,11 +10,13 @@ import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.repository.AppRepository
+import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
 import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
+import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -23,17 +25,23 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 
 @HiltViewModel
 class SiddharoopaViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    private val preferencesRepository: UserPreferencesRepository
 ) :
     ViewModel() {
 
@@ -48,8 +56,19 @@ class SiddharoopaViewModel @Inject constructor(
     private val _tableUIState = MutableStateFlow(TableScreenState())
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
 
-    private val _settingsScreen = MutableStateFlow(SettingsScreenState())
-    val settingsUIState: StateFlow<SettingsScreenState> = _settingsScreen.asStateFlow()
+
+    val settingsUIState: StateFlow<SettingsScreenState> = preferencesRepository
+        .currentTheme.map {
+            SettingsScreenState(currentTheme = it)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = runBlocking {
+                SettingsScreenState(
+                    currentTheme = preferencesRepository.currentTheme.first()
+                )
+            }
+        )
 
 
     private fun getStringFromResources(resId: Int): String {
@@ -57,14 +76,11 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun updateTheme(theme: Theme) {
-        _settingsScreen.update {
-            it.copy(
-                currentTheme = theme
-            )
+    fun changeTheme(theme: Theme) {
+        viewModelScope.launch {
+            preferencesRepository.changeTheme(theme)
         }
     }
-
 
     fun resetTableState() {
         _tableUIState.value = TableScreenState()
