@@ -82,9 +82,9 @@ fun ThemeDialog(
 ) {
 
     val themes = Theme.entries
-    var selectedTheme by rememberSaveable { mutableStateOf(currentTheme) }
 
     if (isDialogOpen) {
+        var selectedTheme by rememberSaveable { mutableStateOf(currentTheme) }
         Dialog(
             onDismissRequest = onDismissRequest,
         ) {
@@ -144,3 +144,4 @@ fun ThemeDialog(
         }
     }
 }
+

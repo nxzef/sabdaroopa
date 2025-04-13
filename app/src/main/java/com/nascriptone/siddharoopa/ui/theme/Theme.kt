@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,8 +10,11 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -267,6 +271,16 @@ fun SiddharoopaTheme(
 
         darkTheme -> darkScheme
         else -> lightScheme
+    }
+
+    val view = LocalView.current
+    val window = (view.context as Activity).window
+    if (!view.isInEditMode) {
+        SideEffect {
+            val windowCompat = WindowCompat.getInsetsController(window, view)
+            windowCompat.isAppearanceLightStatusBars = !darkTheme
+            windowCompat.isAppearanceLightNavigationBars = !darkTheme
+        }
     }
 
     MaterialTheme(
