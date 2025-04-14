@@ -25,6 +25,8 @@ import com.nascriptone.siddharoopa.core.utils.isDarkTheme
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
@@ -102,6 +104,9 @@ fun SiddharoopaApp(
                             tableUIState = tableUIState, viewModel = viewModel
                         )
                     }
+                    composable(SiddharoopaRoutes.Favorites.name) {
+                        FavoritesScreen()
+                    }
                     composable(SiddharoopaRoutes.Settings.name) {
                         SettingsScreen(
                             settingsUIState = settingsUIState, viewModel = viewModel
@@ -144,6 +149,14 @@ fun AppTopBar(
     ) {
         TableScreenTopBar(
             title = tableScreenTitle ?: "", onBackPress = onBackPress
+        )
+    }
+
+    AnimatedVisibility(
+        currentRoute == SiddharoopaRoutes.Favorites
+    ) {
+        FavoritesTopBar(
+            onBackPress = onBackPress
         )
     }
 

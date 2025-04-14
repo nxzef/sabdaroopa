@@ -5,5 +5,5 @@ enum class SiddharoopaRoutes {
     Category,
     Table,
     Settings,
-    Prayer
+    Favorites
 }

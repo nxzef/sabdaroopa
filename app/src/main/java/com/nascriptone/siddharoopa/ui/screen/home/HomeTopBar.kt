@@ -52,7 +52,10 @@ fun HomeTopBar(
                         text = {
                             Text("Favorites")
                         },
-                        onClick = {}
+                        onClick = {
+                            navHostController.navigate(SiddharoopaRoutes.Favorites.name)
+                            menuExpanded = !menuExpanded
+                        }
                     )
                     DropdownMenuItem(
                         text = {

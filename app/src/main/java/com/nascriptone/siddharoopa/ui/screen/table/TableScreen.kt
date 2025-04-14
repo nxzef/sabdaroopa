@@ -139,7 +139,7 @@ fun DeclensionTable(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(42.dp)
+                    .height(56.dp)
             ) {
 
                 row.forEachIndexed { cellIndex, cell ->
