@@ -1,10 +1,14 @@
 package com.nascriptone.siddharoopa.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -17,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.nascriptone.siddharoopa.core.utils.isDarkTheme
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
@@ -27,7 +32,6 @@ import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
-import com.nascriptone.siddharoopa.ui.theme.isDarkTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -45,17 +49,22 @@ fun SiddharoopaApp(
     val backStackEntry by navHostController.currentBackStackEntryAsState()
     val currentRoute by remember(backStackEntry) {
         derivedStateOf {
-            backStackEntry?.destination?.route
-                ?.let { SiddharoopaRoutes.valueOf(it) } ?: SiddharoopaRoutes.Home
+            backStackEntry?.destination?.route?.let { SiddharoopaRoutes.valueOf(it) }
+                ?: SiddharoopaRoutes.Home
         }
     }
 
-    SiddharoopaTheme(
-        darkTheme = isDarkTheme(settingsUIState.currentTheme)
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
+    val userPrefTheme = settingsUIState.currentTheme
+    val systemTheme = isSystemInDarkTheme()
+    val isDark = remember(userPrefTheme, systemTheme) {
+        isDarkTheme(userPrefTheme, systemTheme)
+    }
+
+
+    AnimatedContent(
+        isDark, transitionSpec = { fadeIn() togetherWith fadeOut() }) { darkTheme ->
+        SiddharoopaTheme(
+            darkTheme = darkTheme
         ) {
             Scaffold(
                 topBar = {
@@ -65,8 +74,7 @@ fun SiddharoopaApp(
                         categoryScreenTitle = categoryScreenState.selectedCategory?.title,
                         tableScreenTitle = tableUIState.selectedSabda?.word
                     )
-                },
-                modifier = modifier
+                }, modifier = modifier
             ) {
                 NavHost(
                     navController = navHostController,
@@ -89,17 +97,14 @@ fun SiddharoopaApp(
                             categoryScreenState = categoryScreenState
                         )
                     }
-
                     composable(SiddharoopaRoutes.Table.name) {
                         TableScreen(
-                            tableUIState = tableUIState,
-                            viewModel = viewModel
+                            tableUIState = tableUIState, viewModel = viewModel
                         )
                     }
                     composable(SiddharoopaRoutes.Settings.name) {
                         SettingsScreen(
-                            settingsUIState = settingsUIState,
-                            viewModel = viewModel
+                            settingsUIState = settingsUIState, viewModel = viewModel
                         )
                     }
                 }
@@ -130,8 +135,7 @@ fun AppTopBar(
         currentRoute == SiddharoopaRoutes.Category,
     ) {
         CategoryScreenTopBar(
-            title = categoryScreenTitle ?: "",
-            onBackPress = onBackPress
+            title = categoryScreenTitle ?: "", onBackPress = onBackPress
         )
     }
 
@@ -139,8 +143,7 @@ fun AppTopBar(
         currentRoute == SiddharoopaRoutes.Table
     ) {
         TableScreenTopBar(
-            title = tableScreenTitle ?: "",
-            onBackPress = onBackPress
+            title = tableScreenTitle ?: "", onBackPress = onBackPress
         )
     }
 
