@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.nascriptone.siddharoopa.data.local.AppDatabase
+import com.nascriptone.siddharoopa.data.local.dao.FavoriteSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
 import dagger.Module
@@ -43,6 +44,11 @@ object AppModule {
     @Provides
     fun provideSpecificSabdaDao(db: AppDatabase): SpecificSabdaDao {
         return db.specificSabdaDao()
+    }
+
+    @Provides
+    fun provideFavoriteSabdaDao(db: AppDatabase): FavoriteSabdaDao {
+        return db.favoriteSabdaDao()
     }
 
     @Provides

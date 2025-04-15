@@ -96,3 +96,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
 }
+
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
