@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.category
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -67,6 +68,7 @@ fun CategoryScreen(
         is DataFetchState.Error -> {
             CurrentState {
                 Text(result.msg)
+                Log.e("room_error", result.msg)
             }
         }
 
