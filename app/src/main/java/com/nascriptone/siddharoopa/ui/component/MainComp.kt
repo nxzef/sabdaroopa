@@ -16,11 +16,10 @@ fun CurrentState(
     contentAlignment: Alignment = Alignment.Center,
     content: @Composable () -> Unit
 ) {
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
+    Surface {
         Box(
+            modifier = modifier
+                .fillMaxSize(),
             contentAlignment = contentAlignment
         ) {
             content()

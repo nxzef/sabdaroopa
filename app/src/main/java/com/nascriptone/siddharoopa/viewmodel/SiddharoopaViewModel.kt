@@ -16,7 +16,6 @@ import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
-import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -127,7 +126,6 @@ class SiddharoopaViewModel @Inject constructor(
     fun parseStringToDeclension() {
         viewModelScope.launch(Dispatchers.IO) {
             _tableUIState.update { it.copy(result = StringParse.Loading) }
-
             val result = runCatching {
                 val declension = Gson().fromJson(
                     tableUIState.value.selectedSabda?.declension,
