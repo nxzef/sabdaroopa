@@ -1,10 +1,12 @@
 package com.nascriptone.siddharoopa.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
@@ -41,14 +43,12 @@ class SiddharoopaViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: AppRepository,
     private val preferencesRepository: UserPreferencesRepository
-) :
-    ViewModel() {
+) : ViewModel() {
 
     private val _homeUIState = MutableStateFlow(HomeScreenState())
     val homeUIState: StateFlow<HomeScreenState> = _homeUIState.asStateFlow()
 
-    private val _categoryUIState =
-        MutableStateFlow(CategoryScreenState())
+    private val _categoryUIState = MutableStateFlow(CategoryScreenState())
     val categoryUIState: StateFlow<CategoryScreenState> = _categoryUIState.asStateFlow()
 
 
@@ -56,18 +56,16 @@ class SiddharoopaViewModel @Inject constructor(
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
 
 
-    val settingsUIState: StateFlow<SettingsScreenState> = preferencesRepository
-        .currentTheme.map {
-            SettingsScreenState(currentTheme = it)
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = runBlocking {
-                SettingsScreenState(
-                    currentTheme = preferencesRepository.currentTheme.first()
-                )
-            }
-        )
+    val settingsUIState: StateFlow<SettingsScreenState> = preferencesRepository.currentTheme.map {
+        SettingsScreenState(currentTheme = it)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = runBlocking {
+            SettingsScreenState(
+                currentTheme = preferencesRepository.currentTheme.first()
+            )
+        })
 
 
     private fun getStringFromResources(resId: Int): String {
@@ -81,6 +79,49 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
+
+    private suspend fun updateCurrentSabda() {
+        val userSelectedData = tableUIState.value.selectedSabda
+        val favSabdaId = userSelectedData.sabda?.id ?: 0
+        val favSabdaCategory = userSelectedData.tableCategory?.name ?: ""
+        _tableUIState.update {
+            it.copy(
+                currentSabda = it.currentSabda.copy(
+                    favSabdaId = favSabdaId, favSabdaCategory = favSabdaCategory
+                )
+            )
+        }
+        checkFavoriteSabdaExistence(tableUIState.value.currentSabda)
+    }
+
+    fun toggleFavoriteSabda() {
+        viewModelScope.launch {
+            val currentSabda = tableUIState.value.currentSabda
+            val isItFavorite = tableUIState.value.isItFavorite
+            try {
+                if (!isItFavorite) {
+                    repository.addFavoriteSabda(currentSabda)
+                } else {
+                    repository.removeFavoriteSabda(currentSabda.favSabdaId, currentSabda.favSabdaCategory)
+                }
+                checkFavoriteSabdaExistence(currentSabda)
+            } catch (e: Exception) {
+                Log.e("FavoriteSabda", "Failed to insert/delete", e)
+            }
+        }
+    }
+
+    private suspend fun checkFavoriteSabdaExistence(favoriteSabda: FavoriteSabda) {
+        val isExist =
+            repository.isFavoriteExists(favoriteSabda.favSabdaId, favoriteSabda.favSabdaCategory)
+        _tableUIState.update {
+            it.copy(
+                isItFavorite = isExist
+            )
+        }
+    }
+
+
     fun resetTableState() {
         _tableUIState.value = TableScreenState()
     }
@@ -88,8 +129,7 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateSoundFilter(sound: Sound) {
         _categoryUIState.update {
             it.copy(
-                selectedSound = sound,
-                selectedGender = null
+                selectedSound = sound, selectedGender = null
             )
         }
 
@@ -126,10 +166,11 @@ class SiddharoopaViewModel @Inject constructor(
     fun parseStringToDeclension() {
         viewModelScope.launch(Dispatchers.IO) {
             _tableUIState.update { it.copy(result = StringParse.Loading) }
+            updateCurrentSabda()
             val result = runCatching {
+                val declensionOBJ = tableUIState.value.selectedSabda.sabda?.declension
                 val declension = Gson().fromJson(
-                    tableUIState.value.selectedSabda?.declension,
-                    Declension::class.java
+                    declensionOBJ, Declension::class.java
                 )
                 val declensionTable = createDeclensionTable(declension)
                 StringParse.Success(declensionTable = declensionTable)
@@ -141,11 +182,14 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun updateSelectedTable(selectedSabda: Sabda, sabdaDetails: String) {
+    fun updateSelectedTable(sabda: Sabda, sabdaDetailText: String) {
+        val selectedCategory = categoryUIState.value.selectedCategory
+        val tableCategory = selectedCategory?.category ?: TODO()
         _tableUIState.update {
             it.copy(
-                selectedSabda = selectedSabda,
-                selectedSabdaDetails = sabdaDetails
+                selectedSabda = it.selectedSabda.copy(
+                    sabda = sabda, tableCategory = tableCategory, sabdaDetailText = sabdaDetailText
+                )
             )
         }
     }
@@ -156,50 +200,42 @@ class SiddharoopaViewModel @Inject constructor(
         val dual = getStringFromResources(R.string.dual)
         val plural = getStringFromResources(R.string.plural)
         return listOf(
-            listOf(vibakti, single, dual, plural),
-            listOf(
+            listOf(vibakti, single, dual, plural), listOf(
                 getStringFromResources(R.string.nominative),
                 declension.nominative?.single,
                 declension.nominative?.dual,
                 declension.nominative?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.vocative),
                 declension.vocative?.single,
                 declension.vocative?.dual,
                 declension.vocative?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.accusative),
                 declension.accusative?.single,
                 declension.accusative?.dual,
                 declension.accusative?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.instrumental),
                 declension.instrumental?.single,
                 declension.instrumental?.dual,
                 declension.instrumental?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.dative),
                 declension.dative?.single,
                 declension.dative?.dual,
                 declension.dative?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.ablative),
                 declension.ablative?.single,
                 declension.ablative?.dual,
                 declension.ablative?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.genitive),
                 declension.genitive?.single,
                 declension.genitive?.dual,
                 declension.genitive?.plural
-            ),
-            listOf(
+            ), listOf(
                 getStringFromResources(R.string.locative),
                 declension.locative?.single,
                 declension.locative?.dual,
@@ -217,8 +253,7 @@ class SiddharoopaViewModel @Inject constructor(
             val filteredData = data.filter { sabda ->
                 listOfNotNull(
                     categoryUIState.value.selectedSound?.let { sabda.sound == it.eng.lowercase() },
-                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }
-                ).all { it }
+                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }).all { it }
             }
 
             _categoryUIState.update {

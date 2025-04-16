@@ -31,11 +31,6 @@ fun TableScreenTopBar(
                 Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
             }
         },
-        actions = {
-            IconButton(onClick = {}) {
-                Icon(Icons.Rounded.FavoriteBorder, null)
-            }
-        },
         modifier = modifier
     )
 }

@@ -12,7 +12,26 @@ class AppRepository @Inject constructor(
     private val specificSabdaDao: SpecificSabdaDao,
     private val favoriteSabdaDao: FavoriteSabdaDao
 ) {
+
+
+    // General
     suspend fun getAllGeneralSabda(): List<Sabda> = generalSabdaDao.getAllSabda()
+
+    // Specific
     suspend fun getAllSpecificSabda(): List<Sabda> = specificSabdaDao.getAllSabda()
+
+    // Favorite
     suspend fun getAllFavoriteSabda(): List<FavoriteSabda> = favoriteSabdaDao.getAllSabda()
+
+    suspend fun addFavoriteSabda(favoriteSabda: FavoriteSabda) {
+        favoriteSabdaDao.addFavoriteSabda(favoriteSabda)
+    }
+
+    suspend fun removeFavoriteSabda(id: Int, category: String) {
+        favoriteSabdaDao.removeFavoriteSabda(id, category)
+    }
+
+    suspend fun isFavoriteExists(id: Int, category: String): Boolean =
+        favoriteSabdaDao.isFavoriteExists(id, category)
+
 }

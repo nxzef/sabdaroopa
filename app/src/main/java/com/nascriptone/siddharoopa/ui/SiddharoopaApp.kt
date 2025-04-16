@@ -74,7 +74,7 @@ fun SiddharoopaApp(
                         navHostController = navHostController,
                         currentRoute = currentRoute,
                         categoryScreenTitle = categoryScreenState.selectedCategory?.title,
-                        tableScreenTitle = tableUIState.selectedSabda?.word
+                        tableScreenTitle = tableUIState.selectedSabda?.sabda?.word
                     )
                 }, modifier = modifier
             ) {
