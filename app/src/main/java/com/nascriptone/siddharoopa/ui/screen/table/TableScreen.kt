@@ -1,8 +1,10 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,12 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,6 +41,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,7 +55,9 @@ import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun TableScreen(
-    tableUIState: TableScreenState, viewModel: SiddharoopaViewModel, modifier: Modifier = Modifier
+    tableUIState: TableScreenState,
+    viewModel: SiddharoopaViewModel,
+    modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
     var isFetched by rememberSaveable { mutableStateOf(false) }
@@ -76,31 +88,41 @@ fun TableScreen(
     }
 
 
-        when (val result = tableUIState.result) {
-            is StringParse.Loading -> CurrentState(
-                modifier.fillMaxSize()
-            ) {
-                CircularProgressIndicator()
-            }
-
-            is StringParse.Error -> CurrentState {
-                Text(result.msg)
-            }
-
-            is StringParse.Success -> DeclensionTable(
-                result.declensionTable, sabdaDetails = tableUIState.selectedSabdaDetails
-            )
+    when (val result = tableUIState.result) {
+        is StringParse.Loading -> CurrentState(
+            modifier.fillMaxSize()
+        ) {
+            CircularProgressIndicator()
         }
+
+        is StringParse.Error -> CurrentState {
+            Text(result.msg)
+        }
+
+        is StringParse.Success -> DeclensionTable(
+            result.declensionTable,
+            tableUIState,
+            viewModel
+        )
+    }
 }
 
 
 @Composable
 fun DeclensionTable(
-    declensionTable: List<List<String?>>, sabdaDetails: String, modifier: Modifier = Modifier
+    declensionTable: List<List<String?>>,
+    tableUIState: TableScreenState,
+    viewModel: SiddharoopaViewModel,
+    modifier: Modifier = Modifier
 ) {
+
+    val userSelectedSabda = tableUIState.selectedSabda
+
     Surface {
         Column(
-            modifier = modifier.verticalScroll(rememberScrollState()),
+            modifier = modifier
+                .padding(horizontal = 8.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
@@ -108,7 +130,7 @@ fun DeclensionTable(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                sabdaDetails,
+                userSelectedSabda.sabdaDetailText,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(16.dp)
             )
@@ -116,7 +138,7 @@ fun DeclensionTable(
             Column(
                 modifier = modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 24.dp)
+                    .padding(vertical = 24.dp)
                     .border(
                         BorderStroke(DividerDefaults.Thickness, DividerDefaults.color),
                         RoundedCornerShape(16.dp)
@@ -150,7 +172,53 @@ fun DeclensionTable(
                     }
                 }
             }
+            FavoriteView(
+                isItFavorite = tableUIState.isItFavorite,
+                onClick = {
+                    viewModel.toggleFavoriteSabda()
+                }
+            )
+            Spacer(Modifier.height(28.dp))
+        }
+    }
+}
 
+
+@Composable
+fun FavoriteView(
+    isItFavorite: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .clickable { onClick() },
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick) {
+                AnimatedVisibility(!isItFavorite) {
+                    Icon(
+                        Icons.Rounded.FavoriteBorder,
+                        null
+                    )
+                }
+                AnimatedVisibility(isItFavorite) {
+                    Icon(
+                        Icons.Rounded.Favorite,
+                        null,
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Text("Add to Favorites")
         }
     }
 }
@@ -171,10 +239,7 @@ fun DeclensionCell(
 
     fun <T> isHeaderCell(yes: T, no: T): T {
         return separationValuesForHeader(
-            cellIndex,
-            rowIndex,
-            yes,
-            no
+            cellIndex, rowIndex, yes, no
         )
     }
 
@@ -184,8 +249,7 @@ fun DeclensionCell(
     )
 
     val setFontWeight = isHeaderCell(
-        FontWeight.W700,
-        LocalTextStyle.current.fontWeight
+        FontWeight.W700, LocalTextStyle.current.fontWeight
     )
 
     Box(

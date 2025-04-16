@@ -42,12 +42,10 @@ fun HomeScreen(
 
 
     val vowSound = Sound(
-        eng = stringResource(R.string.vowel_eng),
-        skt = stringResource(R.string.vowel_skt)
+        eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
     )
     val conSound = Sound(
-        eng = stringResource(R.string.consonant_eng),
-        skt = stringResource(R.string.consonant_skt)
+        eng = stringResource(R.string.consonant_eng), skt = stringResource(R.string.consonant_skt)
     )
 
     val categoryViewList: List<CategoryViewType> = listOf(
@@ -56,26 +54,19 @@ fun HomeScreen(
             category = TableCategory.General,
             options = listOf(
                 CategoryOptionType(
-                    sound = vowSound,
-                    displayWord = stringResource(R.string.general_vowel)
-                ),
-                CategoryOptionType(
-                    sound = conSound,
-                    displayWord = stringResource(R.string.general_consonant)
+                    sound = vowSound, displayWord = stringResource(R.string.general_vowel)
+                ), CategoryOptionType(
+                    sound = conSound, displayWord = stringResource(R.string.general_consonant)
                 )
             )
-        ),
-        CategoryViewType(
+        ), CategoryViewType(
             title = stringResource(R.string.specific_category),
             category = TableCategory.Specific,
             options = listOf(
                 CategoryOptionType(
-                    sound = vowSound,
-                    displayWord = stringResource(R.string.specific_vowel)
-                ),
-                CategoryOptionType(
-                    sound = conSound,
-                    displayWord = stringResource(R.string.specific_consonant)
+                    sound = vowSound, displayWord = stringResource(R.string.specific_vowel)
+                ), CategoryOptionType(
+                    sound = conSound, displayWord = stringResource(R.string.specific_consonant)
                 )
             )
         )
@@ -84,8 +75,7 @@ fun HomeScreen(
 
     Surface {
         Column(
-            modifier = modifier
-                .verticalScroll(rememberScrollState())
+            modifier = modifier.verticalScroll(rememberScrollState())
         ) {
             categoryViewList.forEach { view ->
                 CategoryView(
@@ -97,14 +87,12 @@ fun HomeScreen(
                             displayWord = option.displayWord,
                             onCardClick = {
                                 viewModel.updateSelectedCategory(
-                                    view,
-                                    option.sound
+                                    view, option.sound
                                 )
                                 navHostController.navigate(SiddharoopaRoutes.Category.name) {
                                     launchSingleTop = true
                                 }
-                            }
-                        )
+                            })
                     }
                 }
             }
@@ -116,13 +104,10 @@ fun HomeScreen(
 
 @Composable
 fun CategoryView(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable (ColumnScope.() -> Unit)
+    title: String, modifier: Modifier = Modifier, content: @Composable (ColumnScope.() -> Unit)
 ) {
     Column(
-        modifier = modifier
-            .padding(horizontal = 16.dp, vertical = 20.dp)
+        modifier = modifier.padding(horizontal = 16.dp, vertical = 20.dp)
     ) {
         Text(
             text = title,
@@ -135,14 +120,10 @@ fun CategoryView(
 
 @Composable
 fun CategoryOption(
-    title: String,
-    displayWord: String,
-    onCardClick: () -> Unit,
-    modifier: Modifier = Modifier
+    title: String, displayWord: String, onCardClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onCardClick,
-        modifier = modifier
+        onClick = onCardClick, modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
@@ -152,8 +133,7 @@ fun CategoryOption(
                 .padding(16.dp)
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium
+                text = title, style = MaterialTheme.typography.headlineMedium
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -165,9 +145,7 @@ fun CategoryOption(
             )
             Spacer(Modifier.height(16.dp))
             OutlinedButton(
-                onClick = onCardClick,
-                modifier = Modifier
-                    .align(Alignment.End)
+                onClick = onCardClick, modifier = Modifier.align(Alignment.End)
             ) {
                 Text(stringResource(R.string.see_all))
                 Spacer(Modifier.width(12.dp))

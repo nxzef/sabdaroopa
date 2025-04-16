@@ -98,10 +98,8 @@ fun CategoryScreenContent(
 
     val tabItems: List<Sound> = listOf(
         Sound(
-            eng = stringResource(R.string.vowel_eng),
-            skt = stringResource(R.string.vowel_skt)
-        ),
-        Sound(
+            eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
+        ), Sound(
             eng = stringResource(R.string.consonant_eng),
             skt = stringResource(R.string.consonant_skt)
         )
@@ -111,27 +109,19 @@ fun CategoryScreenContent(
         setOf(
             Suggestion(
                 skt = R.string.all_skt
-            ),
-            Suggestion(
-                gender = Gender.Masculine,
-                skt = R.string.masculine_skt
-            ),
-            Suggestion(
-                gender = Gender.Feminine,
-                skt = R.string.feminine_skt
-            ),
-            Suggestion(
-                gender = Gender.Neuter,
-                skt = R.string.neuter_skt
+            ), Suggestion(
+                gender = Gender.Masculine, skt = R.string.masculine_skt
+            ), Suggestion(
+                gender = Gender.Feminine, skt = R.string.feminine_skt
+            ), Suggestion(
+                gender = Gender.Neuter, skt = R.string.neuter_skt
             )
         )
     }
 
     Surface {
         Column(
-            modifier = modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             TabRow(
@@ -139,14 +129,11 @@ fun CategoryScreenContent(
             ) {
                 tabItems.forEach { item ->
                     Tab(
-                        selected = currentSound?.eng == item.eng,
-                        onClick = {
-                            viewModel.updateSoundFilter(item)
-                        },
-                        text = {
-                            Text(item.skt, style = MaterialTheme.typography.titleLarge)
-                        },
-                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        selected = currentSound?.eng == item.eng, onClick = {
+                        viewModel.updateSoundFilter(item)
+                    }, text = {
+                        Text(item.skt, style = MaterialTheme.typography.titleLarge)
+                    }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -163,44 +150,36 @@ fun CategoryScreenContent(
                     val gender = suggestion.gender
                     val selected = currentGender == gender
                     FilterChip(
-                        selected = selected,
-                        label = {
-                            Text(
-                                text = stringResource(suggestion.skt),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.W600
-                            )
-                        },
-                        onClick = {
-                            viewModel.updateGenderFilter(gender)
-                        },
-                        leadingIcon = {
-                            AnimatedVisibility(
-                                visible = selected
-                            ) {
-                                Icon(Icons.Rounded.Check, null)
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(horizontal = 6.dp, vertical = 8.dp)
+                        selected = selected, label = {
+                        Text(
+                            text = stringResource(suggestion.skt),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.W600
+                        )
+                    }, onClick = {
+                        viewModel.updateGenderFilter(gender)
+                    }, leadingIcon = {
+                        AnimatedVisibility(
+                            visible = selected
+                        ) {
+                            Icon(Icons.Rounded.Check, null)
+                        }
+                    }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
                     )
                 }
                 Spacer(Modifier.width(16.dp))
             }
 
             LazyColumn(
-                modifier = modifier
-                    .weight(1F)
+                modifier = modifier.weight(1F)
             ) {
 
                 items(data) { sabda ->
                     SabdaItem(
-                        sabda = sabda,
-                        onClick = { details ->
+                        sabda = sabda, onClick = { details ->
                             viewModel.updateSelectedTable(sabda, details)
                             navHostController.navigate(SiddharoopaRoutes.Table.name)
-                        }
-                    )
+                        })
                 }
 
                 item {
@@ -215,9 +194,7 @@ fun CategoryScreenContent(
 
 @Composable
 fun SabdaItem(
-    sabda: Sabda,
-    onClick: (String) -> Unit,
-    modifier: Modifier = Modifier
+    sabda: Sabda, onClick: (String) -> Unit, modifier: Modifier = Modifier
 ) {
 
     val genderInSkt = when (sabda.gender) {
@@ -231,16 +208,13 @@ fun SabdaItem(
 
     ListItem(
         headlineContent = {
-            Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
-        },
-        supportingContent = {
-            Text(
-                supportingText,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
-            )
-        },
-        modifier = modifier
-            .clickable(onClick = { onClick(supportingText) })
+        Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
+    }, supportingContent = {
+        Text(
+            supportingText,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
+        )
+    }, modifier = modifier.clickable(onClick = { onClick(supportingText) })
     )
 }
