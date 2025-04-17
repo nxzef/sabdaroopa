@@ -1,18 +1,18 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -21,9 +21,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -40,49 +42,47 @@ fun FavoritesScreen(
     }
 
     when (val result = favoritesUIState.result) {
-        is ScreenState.Loading -> {
-            Log.d("fav_data", "Loading...")
-            CurrentState {
-                CircularProgressIndicator()
-            }
+        is ScreenState.Loading -> CurrentState {
+            CircularProgressIndicator()
         }
 
-        is ScreenState.Error -> {
-            Log.d("fav_data", result.msg)
-            CurrentState {
-                Text(result.msg)
-            }
+        is ScreenState.Error -> CurrentState {
+            Text(result.msg)
         }
 
-        is ScreenState.Success -> {
-            Log.d("fav_data", "${result.data}")
-            if (result.data.isEmpty()) {
-                Text("Fetched Successfully, but data is empty.")
-            } else {
-                Text("${result.data.size} data retrieved")
-            }
-        }
+        is ScreenState.Success -> FavoritesScreenContent(
+            favoritesSabdaList = result.data,
+            modifier = modifier
+        )
     }
 }
 
 
 @Composable
 fun FavoritesScreenContent(
+    favoritesSabdaList: List<FavoriteSabdaDetails>,
     modifier: Modifier = Modifier
 ) {
-    Surface {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Spacer(Modifier.height(24.dp))
-            repeat(7) {
-                FavoritesSabdaCard(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                )
+    if (favoritesSabdaList.isNotEmpty()) {
+        Surface {
+            LazyColumn(
+                modifier = modifier
+                    .padding(12.dp)
+            ) {
+                items(favoritesSabdaList) { item ->
+                    Text(item.sabda.word, style = MaterialTheme.typography.headlineMedium)
+                }
+            }
+        }
+    } else {
+        CurrentState {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Rounded.FavoriteBorder, null, modifier = Modifier
+                    .size(48.dp), tint = MaterialTheme.colorScheme.surfaceTint)
+                Spacer(Modifier.height(8.dp))
+                Text("Favorites are empty!")
             }
         }
     }
@@ -133,7 +133,7 @@ fun FavoritesSabdaCard(
 @Composable
 fun FavoriteScreenContentPreview() {
     SiddharoopaTheme(darkTheme = true) {
-        FavoritesScreenContent()
+        FavoritesScreenContent(emptyList())
     }
 }
 
