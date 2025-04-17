@@ -10,6 +10,7 @@ import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
+import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
@@ -17,6 +18,8 @@ import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
+import com.nascriptone.siddharoopa.ui.screen.favorites.ScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
@@ -55,6 +58,9 @@ class SiddharoopaViewModel @Inject constructor(
     private val _tableUIState = MutableStateFlow(TableScreenState())
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
 
+    private val _favoritesUIState = MutableStateFlow(FavoritesScreenState())
+    val favoritesUIState: StateFlow<FavoritesScreenState> = _favoritesUIState.asStateFlow()
+
 
     val settingsUIState: StateFlow<SettingsScreenState> = preferencesRepository.currentTheme.map {
         SettingsScreenState(currentTheme = it)
@@ -76,6 +82,50 @@ class SiddharoopaViewModel @Inject constructor(
     fun changeTheme(theme: Theme) {
         viewModelScope.launch {
             preferencesRepository.changeTheme(theme)
+        }
+    }
+
+    fun fetchFavoriteSabda() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
+            val result = runCatching {
+                val favoriteSabda = repository.getAllFavoriteSabda()
+                val tables = TableCategory.entries
+                val favoriteSabdaList: List<FavoriteSabdaDetails> = tables.flatMap { table ->
+                    val desiredIDs = favoriteSabda.filter { it.favSabdaCategory == table.name }
+                        .map { it.favSabdaId }
+                    if (desiredIDs.isNotEmpty()) {
+                        when (table) {
+                            TableCategory.General -> {
+                                val favFromGeneral = repository.getGeneralFavoritesSabda(desiredIDs)
+                                favFromGeneral.map { sabda ->
+                                    FavoriteSabdaDetails(
+                                        sabda = sabda,
+                                        table = table
+                                    )
+                                }
+                            }
+
+                            TableCategory.Specific -> {
+                                val favFromSpecific =
+                                    repository.getSpecificFavoritesSabda(desiredIDs)
+                                favFromSpecific.map { sabda ->
+                                    FavoriteSabdaDetails(
+                                        sabda = sabda,
+                                        table = table
+                                    )
+                                }
+                            }
+                        }
+                    } else emptyList()
+                }
+                ScreenState.Success(data = favoriteSabdaList)
+            }.getOrElse { e ->
+                val msg = e.message
+                Log.e("error", msg.orEmpty(), e)
+                ScreenState.Error(msg = msg.orEmpty())
+            }
+            _favoritesUIState.update { it.copy(result = result) }
         }
     }
 
@@ -102,7 +152,10 @@ class SiddharoopaViewModel @Inject constructor(
                 if (!isItFavorite) {
                     repository.addFavoriteSabda(currentSabda)
                 } else {
-                    repository.removeFavoriteSabda(currentSabda.favSabdaId, currentSabda.favSabdaCategory)
+                    repository.removeFavoriteSabda(
+                        currentSabda.favSabdaId,
+                        currentSabda.favSabdaCategory
+                    )
                 }
                 checkFavoriteSabdaExistence(currentSabda)
             } catch (e: Exception) {

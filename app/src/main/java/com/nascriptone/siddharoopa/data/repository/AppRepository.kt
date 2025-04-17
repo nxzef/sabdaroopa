@@ -16,9 +16,11 @@ class AppRepository @Inject constructor(
 
     // General
     suspend fun getAllGeneralSabda(): List<Sabda> = generalSabdaDao.getAllSabda()
+    suspend fun getGeneralFavoritesSabda(ids: List<Int>): List<Sabda> = generalSabdaDao.getFavoritesSabda(ids)
 
     // Specific
     suspend fun getAllSpecificSabda(): List<Sabda> = specificSabdaDao.getAllSabda()
+    suspend fun getSpecificFavoritesSabda(ids: List<Int>): List<Sabda> = specificSabdaDao.getFavoritesSabda(ids)
 
     // Favorite
     suspend fun getAllFavoriteSabda(): List<FavoriteSabda> = favoriteSabdaDao.getAllSabda()
