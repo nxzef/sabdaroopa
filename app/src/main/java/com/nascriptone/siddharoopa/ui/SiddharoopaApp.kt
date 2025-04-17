@@ -48,6 +48,7 @@ fun SiddharoopaApp(
     val homeUiState by viewModel.homeUIState.collectAsStateWithLifecycle()
     val categoryScreenState by viewModel.categoryUIState.collectAsStateWithLifecycle()
     val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
+    val favoritesUIState by viewModel.favoritesUIState.collectAsStateWithLifecycle()
     val settingsUIState by viewModel.settingsUIState.collectAsStateWithLifecycle()
 
     val backStackEntry by navHostController.currentBackStackEntryAsState()
@@ -115,7 +116,10 @@ fun SiddharoopaApp(
                         )
                     }
                     composable(SiddharoopaRoutes.Favorites.name) {
-                        FavoritesScreen()
+                        FavoritesScreen(
+                            viewModel = viewModel,
+                            favoritesUIState = favoritesUIState
+                        )
                     }
                     composable(SiddharoopaRoutes.Settings.name) {
                         SettingsScreen(
