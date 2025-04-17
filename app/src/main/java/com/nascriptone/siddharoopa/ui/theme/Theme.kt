@@ -277,20 +277,23 @@ fun SiddharoopaTheme(
     }
 
     val view = LocalView.current
-    val window = (view.context as Activity).window
     if (!view.isInEditMode) {
-        SideEffect {
-            val windowCompat = WindowCompat.getInsetsController(window, view)
-            windowCompat.isAppearanceLightStatusBars = !darkTheme
-            windowCompat.isAppearanceLightNavigationBars = !darkTheme
+        runCatching {
+            val window = (view.context as Activity).window
+            SideEffect {
+                val windowCompat = WindowCompat.getInsetsController(window, view)
+                windowCompat.isAppearanceLightStatusBars = !darkTheme
+                windowCompat.isAppearanceLightNavigationBars = !darkTheme
+            }
         }
     }
 
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography
+        typography = AppTypography,
     ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface {
             content()
         }
     }

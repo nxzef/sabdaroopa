@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -36,13 +37,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,11 +53,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun TableScreen(
     tableUIState: TableScreenState,
     viewModel: SiddharoopaViewModel,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
@@ -100,9 +103,7 @@ fun TableScreen(
         }
 
         is StringParse.Success -> DeclensionTable(
-            result.declensionTable,
-            tableUIState,
-            viewModel
+            result.declensionTable, tableUIState, viewModel, snackbarHostState
         )
     }
 }
@@ -113,9 +114,11 @@ fun DeclensionTable(
     declensionTable: List<List<String?>>,
     tableUIState: TableScreenState,
     viewModel: SiddharoopaViewModel,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
 
+    val scope = rememberCoroutineScope()
     val userSelectedSabda = tableUIState.selectedSabda
 
     Surface {
@@ -173,11 +176,12 @@ fun DeclensionTable(
                 }
             }
             FavoriteView(
-                isItFavorite = tableUIState.isItFavorite,
-                onClick = {
+                isItFavorite = tableUIState.isItFavorite, onClick = {
                     viewModel.toggleFavoriteSabda()
-                }
-            )
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Hello Naseef")
+                    }
+                })
             Spacer(Modifier.height(28.dp))
         }
     }
@@ -186,9 +190,7 @@ fun DeclensionTable(
 
 @Composable
 fun FavoriteView(
-    isItFavorite: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    isItFavorite: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
@@ -199,21 +201,18 @@ fun FavoriteView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick) {
                 AnimatedVisibility(!isItFavorite) {
                     Icon(
-                        Icons.Rounded.FavoriteBorder,
-                        null
+                        Icons.Rounded.FavoriteBorder, null
                     )
                 }
                 AnimatedVisibility(isItFavorite) {
                     Icon(
-                        Icons.Rounded.Favorite,
-                        null,
-                        tint = MaterialTheme.colorScheme.tertiary
+                        Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }

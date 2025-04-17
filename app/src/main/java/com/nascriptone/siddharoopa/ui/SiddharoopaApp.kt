@@ -9,6 +9,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -62,6 +64,8 @@ fun SiddharoopaApp(
         isDarkTheme(userPrefTheme, systemTheme)
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
 
     AnimatedContent(
         isDark, transitionSpec = { fadeIn() togetherWith fadeOut() }) { darkTheme ->
@@ -74,9 +78,13 @@ fun SiddharoopaApp(
                         navHostController = navHostController,
                         currentRoute = currentRoute,
                         categoryScreenTitle = categoryScreenState.selectedCategory?.title,
-                        tableScreenTitle = tableUIState.selectedSabda?.sabda?.word
+                        tableScreenTitle = tableUIState.selectedSabda.sabda?.word
                     )
-                }, modifier = modifier
+                },
+                snackbarHost = {
+                    SnackbarHost(snackbarHostState)
+                },
+                modifier = modifier
             ) {
                 NavHost(
                     navController = navHostController,
@@ -101,7 +109,9 @@ fun SiddharoopaApp(
                     }
                     composable(SiddharoopaRoutes.Table.name) {
                         TableScreen(
-                            tableUIState = tableUIState, viewModel = viewModel
+                            tableUIState = tableUIState,
+                            viewModel = viewModel,
+                            snackbarHostState = snackbarHostState
                         )
                     }
                     composable(SiddharoopaRoutes.Favorites.name) {
