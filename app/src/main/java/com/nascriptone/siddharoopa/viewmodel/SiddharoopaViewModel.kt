@@ -88,52 +88,43 @@ class SiddharoopaViewModel @Inject constructor(
     fun fetchFavoriteSabda() {
         viewModelScope.launch(Dispatchers.IO) {
             _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
+
             val result = runCatching {
                 val favoriteSabda = repository.getAllFavoriteSabda()
-                val tables = TableCategory.entries
-                val favoriteSabdaList: List<FavoriteSabdaDetails> = tables.flatMap { table ->
-                    val desiredIDs = favoriteSabda.filter { it.favSabdaCategory == table.name }
-                        .map { it.favSabdaId }
-                    if (desiredIDs.isNotEmpty()) {
-                        when (table) {
-                            TableCategory.General -> {
-                                val favFromGeneral = repository.getGeneralFavoritesSabda(desiredIDs)
-                                favFromGeneral.map { sabda ->
-                                    FavoriteSabdaDetails(
-                                        sabda = sabda,
-                                        table = table
-                                    )
-                                }
-                            }
 
-                            TableCategory.Specific -> {
-                                val favFromSpecific =
-                                    repository.getSpecificFavoritesSabda(desiredIDs)
-                                favFromSpecific.map { sabda ->
-                                    FavoriteSabdaDetails(
-                                        sabda = sabda,
-                                        table = table
-                                    )
-                                }
-                            }
+                val favoriteSabdaList = TableCategory.entries
+                    .map { table ->
+                        val desiredIDs = favoriteSabda
+                            .filter { it.favSabdaCategory == table.name }
+                            .map { it.favSabdaId }
+
+                        if (desiredIDs.isEmpty()) return@map emptyList()
+
+                        val sabdaList = when (table) {
+                            TableCategory.General -> repository.getGeneralFavoritesSabda(desiredIDs)
+                            TableCategory.Specific -> repository.getSpecificFavoritesSabda(desiredIDs)
                         }
-                    } else emptyList()
-                }
+
+                        sabdaList.map { sabda -> FavoriteSabdaDetails(sabda, table) }
+                    }
+                    .flatten()
+
                 ScreenState.Success(data = favoriteSabdaList)
             }.getOrElse { e ->
-                val msg = e.message
-                Log.e("error", msg.orEmpty(), e)
-                ScreenState.Error(msg = msg.orEmpty())
+                Log.e("error", e.message.orEmpty(), e)
+                ScreenState.Error(msg = e.message.orEmpty())
             }
+
             _favoritesUIState.update { it.copy(result = result) }
         }
     }
 
 
+
     private suspend fun updateCurrentSabda() {
         val userSelectedData = tableUIState.value.selectedSabda
         val favSabdaId = userSelectedData.sabda?.id ?: 0
-        val favSabdaCategory = userSelectedData.tableCategory?.name ?: ""
+        val favSabdaCategory = userSelectedData.tableCategory?.name.orEmpty()
         _tableUIState.update {
             it.copy(
                 currentSabda = it.currentSabda.copy(
