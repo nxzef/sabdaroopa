@@ -90,9 +90,9 @@ class SiddharoopaViewModel @Inject constructor(
             _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
 
             val result = runCatching {
-                val favoriteSabda = repository.getAllFavoriteSabda()
+                val favoriteSabda = repository.getAllFavoriteSabda().asReversed()
 
-                val favoriteSabdaList = TableCategory.entries
+                val favoriteSabdaDetailsUnordered = TableCategory.entries
                     .map { table ->
                         val desiredIDs = favoriteSabda
                             .filter { it.favSabdaCategory == table.name }
@@ -108,6 +108,11 @@ class SiddharoopaViewModel @Inject constructor(
                         sabdaList.map { sabda -> FavoriteSabdaDetails(sabda, table) }
                     }
                     .flatten()
+
+                val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
+                val favoriteSabdaList = favoriteSabda.mapNotNull { sabda ->
+                    unorderedMap[sabda.favSabdaId]
+                }
 
                 ScreenState.Success(data = favoriteSabdaList)
             }.getOrElse { e ->
