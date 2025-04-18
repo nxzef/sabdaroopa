@@ -12,10 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,11 +25,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
+import com.nascriptone.siddharoopa.ui.screen.Sound
+import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -51,8 +55,7 @@ fun FavoritesScreen(
         }
 
         is ScreenState.Success -> FavoritesScreenContent(
-            favoritesSabdaList = result.data,
-            modifier = modifier
+            favoritesSabdaList = result.data, modifier = modifier
         )
     }
 }
@@ -60,17 +63,23 @@ fun FavoritesScreen(
 
 @Composable
 fun FavoritesScreenContent(
-    favoritesSabdaList: List<FavoriteSabdaDetails>,
-    modifier: Modifier = Modifier
+    favoritesSabdaList: List<FavoriteSabdaDetails>, modifier: Modifier = Modifier
 ) {
     if (favoritesSabdaList.isNotEmpty()) {
         Surface {
             LazyColumn(
-                modifier = modifier
-                    .padding(12.dp)
+                modifier = modifier.padding(horizontal = 4.dp)
             ) {
-                items(favoritesSabdaList) { item ->
-                    Text(item.sabda.word, style = MaterialTheme.typography.headlineMedium)
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+                items(favoritesSabdaList) { details ->
+                    FavoritesSabdaCard(
+                        details = details, modifier = Modifier.padding(8.dp)
+                    )
+                }
+                item {
+                    Spacer(Modifier.height(28.dp))
                 }
             }
         }
@@ -79,8 +88,12 @@ fun FavoritesScreenContent(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Rounded.FavoriteBorder, null, modifier = Modifier
-                    .size(48.dp), tint = MaterialTheme.colorScheme.surfaceTint)
+                Icon(
+                    Icons.Rounded.FavoriteBorder,
+                    null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.surfaceTint
+                )
                 Spacer(Modifier.height(8.dp))
                 Text("Favorites are empty!")
             }
@@ -90,33 +103,62 @@ fun FavoritesScreenContent(
 
 @Composable
 fun FavoritesSabdaCard(
-    modifier: Modifier = Modifier
+    details: FavoriteSabdaDetails, modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth(),
-        onClick = {
+    val sabda = details.sabda
+    val sabdaSkt = stringResource(R.string.sabda)
+    val table = when (details.table) {
+        TableCategory.General -> stringResource(R.string.general_category)
+        TableCategory.Specific -> stringResource(R.string.specific_category)
+    }
+    val genderInSkt = when (sabda.gender) {
+        stringResource(R.string.masculine_eng).lowercase() -> stringResource(R.string.masculine_skt)
+        stringResource(R.string.feminine_eng).lowercase() -> stringResource(R.string.feminine_skt)
+        else -> stringResource(R.string.neuter_skt)
+    }
 
-        },
-        shape = MaterialTheme.shapes.large
-    ) {
+    val sound = Sound.valueOf(sabda.sound.uppercase())
+    val detailedText = "${sabda.anta} $genderInSkt $sabdaSkt"
+
+    Card(
+        modifier = modifier, shape = MaterialTheme.shapes.large, onClick = {
+
+        }) {
         Column(
             modifier = Modifier
-                .padding(12.dp)
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            Text("Favorite", style = MaterialTheme.typography.titleLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(sabda.word, style = MaterialTheme.typography.headlineMedium)
+                IconButton(onClick = {}) {
+                    Icon(Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.secondary)
+                }
+            }
             Text(
-                "This is a small demo text",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.outline
+                detailedText,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F)
             )
+            Spacer(Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Masculine")
-                Row {
+                Text(
+                    "$table (${stringResource(sound.skt)})",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text("See table")
                     Icon(
                         Icons.AutoMirrored.Rounded.KeyboardArrowRight, null
@@ -128,19 +170,3 @@ fun FavoritesSabdaCard(
     }
 }
 
-
-@Preview
-@Composable
-fun FavoriteScreenContentPreview() {
-    SiddharoopaTheme(darkTheme = true) {
-        FavoritesScreenContent(emptyList())
-    }
-}
-
-@Preview
-@Composable
-fun FavoritesSabdaCardPreview() {
-    SiddharoopaTheme {
-        FavoritesSabdaCard()
-    }
-}

@@ -11,7 +11,7 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
 import com.nascriptone.siddharoopa.ui.screen.Gender
@@ -102,7 +102,9 @@ class SiddharoopaViewModel @Inject constructor(
 
                         val sabdaList = when (table) {
                             TableCategory.General -> repository.getGeneralFavoritesSabda(desiredIDs)
-                            TableCategory.Specific -> repository.getSpecificFavoritesSabda(desiredIDs)
+                            TableCategory.Specific -> repository.getSpecificFavoritesSabda(
+                                desiredIDs
+                            )
                         }
 
                         sabdaList.map { sabda -> FavoriteSabdaDetails(sabda, table) }
@@ -123,7 +125,6 @@ class SiddharoopaViewModel @Inject constructor(
             _favoritesUIState.update { it.copy(result = result) }
         }
     }
-
 
 
     private suspend fun updateCurrentSabda() {
@@ -175,7 +176,7 @@ class SiddharoopaViewModel @Inject constructor(
         _tableUIState.value = TableScreenState()
     }
 
-    fun updateSoundFilter(sound: Sound) {
+    fun updateSoundFilter(sound: SoundLang) {
         _categoryUIState.update {
             it.copy(
                 selectedSound = sound, selectedGender = null
@@ -198,7 +199,7 @@ class SiddharoopaViewModel @Inject constructor(
 
     fun updateSelectedCategory(
         selectedCategory: CategoryViewType,
-        selectedSound: Sound,
+        selectedSound: SoundLang,
     ) {
         _categoryUIState.update {
             it.copy(

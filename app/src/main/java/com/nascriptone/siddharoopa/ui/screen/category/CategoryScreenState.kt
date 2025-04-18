@@ -2,13 +2,13 @@ package com.nascriptone.siddharoopa.ui.screen.category
 
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
 import com.nascriptone.siddharoopa.ui.screen.Gender
 
 
 data class CategoryScreenState(
     val selectedCategory: CategoryViewType? = null,
-    val selectedSound: Sound? = null,
+    val selectedSound: SoundLang? = null,
     val selectedGender: Gender? = null,
     val lastFetchedCategory: String = "",
     val isDataFetched: Boolean = false,
