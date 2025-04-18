@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
 import com.nascriptone.siddharoopa.data.model.uiobj.Suggestion
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.Gender
@@ -88,7 +88,7 @@ fun CategoryScreen(
 @Composable
 fun CategoryScreenContent(
     data: List<Sabda>,
-    currentSound: Sound?,
+    currentSound: SoundLang?,
     currentGender: Gender?,
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
@@ -96,10 +96,10 @@ fun CategoryScreenContent(
 ) {
 
 
-    val tabItems: List<Sound> = listOf(
-        Sound(
+    val tabItems: List<SoundLang> = listOf(
+        SoundLang(
             eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
-        ), Sound(
+        ), SoundLang(
             eng = stringResource(R.string.consonant_eng),
             skt = stringResource(R.string.consonant_skt)
         )
@@ -130,10 +130,10 @@ fun CategoryScreenContent(
                 tabItems.forEach { item ->
                     Tab(
                         selected = currentSound?.eng == item.eng, onClick = {
-                        viewModel.updateSoundFilter(item)
-                    }, text = {
-                        Text(item.skt, style = MaterialTheme.typography.titleLarge)
-                    }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            viewModel.updateSoundFilter(item)
+                        }, text = {
+                            Text(item.skt, style = MaterialTheme.typography.titleLarge)
+                        }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -151,20 +151,20 @@ fun CategoryScreenContent(
                     val selected = currentGender == gender
                     FilterChip(
                         selected = selected, label = {
-                        Text(
-                            text = stringResource(suggestion.skt),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.W600
-                        )
-                    }, onClick = {
-                        viewModel.updateGenderFilter(gender)
-                    }, leadingIcon = {
-                        AnimatedVisibility(
-                            visible = selected
-                        ) {
-                            Icon(Icons.Rounded.Check, null)
-                        }
-                    }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
+                            Text(
+                                text = stringResource(suggestion.skt),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.W600
+                            )
+                        }, onClick = {
+                            viewModel.updateGenderFilter(gender)
+                        }, leadingIcon = {
+                            AnimatedVisibility(
+                                visible = selected
+                            ) {
+                                Icon(Icons.Rounded.Check, null)
+                            }
+                        }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
                     )
                 }
                 Spacer(Modifier.width(16.dp))
@@ -208,13 +208,13 @@ fun SabdaItem(
 
     ListItem(
         headlineContent = {
-        Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
-    }, supportingContent = {
-        Text(
-            supportingText,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
-        )
-    }, modifier = modifier.clickable(onClick = { onClick(supportingText) })
+            Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
+        }, supportingContent = {
+            Text(
+                supportingText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
+            )
+        }, modifier = modifier.clickable(onClick = { onClick(supportingText) })
     )
 }

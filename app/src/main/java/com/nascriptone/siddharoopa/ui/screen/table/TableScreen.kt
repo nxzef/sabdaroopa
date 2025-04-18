@@ -212,7 +212,7 @@ fun FavoriteView(
                 }
                 AnimatedVisibility(isItFavorite) {
                     Icon(
-                        Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.tertiary
+                        Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }

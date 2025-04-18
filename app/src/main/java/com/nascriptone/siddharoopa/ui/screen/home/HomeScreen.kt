@@ -27,7 +27,7 @@ import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryOptionType
 import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -41,10 +41,10 @@ fun HomeScreen(
 ) {
 
 
-    val vowSound = Sound(
+    val vowSound = SoundLang(
         eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
     )
-    val conSound = Sound(
+    val conSound = SoundLang(
         eng = stringResource(R.string.consonant_eng), skt = stringResource(R.string.consonant_skt)
     )
 
