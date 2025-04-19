@@ -193,20 +193,6 @@ class SiddharoopaViewModel @Inject constructor(
                 selectedSound = selectedSound
             )
         }
-        updateCategoryScreenToFilter()
-    }
-
-    private fun updateCategoryScreenToFilter() {
-        val selectedTable = homeUIState.value.selectedTable
-        val selectedSound = homeUIState.value.selectedSound
-        _categoryUIState.update {
-            it.copy(
-                selectedSound = selectedSound,
-                selectedGender = null,
-                isDataFetched = it.lastFetchedTable == selectedTable,
-                lastFetchedTable = selectedTable
-            )
-        }
     }
 
     fun parseStringToDeclension() {
@@ -310,8 +296,21 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
+    private fun updateCategoryScreenToFilter() {
+        val selectedTable = homeUIState.value.selectedTable
+        val selectedSound = homeUIState.value.selectedSound
+        _categoryUIState.update {
+            it.copy(
+                selectedSound = selectedSound,
+                selectedGender = null,
+                isDataFetched = it.lastFetchedTable == selectedTable,
+                lastFetchedTable = selectedTable
+            )
+        }
+    }
 
     fun fetchSabda() {
+        updateCategoryScreenToFilter()
         if (categoryUIState.value.isDataFetched) {
             applyFilter()
             return
@@ -335,4 +334,5 @@ class SiddharoopaViewModel @Inject constructor(
             applyFilter()
         }
     }
+
 }

@@ -80,7 +80,7 @@ fun SiddharoopaApp(
                     AppTopBar(
                         navHostController = navHostController,
                         currentRoute = currentRoute,
-                        categoryScreenTitle = categoryScreenState.selectedSabda?.table,
+                        categoryScreenTitle = categoryScreenState.lastFetchedTable,
                         tableScreenTitle = tableUIState.currentSabda?.sabda?.word
                     )
                 },
