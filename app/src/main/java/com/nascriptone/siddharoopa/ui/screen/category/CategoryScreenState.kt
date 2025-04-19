@@ -10,7 +10,7 @@ data class CategoryScreenState(
     val selectedSabda: EntireSabda? = null,
     val selectedSound: Sound? = null,
     val selectedGender: Gender? = null,
-    val lastFetchedTable: Table = Table.entries.first(),
+    val lastFetchedTable: Table? = null,
     val isDataFetched: Boolean = false,
     val result: DataFetchState = DataFetchState.Loading,
     val filteredData: List<EntireSabda> = emptyList()

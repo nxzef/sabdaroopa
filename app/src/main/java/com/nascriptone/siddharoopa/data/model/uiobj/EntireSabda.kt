@@ -15,8 +15,8 @@ enum class Table(@StringRes val skt: Int) {
 }
 
 enum class Sound(@StringRes val eng: Int, @StringRes val skt: Int) {
+    VOWELS(eng = R.string.vowel_eng, skt = R.string.vowel_skt),
     CONSONANTS(eng = R.string.consonant_eng, skt = R.string.consonant_skt),
-    VOWELS(eng = R.string.vowel_eng, skt = R.string.vowel_skt)
 }
 
 enum class Gender(@StringRes val eng: Int, @StringRes val skt: Int) {

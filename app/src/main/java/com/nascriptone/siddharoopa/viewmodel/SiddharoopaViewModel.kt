@@ -202,26 +202,27 @@ class SiddharoopaViewModel @Inject constructor(
         selectedTable: Table,
         selectedSound: Sound,
     ) {
-
         _homeUIState.update {
             it.copy(
                 selectedTable = selectedTable,
                 selectedSound = selectedSound
             )
         }
-
-
-//        _categoryUIState.update {
-//            it.copy(
-//                selectedCategory = selectedCategory,
-//                selectedSound = selectedSound,
-//                selectedGender = null,
-//                isDataFetched = it.lastFetchedCategory == selectedCategory.title,
-//                lastFetchedCategory = selectedCategory.title
-//            )
-//        }
+        updateCategoryScreenToFilter()
     }
 
+    private fun updateCategoryScreenToFilter() {
+        val selectedTable = homeUIState.value.selectedTable
+        val selectedSound = homeUIState.value.selectedSound
+        _categoryUIState.update {
+            it.copy(
+                selectedSound = selectedSound,
+                selectedGender = null,
+                isDataFetched = it.lastFetchedTable == selectedTable,
+                lastFetchedTable = selectedTable
+            )
+        }
+    }
 
     fun parseStringToDeclension() {
         val currentSabda = categoryUIState.value.selectedSabda ?: return
@@ -248,22 +249,11 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun updateSelectedSabda(sabda: EntireSabda) {
-
         _categoryUIState.update {
             it.copy(
                 selectedSabda = sabda
             )
         }
-
-//        val selectedCategory = categoryUIState.value.selectedCategory
-//        val tableCategory = selectedCategory?.category ?: TODO()
-//        _tableUIState.update {
-//            it.copy(
-//                selectedSabda = it.selectedSabda.copy(
-//                    sabda = sabda, tableCategory = tableCategory, sabdaDetailText = sabdaDetailText
-//                )
-//            )
-//        }
     }
 
     private fun createDeclensionTable(declension: Declension): List<List<String?>> {
@@ -320,20 +310,13 @@ class SiddharoopaViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val data =
                 (categoryUIState.value.result as? DataFetchState.Success)?.data ?: emptyList()
-
-
             val filteredData = data.filter { entireSabda ->
 
                 listOfNotNull(
                     categoryUIState.value.selectedSound?.let { it.name.lowercase() == entireSabda.sabda.sound },
                     categoryUIState.value.selectedGender?.let { it.name.lowercase() == entireSabda.sabda.gender }
                 ).all { it }
-
-
-//                    categoryUIState.value.selectedSound?.let { sabda.sound == it.eng.lowercase() },
-//                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }).all { it }
             }
-
             _categoryUIState.update {
                 it.copy(
                     filteredData = filteredData
@@ -348,50 +331,23 @@ class SiddharoopaViewModel @Inject constructor(
             applyFilter()
             return
         }
-
-//        val category = categoryUIState.value.selectedCategory?.category
         val selectedTable = homeUIState.value.selectedTable
-        val selectedSound = homeUIState.value.selectedSound
-
         viewModelScope.launch(Dispatchers.IO) {
-            _categoryUIState.update {
-                it.copy(
-                    result = DataFetchState.Loading,
-                    selectedSound = selectedSound,
-                    selectedGender = null,
-                    isDataFetched = it.lastFetchedTable == selectedTable,
-                    lastFetchedTable = selectedTable
-                )
-            }
-
+            _categoryUIState.update { it.copy(result = DataFetchState.Loading) }
             val result = try {
-
                 val retrievedData = when (selectedTable) {
                     Table.GENERAL -> repository.getAllGeneralSabda()
                     Table.SPECIFIC -> repository.getAllSpecificSabda()
                 }
-
                 val data = retrievedData.map { sabda ->
                     EntireSabda(sabda = sabda, table = selectedTable)
                 }
-
-
-//                val data = category?.let {
-//                    when (it) {
-//                        TableCategory.General -> repository.getAllGeneralSabda()
-//                        TableCategory.Specific -> repository.getAllSpecificSabda()
-//                    }
-//                } ?: throw IllegalArgumentException("Invalid category")
-
                 DataFetchState.Success(data)
             } catch (e: Exception) {
                 DataFetchState.Error(e.message ?: "Unknown error occurred")
             }
-
             _categoryUIState.update { it.copy(result = result, isDataFetched = true) }
             applyFilter()
         }
     }
-
-
 }

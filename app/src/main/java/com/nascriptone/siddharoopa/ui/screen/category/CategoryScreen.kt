@@ -197,7 +197,8 @@ fun SabdaItem(
 ) {
 
     val sabda = entireSabda.sabda
-    val genderInSkt = Gender.valueOf(sabda.gender.uppercase()).skt
+    val gender = Gender.valueOf(sabda.gender.uppercase())
+    val genderInSkt = stringResource(gender.skt)
     val sabdaInSkt = stringResource(R.string.sabda)
     val supportingText = "${sabda.anta} $genderInSkt \"${sabda.word}\" $sabdaInSkt"
 
