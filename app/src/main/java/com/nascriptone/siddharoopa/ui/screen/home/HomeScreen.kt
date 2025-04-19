@@ -45,8 +45,8 @@ fun HomeScreen(
             option = OptionView(
                 sound = Sound.entries,
                 displayWord = DisplayWord(
-                    consonantResId = R.string.general_consonant,
-                    vowelResId = R.string.general_vowel
+                    vowelResId = R.string.general_vowel,
+                    consonantResId = R.string.general_consonant
                 )
             )
         ),
@@ -55,8 +55,8 @@ fun HomeScreen(
             option = OptionView(
                 sound = Sound.entries,
                 displayWord = DisplayWord(
-                    consonantResId = R.string.specific_consonant,
-                    vowelResId = R.string.specific_vowel
+                    vowelResId = R.string.specific_vowel,
+                    consonantResId = R.string.specific_consonant
                 )
             )
         )
@@ -77,8 +77,8 @@ fun HomeScreen(
                     option.sound.forEach { sound ->
                         val title = stringResource(sound.skt)
                         val displayWordResId = when (sound) {
-                            Sound.CONSONANTS -> option.displayWord.consonantResId
                             Sound.VOWELS -> option.displayWord.vowelResId
+                            Sound.CONSONANTS -> option.displayWord.consonantResId
                         }
                         val displayWord = stringResource(displayWordResId)
                         Option(
@@ -161,6 +161,6 @@ data class OptionView(
 )
 
 data class DisplayWord(
-    @StringRes val consonantResId: Int,
-    @StringRes val vowelResId: Int
+    @StringRes val vowelResId: Int,
+    @StringRes val consonantResId: Int
 )
