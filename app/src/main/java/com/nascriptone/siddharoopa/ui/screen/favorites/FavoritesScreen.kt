@@ -199,9 +199,13 @@ fun FavoritesSabdaCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("See table")
+                    TextButton(onClick) {
+                        Text("See table")
+                    }
                     Icon(
-                        Icons.AutoMirrored.Rounded.KeyboardArrowRight, null
+                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                        null,
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -227,7 +231,7 @@ fun DeletionDialog(
                         .widthIn(280.dp, 560.dp)
                         .padding(24.dp)
                 ) {
-                    Text("You're about to remove this from your favorites. Are you sure?")
+                    Text("Do you want to delete this from your favorites?")
                     Spacer(Modifier.height(36.dp))
                     Row(
                         modifier = Modifier
