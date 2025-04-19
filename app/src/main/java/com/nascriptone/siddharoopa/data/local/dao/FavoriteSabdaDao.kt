@@ -16,12 +16,12 @@ interface FavoriteSabdaDao {
     @Query("SELECT * FROM favorite_sabda")
     suspend fun getAllSabda(): List<FavoriteSabda>
 
-    @Query("DELETE FROM favorite_sabda WHERE favSabdaId = :id AND favSabdaCategory = :category")
-    suspend fun removeFavoriteSabda(id: Int, category: String)
+    @Query("DELETE FROM favorite_sabda WHERE favSabdaId = :id AND favSabdaCategory = :table")
+    suspend fun removeFavoriteSabda(id: Int, table: String)
 
     @Query(
-        "SELECT EXISTS(SELECT 1 FROM favorite_sabda WHERE favSabdaId = :id AND favSabdaCategory = :category)"
+        "SELECT EXISTS(SELECT 1 FROM favorite_sabda WHERE favSabdaId = :id AND favSabdaCategory = :table)"
     )
-    suspend fun isFavoriteExists(id: Int, category: String): Boolean
+    suspend fun isFavoriteExists(id: Int, table: String): Boolean
 
 }

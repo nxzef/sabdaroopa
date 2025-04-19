@@ -45,12 +45,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.launch
@@ -102,9 +105,11 @@ fun TableScreen(
             Text(result.msg)
         }
 
-        is StringParse.Success -> DeclensionTable(
-            result.declensionTable, tableUIState, viewModel, snackbarHostState
-        )
+        is StringParse.Success -> {
+            DeclensionTable(
+                result.declensionTable, tableUIState, viewModel, snackbarHostState
+            )
+        }
     }
 }
 
@@ -119,7 +124,15 @@ fun DeclensionTable(
 ) {
 
     val scope = rememberCoroutineScope()
-    val userSelectedSabda = tableUIState.selectedSabda
+    val userSelectedSabda = tableUIState.currentSabda
+
+    val displayText = if (userSelectedSabda != null) {
+        val sabda = userSelectedSabda.sabda
+        val gender = Gender.valueOf(sabda.gender.uppercase())
+        val sabdaSkt = stringResource(R.string.sabda)
+        "${sabda.anta} $gender ${sabda.word} $sabdaSkt"
+    } else ""
+
 
     Surface {
         Column(
@@ -133,7 +146,7 @@ fun DeclensionTable(
             Spacer(Modifier.height(16.dp))
 
             Text(
-                userSelectedSabda.sabdaDetailText,
+                displayText,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(16.dp)
             )

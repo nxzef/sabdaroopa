@@ -42,10 +42,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
+import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.screen.Sound
-import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -77,7 +77,7 @@ fun FavoritesScreen(
 
 @Composable
 fun FavoritesScreenContent(
-    favoritesSabdaList: List<FavoriteSabdaDetails>, modifier: Modifier = Modifier
+    favoritesSabdaList: List<EntireSabda>, modifier: Modifier = Modifier
 ) {
 
     var isDialogOpened by rememberSaveable { mutableStateOf(false) }
@@ -139,14 +139,14 @@ fun FavoritesSabdaCard(
     onLongClick: () -> Unit,
     onClick: () -> Unit,
     onHeartIconClick: () -> Unit,
-    details: FavoriteSabdaDetails,
+    details: EntireSabda,
     modifier: Modifier = Modifier
 ) {
     val sabda = details.sabda
     val sabdaSkt = stringResource(R.string.sabda)
     val table = when (details.table) {
-        TableCategory.General -> stringResource(R.string.general_category)
-        TableCategory.Specific -> stringResource(R.string.specific_category)
+        Table.GENERAL -> stringResource(R.string.general_table)
+        Table.SPECIFIC -> stringResource(R.string.specific_table)
     }
     val genderInSkt = when (sabda.gender) {
         stringResource(R.string.masculine_eng).lowercase() -> stringResource(R.string.masculine_skt)
@@ -158,10 +158,11 @@ fun FavoritesSabdaCard(
     val detailedText = "${sabda.anta} $genderInSkt $sabdaSkt"
 
     Card(
-        modifier = modifier.combinedClickable(
-            onClick = onClick, onLongClick = onLongClick
-        ),
-        shape = MaterialTheme.shapes.large,
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .combinedClickable(
+                onClick = onClick, onLongClick = onLongClick
+            ),
     ) {
         Column(
             modifier = Modifier
@@ -226,7 +227,7 @@ fun DeletionDialog(
                         .widthIn(280.dp, 560.dp)
                         .padding(24.dp)
                 ) {
-                    Text("You're about to remove this from your favorite items. Are you sure?")
+                    Text("You're about to remove this from your favorites. Are you sure?")
                     Spacer(Modifier.height(36.dp))
                     Row(
                         modifier = Modifier

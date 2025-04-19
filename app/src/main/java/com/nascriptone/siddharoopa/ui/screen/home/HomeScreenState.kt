@@ -1,10 +1,9 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
-data class HomeScreenState(
-    val textFieldData: TextFieldData = TextFieldData()
-)
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 
-data class TextFieldData(
-    val text: String = "",
-    val isSearchViewExpanded: Boolean = false
+data class HomeScreenState(
+    val selectedTable: Table = Table.entries.first(),
+    val selectedSound: Sound = Sound.entries.first()
 )
