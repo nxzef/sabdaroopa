@@ -2,6 +2,7 @@ package com.nascriptone.siddharoopa.viewmodel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -124,7 +126,7 @@ class SiddharoopaViewModel @Inject constructor(
 
     fun toggleFavoriteSabda() {
         viewModelScope.launch {
-            val currentSabda = categoryUIState.value.selectedSabda ?: return@launch
+            val currentSabda = tableUIState.value.currentSabda ?: return@launch
             val isItFavorite = tableUIState.value.isItFavorite
 
             val favoriteSabda = FavoriteSabda(
@@ -191,20 +193,6 @@ class SiddharoopaViewModel @Inject constructor(
             it.copy(
                 selectedTable = selectedTable,
                 selectedSound = selectedSound
-            )
-        }
-        updateCategoryScreenToFilter()
-    }
-
-    private fun updateCategoryScreenToFilter() {
-        val selectedTable = homeUIState.value.selectedTable
-        val selectedSound = homeUIState.value.selectedSound
-        _categoryUIState.update {
-            it.copy(
-                selectedSound = selectedSound,
-                selectedGender = null,
-                isDataFetched = it.lastFetchedTable == selectedTable,
-                lastFetchedTable = selectedTable
             )
         }
     }
@@ -312,27 +300,48 @@ class SiddharoopaViewModel @Inject constructor(
 
 
     fun fetchSabda() {
-        if (categoryUIState.value.isDataFetched) {
-            applyFilter()
-            return
-        }
-        val selectedTable = homeUIState.value.selectedTable
         viewModelScope.launch(Dispatchers.IO) {
+            val selectedTable = homeUIState.value.selectedTable
+            val selectedSound = homeUIState.value.selectedSound
+
+            val alreadyFetched = _categoryUIState.updateAndGet {
+                it.copy(
+                    selectedSound = selectedSound,
+                    selectedGender = null,
+                    isDataFetched = it.lastFetchedTable == selectedTable,
+                    lastFetchedTable = selectedTable
+                )
+            }.isDataFetched
+
+            if (alreadyFetched) {
+                applyFilter()
+                return@launch
+            }
+
             _categoryUIState.update { it.copy(result = DataFetchState.Loading) }
-            val result = try {
+
+            val result = runCatching {
                 val retrievedData = when (selectedTable) {
                     Table.GENERAL -> repository.getAllGeneralSabda()
                     Table.SPECIFIC -> repository.getAllSpecificSabda()
                 }
-                val data = retrievedData.map { sabda ->
+
+                val data = retrievedData.fastMap { sabda ->
                     EntireSabda(sabda = sabda, table = selectedTable)
                 }
+
                 DataFetchState.Success(data)
-            } catch (e: Exception) {
+            }.getOrElse { e ->
                 DataFetchState.Error(e.message ?: "Unknown error occurred")
             }
-            _categoryUIState.update { it.copy(result = result, isDataFetched = true) }
+
+            _categoryUIState.update {
+                it.copy(result = result, isDataFetched = true)
+            }
+
             applyFilter()
         }
     }
+
+
 }
