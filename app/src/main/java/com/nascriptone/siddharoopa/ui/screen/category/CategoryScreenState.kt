@@ -1,24 +1,24 @@
 package com.nascriptone.siddharoopa.ui.screen.category
 
-import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
-import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
-import com.nascriptone.siddharoopa.ui.screen.Gender
+import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.uiobj.Gender
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 
 
 data class CategoryScreenState(
-    val selectedCategory: CategoryViewType? = null,
-    val selectedSound: SoundLang? = null,
+    val selectedSabda: EntireSabda? = null,
+    val selectedSound: Sound? = null,
     val selectedGender: Gender? = null,
-    val lastFetchedCategory: String = "",
+    val lastFetchedTable: Table = Table.entries.first(),
     val isDataFetched: Boolean = false,
     val result: DataFetchState = DataFetchState.Loading,
-    val filteredData: List<Sabda> = emptyList()
+    val filteredData: List<EntireSabda> = emptyList()
 )
 
 sealed class DataFetchState {
     data object Loading : DataFetchState()
     data class Error(val msg: String) : DataFetchState()
-    data class Success(val data: List<Sabda>) : DataFetchState()
+    data class Success(val data: List<EntireSabda>) : DataFetchState()
 }
 

@@ -7,15 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
-import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
-import com.nascriptone.siddharoopa.data.model.uiobj.FavoriteSabdaDetails
-import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
+import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.uiobj.Gender
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
-import com.nascriptone.siddharoopa.ui.screen.Gender
-import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
 import com.nascriptone.siddharoopa.ui.screen.category.DataFetchState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
@@ -92,7 +90,7 @@ class SiddharoopaViewModel @Inject constructor(
             val result = runCatching {
                 val favoriteSabda = repository.getAllFavoriteSabda().asReversed()
 
-                val favoriteSabdaDetailsUnordered = TableCategory.entries
+                val favoriteSabdaDetailsUnordered = Table.entries
                     .map { table ->
                         val desiredIDs = favoriteSabda
                             .filter { it.favSabdaCategory == table.name }
@@ -101,13 +99,11 @@ class SiddharoopaViewModel @Inject constructor(
                         if (desiredIDs.isEmpty()) return@map emptyList()
 
                         val sabdaList = when (table) {
-                            TableCategory.General -> repository.getGeneralFavoritesSabda(desiredIDs)
-                            TableCategory.Specific -> repository.getSpecificFavoritesSabda(
-                                desiredIDs
-                            )
+                            Table.GENERAL -> repository.getGeneralFavoritesSabda(desiredIDs)
+                            Table.SPECIFIC -> repository.getSpecificFavoritesSabda(desiredIDs)
                         }
 
-                        sabdaList.map { sabda -> FavoriteSabdaDetails(sabda, table) }
+                        sabdaList.map { sabda -> EntireSabda(sabda, table) }
                     }
                     .flatten()
 
@@ -127,47 +123,54 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    private suspend fun updateCurrentSabda() {
-        val userSelectedData = tableUIState.value.selectedSabda
-        val favSabdaId = userSelectedData.sabda?.id ?: 0
-        val favSabdaCategory = userSelectedData.tableCategory?.name.orEmpty()
-        _tableUIState.update {
-            it.copy(
-                currentSabda = it.currentSabda.copy(
-                    favSabdaId = favSabdaId, favSabdaCategory = favSabdaCategory
-                )
-            )
-        }
-        checkFavoriteSabdaExistence(tableUIState.value.currentSabda)
-    }
+//    private suspend fun updateCurrentSabda() {
+//        val userSelectedData = tableUIState.value.selectedSabda
+//        val favSabdaId = userSelectedData.sabda?.id ?: 0
+//        val favSabdaCategory = userSelectedData.tableCategory?.name.orEmpty()
+//        _tableUIState.update {
+//            it.copy(
+//                currentSabda = it.currentSabda.copy(
+//                    favSabdaId = favSabdaId, favSabdaCategory = favSabdaCategory
+//                )
+//            )
+//        }
+//        checkFavoriteSabdaExistence(tableUIState.value.currentSabda)
+//    }
 
     fun toggleFavoriteSabda() {
         viewModelScope.launch {
-            val currentSabda = tableUIState.value.currentSabda
+            val currentSabda = categoryUIState.value.selectedSabda ?: return@launch
             val isItFavorite = tableUIState.value.isItFavorite
-            try {
-                if (!isItFavorite) {
-                    repository.addFavoriteSabda(currentSabda)
-                } else {
+
+            val favoriteSabda = FavoriteSabda(
+                favSabdaId = currentSabda.sabda.id,
+                favSabdaCategory = currentSabda.table.name
+            )
+
+            runCatching {
+                if (isItFavorite) {
                     repository.removeFavoriteSabda(
-                        currentSabda.favSabdaId,
-                        currentSabda.favSabdaCategory
+                        favoriteSabda.favSabdaId,
+                        favoriteSabda.favSabdaCategory
                     )
+                } else {
+                    repository.addFavoriteSabda(favoriteSabda)
                 }
+
                 checkFavoriteSabdaExistence(currentSabda)
-            } catch (e: Exception) {
-                Log.e("FavoriteSabda", "Failed to insert/delete", e)
+            }.getOrElse { e ->
+                Log.e("toggleFavoriteSabda", "Failed to toggle favorite", e)
             }
         }
     }
 
-    private suspend fun checkFavoriteSabdaExistence(favoriteSabda: FavoriteSabda) {
-        val isExist =
-            repository.isFavoriteExists(favoriteSabda.favSabdaId, favoriteSabda.favSabdaCategory)
+    private suspend fun checkFavoriteSabdaExistence(currentSabda: EntireSabda) {
+        val isExist = repository.isFavoriteExists(
+            currentSabda.sabda.id,
+            currentSabda.table.name
+        )
         _tableUIState.update {
-            it.copy(
-                isItFavorite = isExist
-            )
+            it.copy(isItFavorite = isExist)
         }
     }
 
@@ -176,13 +179,12 @@ class SiddharoopaViewModel @Inject constructor(
         _tableUIState.value = TableScreenState()
     }
 
-    fun updateSoundFilter(sound: SoundLang) {
+    fun updateSoundFilter(sound: Sound) {
         _categoryUIState.update {
             it.copy(
                 selectedSound = sound, selectedGender = null
             )
         }
-
         applyFilter()
     }
 
@@ -192,33 +194,46 @@ class SiddharoopaViewModel @Inject constructor(
                 selectedGender = gender
             )
         }
-
         applyFilter()
     }
 
 
-    fun updateSelectedCategory(
-        selectedCategory: CategoryViewType,
-        selectedSound: SoundLang,
+    fun updateTable(
+        selectedTable: Table,
+        selectedSound: Sound,
     ) {
-        _categoryUIState.update {
+
+        _homeUIState.update {
             it.copy(
-                selectedCategory = selectedCategory,
-                selectedSound = selectedSound,
-                selectedGender = null,
-                isDataFetched = it.lastFetchedCategory == selectedCategory.title,
-                lastFetchedCategory = selectedCategory.title
+                selectedTable = selectedTable,
+                selectedSound = selectedSound
             )
         }
+
+
+//        _categoryUIState.update {
+//            it.copy(
+//                selectedCategory = selectedCategory,
+//                selectedSound = selectedSound,
+//                selectedGender = null,
+//                isDataFetched = it.lastFetchedCategory == selectedCategory.title,
+//                lastFetchedCategory = selectedCategory.title
+//            )
+//        }
     }
 
 
     fun parseStringToDeclension() {
+        val currentSabda = categoryUIState.value.selectedSabda ?: return
         viewModelScope.launch(Dispatchers.IO) {
-            _tableUIState.update { it.copy(result = StringParse.Loading) }
-            updateCurrentSabda()
+            _tableUIState.update {
+                it.copy(
+                    result = StringParse.Loading,
+                    currentSabda = currentSabda
+                )
+            }
             val result = runCatching {
-                val declensionOBJ = tableUIState.value.selectedSabda.sabda?.declension
+                val declensionOBJ = currentSabda.sabda.declension
                 val declension = Gson().fromJson(
                     declensionOBJ, Declension::class.java
                 )
@@ -227,21 +242,28 @@ class SiddharoopaViewModel @Inject constructor(
             }.getOrElse { e ->
                 StringParse.Error(msg = e.message ?: "Can't find declension table.")
             }
-
             _tableUIState.update { it.copy(result = result) }
+            checkFavoriteSabdaExistence(currentSabda)
         }
     }
 
-    fun updateSelectedTable(sabda: Sabda, sabdaDetailText: String) {
-        val selectedCategory = categoryUIState.value.selectedCategory
-        val tableCategory = selectedCategory?.category ?: TODO()
-        _tableUIState.update {
+    fun updateSelectedSabda(sabda: EntireSabda) {
+
+        _categoryUIState.update {
             it.copy(
-                selectedSabda = it.selectedSabda.copy(
-                    sabda = sabda, tableCategory = tableCategory, sabdaDetailText = sabdaDetailText
-                )
+                selectedSabda = sabda
             )
         }
+
+//        val selectedCategory = categoryUIState.value.selectedCategory
+//        val tableCategory = selectedCategory?.category ?: TODO()
+//        _tableUIState.update {
+//            it.copy(
+//                selectedSabda = it.selectedSabda.copy(
+//                    sabda = sabda, tableCategory = tableCategory, sabdaDetailText = sabdaDetailText
+//                )
+//            )
+//        }
     }
 
     private fun createDeclensionTable(declension: Declension): List<List<String?>> {
@@ -300,10 +322,16 @@ class SiddharoopaViewModel @Inject constructor(
                 (categoryUIState.value.result as? DataFetchState.Success)?.data ?: emptyList()
 
 
-            val filteredData = data.filter { sabda ->
+            val filteredData = data.filter { entireSabda ->
+
                 listOfNotNull(
-                    categoryUIState.value.selectedSound?.let { sabda.sound == it.eng.lowercase() },
-                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }).all { it }
+                    categoryUIState.value.selectedSound?.let { it.name.lowercase() == entireSabda.sabda.sound },
+                    categoryUIState.value.selectedGender?.let { it.name.lowercase() == entireSabda.sabda.gender }
+                ).all { it }
+
+
+//                    categoryUIState.value.selectedSound?.let { sabda.sound == it.eng.lowercase() },
+//                    categoryUIState.value.selectedGender?.let { sabda.gender == it.name.lowercase() }).all { it }
             }
 
             _categoryUIState.update {
@@ -321,22 +349,39 @@ class SiddharoopaViewModel @Inject constructor(
             return
         }
 
-        val category = categoryUIState.value.selectedCategory?.category
+//        val category = categoryUIState.value.selectedCategory?.category
+        val selectedTable = homeUIState.value.selectedTable
+        val selectedSound = homeUIState.value.selectedSound
 
         viewModelScope.launch(Dispatchers.IO) {
             _categoryUIState.update {
                 it.copy(
-                    result = DataFetchState.Loading
+                    result = DataFetchState.Loading,
+                    selectedSound = selectedSound,
+                    selectedGender = null,
+                    isDataFetched = it.lastFetchedTable == selectedTable,
+                    lastFetchedTable = selectedTable
                 )
             }
 
             val result = try {
-                val data = category?.let {
-                    when (it) {
-                        TableCategory.General -> repository.getAllGeneralSabda()
-                        TableCategory.Specific -> repository.getAllSpecificSabda()
-                    }
-                } ?: throw IllegalArgumentException("Invalid category")
+
+                val retrievedData = when (selectedTable) {
+                    Table.GENERAL -> repository.getAllGeneralSabda()
+                    Table.SPECIFIC -> repository.getAllSpecificSabda()
+                }
+
+                val data = retrievedData.map { sabda ->
+                    EntireSabda(sabda = sabda, table = selectedTable)
+                }
+
+
+//                val data = category?.let {
+//                    when (it) {
+//                        TableCategory.General -> repository.getAllGeneralSabda()
+//                        TableCategory.Specific -> repository.getAllSpecificSabda()
+//                    }
+//                } ?: throw IllegalArgumentException("Invalid category")
 
                 DataFetchState.Success(data)
             } catch (e: Exception) {

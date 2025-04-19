@@ -16,6 +16,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.core.utils.isDarkTheme
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
@@ -78,8 +80,8 @@ fun SiddharoopaApp(
                     AppTopBar(
                         navHostController = navHostController,
                         currentRoute = currentRoute,
-                        categoryScreenTitle = categoryScreenState.selectedCategory?.title,
-                        tableScreenTitle = tableUIState.selectedSabda.sabda?.word
+                        categoryScreenTitle = categoryScreenState.selectedSabda?.table,
+                        tableScreenTitle = tableUIState.currentSabda?.sabda?.word
                     )
                 },
                 snackbarHost = {
@@ -136,7 +138,7 @@ fun SiddharoopaApp(
 fun AppTopBar(
     navHostController: NavHostController,
     currentRoute: SiddharoopaRoutes,
-    categoryScreenTitle: String?,
+    categoryScreenTitle: Table?,
     tableScreenTitle: String?,
 ) {
 
@@ -150,11 +152,10 @@ fun AppTopBar(
         )
     }
 
-    AnimatedVisibility(
-        currentRoute == SiddharoopaRoutes.Category,
-    ) {
+    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Category) {
         CategoryScreenTopBar(
-            title = categoryScreenTitle ?: "", onBackPress = onBackPress
+            title = categoryScreenTitle?.let { stringResource(it.skt) } ?: "",
+            onBackPress = onBackPress
         )
     }
 

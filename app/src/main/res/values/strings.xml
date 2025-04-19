@@ -3,12 +3,12 @@
 
 
     <!-- General -->
-    <string name="general_category">साधारण शब्द विभागः</string>
+    <string name="general_table">साधारण शब्द विभागः</string>
     <string name="general_subhead_eng">General word category</string>
 
 
     <!-- Specific -->
-    <string name="specific_category">विशॆष शब्द विभागः</string>
+    <string name="specific_table">विशॆष शब्द विभागः</string>
     <string name="specific_subhead_eng">Specific word category</string>
 
     <!-- Pronouns -->

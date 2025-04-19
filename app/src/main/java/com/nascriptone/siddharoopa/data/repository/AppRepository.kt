@@ -29,11 +29,11 @@ class AppRepository @Inject constructor(
         favoriteSabdaDao.addFavoriteSabda(favoriteSabda)
     }
 
-    suspend fun removeFavoriteSabda(id: Int, category: String) {
-        favoriteSabdaDao.removeFavoriteSabda(id, category)
+    suspend fun removeFavoriteSabda(id: Int, table: String) {
+        favoriteSabdaDao.removeFavoriteSabda(id, table)
     }
 
-    suspend fun isFavoriteExists(id: Int, category: String): Boolean =
-        favoriteSabdaDao.isFavoriteExists(id, category)
+    suspend fun isFavoriteExists(id: Int, table: String): Boolean =
+        favoriteSabdaDao.isFavoriteExists(id, table)
 
 }

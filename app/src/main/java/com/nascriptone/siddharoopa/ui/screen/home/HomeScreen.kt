@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -25,11 +26,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.uiobj.CategoryOptionType
-import com.nascriptone.siddharoopa.data.model.uiobj.CategoryViewType
-import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
+import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
-import com.nascriptone.siddharoopa.ui.screen.TableCategory
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -40,33 +39,24 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
 
-
-    val vowSound = SoundLang(
-        eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
-    )
-    val conSound = SoundLang(
-        eng = stringResource(R.string.consonant_eng), skt = stringResource(R.string.consonant_skt)
-    )
-
-    val categoryViewList: List<CategoryViewType> = listOf(
-        CategoryViewType(
-            title = stringResource(R.string.general_category),
-            category = TableCategory.General,
-            options = listOf(
-                CategoryOptionType(
-                    sound = vowSound, displayWord = stringResource(R.string.general_vowel)
-                ), CategoryOptionType(
-                    sound = conSound, displayWord = stringResource(R.string.general_consonant)
+    val tableViews = listOf<TableView>(
+        TableView(
+            table = Table.GENERAL,
+            option = OptionView(
+                sound = Sound.entries,
+                displayWord = DisplayWord(
+                    consonantResId = R.string.general_consonant,
+                    vowelResId = R.string.general_vowel
                 )
             )
-        ), CategoryViewType(
-            title = stringResource(R.string.specific_category),
-            category = TableCategory.Specific,
-            options = listOf(
-                CategoryOptionType(
-                    sound = vowSound, displayWord = stringResource(R.string.specific_vowel)
-                ), CategoryOptionType(
-                    sound = conSound, displayWord = stringResource(R.string.specific_consonant)
+        ),
+        TableView(
+            table = Table.SPECIFIC,
+            option = OptionView(
+                sound = Sound.entries,
+                displayWord = DisplayWord(
+                    consonantResId = R.string.specific_consonant,
+                    vowelResId = R.string.specific_vowel
                 )
             )
         )
@@ -77,22 +67,28 @@ fun HomeScreen(
         Column(
             modifier = modifier.verticalScroll(rememberScrollState())
         ) {
-            categoryViewList.forEach { view ->
-                CategoryView(
-                    title = view.title
-                ) {
-                    view.options.forEach { option ->
-                        CategoryOption(
-                            title = option.sound.skt,
-                            displayWord = option.displayWord,
+            tableViews.forEach { tables ->
+                val tableName = when (tables.table) {
+                    Table.GENERAL -> stringResource(R.string.general_table)
+                    Table.SPECIFIC -> stringResource(R.string.specific_table)
+                }
+                View(tableName) {
+                    val option = tables.option
+                    option.sound.forEach { sound ->
+                        val title = stringResource(sound.skt)
+                        val displayWordResId = when (sound) {
+                            Sound.CONSONANTS -> option.displayWord.consonantResId
+                            Sound.VOWELS -> option.displayWord.vowelResId
+                        }
+                        val displayWord = stringResource(displayWordResId)
+                        Option(
+                            title = title,
+                            displayWord = displayWord,
                             onCardClick = {
-                                viewModel.updateSelectedCategory(
-                                    view, option.sound
-                                )
-                                navHostController.navigate(SiddharoopaRoutes.Category.name) {
-                                    launchSingleTop = true
-                                }
-                            })
+                                viewModel.updateTable(tables.table, sound)
+                                navHostController.navigate(SiddharoopaRoutes.Category.name)
+                            }
+                        )
                     }
                 }
             }
@@ -103,7 +99,7 @@ fun HomeScreen(
 
 
 @Composable
-fun CategoryView(
+fun View(
     title: String, modifier: Modifier = Modifier, content: @Composable (ColumnScope.() -> Unit)
 ) {
     Column(
@@ -113,18 +109,17 @@ fun CategoryView(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         content()
     }
 }
 
 @Composable
-fun CategoryOption(
+fun Option(
     title: String, displayWord: String, onCardClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Card(
         onClick = onCardClick, modifier = modifier
-            .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
         Column(
@@ -154,3 +149,18 @@ fun CategoryOption(
         }
     }
 }
+
+data class TableView(
+    val table: Table,
+    val option: OptionView
+)
+
+data class OptionView(
+    val sound: List<Sound>,
+    val displayWord: DisplayWord
+)
+
+data class DisplayWord(
+    @StringRes val consonantResId: Int,
+    @StringRes val vowelResId: Int
+)

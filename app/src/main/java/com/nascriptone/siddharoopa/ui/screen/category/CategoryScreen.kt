@@ -29,7 +29,6 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,11 +36,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.model.uiobj.SoundLang
-import com.nascriptone.siddharoopa.data.model.uiobj.Suggestion
+import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.uiobj.Gender
+import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.screen.Gender
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
@@ -87,8 +85,8 @@ fun CategoryScreen(
 
 @Composable
 fun CategoryScreenContent(
-    data: List<Sabda>,
-    currentSound: SoundLang?,
+    data: List<EntireSabda>,
+    currentSound: Sound?,
     currentGender: Gender?,
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
@@ -96,44 +94,44 @@ fun CategoryScreenContent(
 ) {
 
 
-    val tabItems: List<SoundLang> = listOf(
-        SoundLang(
-            eng = stringResource(R.string.vowel_eng), skt = stringResource(R.string.vowel_skt)
-        ), SoundLang(
-            eng = stringResource(R.string.consonant_eng),
-            skt = stringResource(R.string.consonant_skt)
-        )
-    )
+    val tabItems = Sound.entries
 
-    val genderSuggestions: Set<Suggestion> = remember {
-        setOf(
-            Suggestion(
-                skt = R.string.all_skt
-            ), Suggestion(
-                gender = Gender.Masculine, skt = R.string.masculine_skt
-            ), Suggestion(
-                gender = Gender.Feminine, skt = R.string.feminine_skt
-            ), Suggestion(
-                gender = Gender.Neuter, skt = R.string.neuter_skt
-            )
-        )
-    }
+//    val genderSuggestions: Set<Suggestion> = remember {
+//        setOf(
+//            Suggestion(
+//                skt = R.string.all_skt
+//            ), Suggestion(
+//                gender = Gender.Masculine, skt = R.string.masculine_skt
+//            ), Suggestion(
+//                gender = Gender.Feminine, skt = R.string.feminine_skt
+//            ), Suggestion(
+//                gender = Gender.Neuter, skt = R.string.neuter_skt
+//            )
+//        )
+//    }
+
+    val genderSuggestions: Set<Gender?> = setOf(
+        null, *Gender.entries.toTypedArray()
+    )
 
     Surface {
         Column(
             modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             TabRow(
                 selectedTabIndex = tabItems.indexOf(currentSound),
             ) {
-                tabItems.forEach { item ->
+                tabItems.forEach { sound ->
+                    val label = stringResource(sound.skt)
                     Tab(
-                        selected = currentSound?.eng == item.eng, onClick = {
-                            viewModel.updateSoundFilter(item)
-                        }, text = {
-                            Text(item.skt, style = MaterialTheme.typography.titleLarge)
-                        }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        selected = sound == currentSound,
+                        onClick = {
+                            viewModel.updateSoundFilter(sound)
+                        },
+                        text = {
+                            Text(label, style = MaterialTheme.typography.titleLarge)
+                        },
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -146,22 +144,21 @@ fun CategoryScreenContent(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Spacer(Modifier.width(16.dp))
-                genderSuggestions.forEach { suggestion ->
-                    val gender = suggestion.gender
+                genderSuggestions.forEach { gender ->
                     val selected = currentGender == gender
+                    val label = stringResource(gender?.skt ?: R.string.sabda)
                     FilterChip(
-                        selected = selected, label = {
+                        selected = selected,
+                        label = {
                             Text(
-                                text = stringResource(suggestion.skt),
+                                text = label,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.W600
                             )
                         }, onClick = {
                             viewModel.updateGenderFilter(gender)
                         }, leadingIcon = {
-                            AnimatedVisibility(
-                                visible = selected
-                            ) {
+                            AnimatedVisibility(selected) {
                                 Icon(Icons.Rounded.Check, null)
                             }
                         }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
@@ -176,9 +173,11 @@ fun CategoryScreenContent(
 
                 items(data) { sabda ->
                     SabdaItem(
-                        sabda = sabda, onClick = { details ->
-                            viewModel.updateSelectedTable(sabda, details)
-                            navHostController.navigate(SiddharoopaRoutes.Table.name)
+                        entireSabda = sabda, onClick = { details ->
+                            viewModel.updateSelectedSabda(sabda)
+                            navHostController.navigate(SiddharoopaRoutes.Table.name) {
+                                launchSingleTop = true
+                            }
                         })
                 }
 
@@ -194,15 +193,11 @@ fun CategoryScreenContent(
 
 @Composable
 fun SabdaItem(
-    sabda: Sabda, onClick: (String) -> Unit, modifier: Modifier = Modifier
+    entireSabda: EntireSabda, onClick: (String) -> Unit, modifier: Modifier = Modifier
 ) {
 
-    val genderInSkt = when (sabda.gender) {
-        stringResource(R.string.masculine_eng).lowercase() -> stringResource(R.string.masculine_skt)
-        stringResource(R.string.feminine_eng).lowercase() -> stringResource(R.string.feminine_skt)
-        else -> stringResource(R.string.neuter_skt)
-    }
-
+    val sabda = entireSabda.sabda
+    val genderInSkt = Gender.valueOf(sabda.gender.uppercase()).skt
     val sabdaInSkt = stringResource(R.string.sabda)
     val supportingText = "${sabda.anta} $genderInSkt \"${sabda.word}\" $sabdaInSkt"
 
