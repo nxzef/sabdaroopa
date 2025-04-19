@@ -122,21 +122,6 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-
-//    private suspend fun updateCurrentSabda() {
-//        val userSelectedData = tableUIState.value.selectedSabda
-//        val favSabdaId = userSelectedData.sabda?.id ?: 0
-//        val favSabdaCategory = userSelectedData.tableCategory?.name.orEmpty()
-//        _tableUIState.update {
-//            it.copy(
-//                currentSabda = it.currentSabda.copy(
-//                    favSabdaId = favSabdaId, favSabdaCategory = favSabdaCategory
-//                )
-//            )
-//        }
-//        checkFavoriteSabdaExistence(tableUIState.value.currentSabda)
-//    }
-
     fun toggleFavoriteSabda() {
         viewModelScope.launch {
             val currentSabda = categoryUIState.value.selectedSabda ?: return@launch
