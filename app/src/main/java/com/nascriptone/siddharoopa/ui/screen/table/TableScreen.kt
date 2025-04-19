@@ -131,7 +131,7 @@ fun DeclensionTable(
         val gender = Gender.valueOf(sabda.gender.uppercase())
         val genderSkt = stringResource(gender.skt)
         val sabdaSkt = stringResource(R.string.sabda)
-        "${sabda.anta} $genderSkt ${sabda.word} $sabdaSkt"
+        "${sabda.anta} $genderSkt \"${sabda.word}\" $sabdaSkt"
     } else ""
 
 
