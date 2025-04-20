@@ -94,79 +94,88 @@ class SiddharoopaViewModel @Inject constructor(
     private fun observeFavorites() {
         viewModelScope.launch {
             repository.getAllFavoriteSabda().collect { favoriteSabdaList ->
-                    _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
+                _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
 
-                    val state = runCatching {
-                        val reversed = favoriteSabdaList.asReversed()
+                val state = runCatching {
+                    val reversed = favoriteSabdaList.asReversed()
 
-                        val favoriteSabdaDetailsUnordered = Table.entries.map { table ->
-                                val desiredIDs =
-                                    reversed.filter { it.favSabdaCategory == table.name }
-                                        .map { it.favSabdaId }
+                    val favoriteSabdaDetailsUnordered = Table.entries.map { table ->
+                        val desiredIDs =
+                            reversed.filter { it.favSabdaCategory == table.name }
+                                .map { it.favSabdaId }
 
-                                if (desiredIDs.isEmpty()) return@map emptyList()
+                        if (desiredIDs.isEmpty()) return@map emptyList()
 
-                                val sabdaList = when (table) {
-                                    Table.GENERAL -> repository.getGeneralFavoritesSabda(desiredIDs)
-                                    Table.SPECIFIC -> repository.getSpecificFavoritesSabda(
-                                        desiredIDs
-                                    )
-                                }
-
-                                sabdaList.map { sabda -> EntireSabda(sabda, table) }
-                            }.flatten()
-
-                        val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
-                        val favoriteSabdaList = reversed.mapNotNull { sabda ->
-                            unorderedMap[sabda.favSabdaId]
+                        val sabdaList = when (table) {
+                            Table.GENERAL -> repository.getGeneralFavoritesSabda(desiredIDs)
+                            Table.SPECIFIC -> repository.getSpecificFavoritesSabda(
+                                desiredIDs
+                            )
                         }
 
-                        ScreenState.Success(data = favoriteSabdaList)
-                    }.getOrElse { e ->
-                        Log.e("error", e.message.orEmpty(), e)
-                        ScreenState.Error(msg = e.message.orEmpty())
+                        sabdaList.map { sabda -> EntireSabda(sabda, table) }
+                    }.flatten()
+
+                    val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
+                    val favoriteSabdaList = reversed.mapNotNull { sabda ->
+                        unorderedMap[sabda.favSabdaId]
                     }
 
-                    _favoritesUIState.update { it.copy(result = state) }
+                    ScreenState.Success(data = favoriteSabdaList)
+                }.getOrElse { e ->
+                    Log.e("error", e.message.orEmpty(), e)
+                    ScreenState.Error(msg = e.message.orEmpty())
                 }
+
+                _favoritesUIState.update { it.copy(result = state) }
+            }
         }
     }
 
 
     fun toggleFavoriteSabda() {
+        val currentSabda = tableUIState.value.currentSabda ?: return
+        val isItFavorite = tableUIState.value.isItFavorite
+
+        if (isItFavorite) removeSabdaFromFavorites(currentSabda)
+        else addSabdaToFavorites(currentSabda)
+        val isExist = checkFavoriteSabdaExistence(currentSabda)
+        _tableUIState.update { it.copy(isItFavorite = isExist) }
+    }
+
+    fun removeSabdaFromFavorites(currentSabda: EntireSabda) {
         viewModelScope.launch {
-            val currentSabda = tableUIState.value.currentSabda ?: return@launch
-            val isItFavorite = tableUIState.value.isItFavorite
-
-            val favoriteSabda = FavoriteSabda(
-                favSabdaId = currentSabda.sabda.id,
-                favSabdaCategory = currentSabda.table.name
-            )
-
             runCatching {
-                if (isItFavorite) {
-                    repository.removeFavoriteSabda(
-                        favoriteSabda.favSabdaId,
-                        favoriteSabda.favSabdaCategory
-                    )
-                } else {
-                    repository.addFavoriteSabda(favoriteSabda)
-                }
-
-                checkFavoriteSabdaExistence(currentSabda)
+                repository.removeFavoriteSabda(
+                    id = currentSabda.sabda.id,
+                    table = currentSabda.table.name
+                )
             }.getOrElse { e ->
-                Log.e("toggleFavoriteSabda", "Failed to toggle favorite", e)
+                Log.d("error", "Remove Sabda Error Occur!", e)
             }
         }
     }
 
-    private suspend fun checkFavoriteSabdaExistence(currentSabda: EntireSabda) {
-        val isExist = repository.isFavoriteExists(
-            currentSabda.sabda.id,
-            currentSabda.table.name
-        )
-        _tableUIState.update {
-            it.copy(isItFavorite = isExist)
+    fun addSabdaToFavorites(currentSabda: EntireSabda) {
+        viewModelScope.launch {
+            runCatching {
+                val favoriteSabda = FavoriteSabda(
+                    favSabdaId = currentSabda.sabda.id,
+                    favSabdaCategory = currentSabda.table.name
+                )
+                repository.addFavoriteSabda(favoriteSabda)
+            }.getOrElse { e ->
+                Log.d("error", "Add Sabda Error Occur!", e)
+            }
+        }
+    }
+
+    private fun checkFavoriteSabdaExistence(currentSabda: EntireSabda): Boolean {
+        val currentState = favoritesUIState.value.result
+        if (currentState !is ScreenState.Success) return false
+        val favoriteSabdaList = currentState.data
+        return favoriteSabdaList.any {
+            it.sabda.id == currentSabda.sabda.id && it.table == currentSabda.table
         }
     }
 
@@ -207,12 +216,12 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun parseStringToDeclension() {
-        val currentSabda = categoryUIState.value.selectedSabda ?: return
         viewModelScope.launch(Dispatchers.IO) {
+            val currentSabda = categoryUIState.value.selectedSabda ?: return@launch
             _tableUIState.update {
                 it.copy(
-                    result = StringParse.Loading,
-                    currentSabda = currentSabda
+                    currentSabda = currentSabda,
+                    result = StringParse.Loading
                 )
             }
             val result = runCatching {
@@ -225,8 +234,8 @@ class SiddharoopaViewModel @Inject constructor(
             }.getOrElse { e ->
                 StringParse.Error(msg = e.message ?: "Can't find declension table.")
             }
-            _tableUIState.update { it.copy(result = result) }
-            checkFavoriteSabdaExistence(currentSabda)
+            val isExist = checkFavoriteSabdaExistence(currentSabda)
+            _tableUIState.update { it.copy(result = result, isItFavorite = isExist) }
         }
     }
 

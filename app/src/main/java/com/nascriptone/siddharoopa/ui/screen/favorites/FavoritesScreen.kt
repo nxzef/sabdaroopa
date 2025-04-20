@@ -64,7 +64,9 @@ fun FavoritesScreen(
         }
 
         is ScreenState.Success -> FavoritesScreenContent(
-            favoritesSabdaList = result.data, modifier = modifier
+            favoritesSabdaList = result.data,
+            viewModel = viewModel,
+            modifier = modifier
         )
     }
 }
@@ -72,10 +74,13 @@ fun FavoritesScreen(
 
 @Composable
 fun FavoritesScreenContent(
-    favoritesSabdaList: List<EntireSabda>, modifier: Modifier = Modifier
+    viewModel: SiddharoopaViewModel,
+    favoritesSabdaList: List<EntireSabda>,
+    modifier: Modifier = Modifier
 ) {
 
     var isDialogOpened by rememberSaveable { mutableStateOf(false) }
+    var sabdaToDelete by rememberSaveable { mutableStateOf(favoritesSabdaList.first()) }
 
     if (favoritesSabdaList.isNotEmpty()) {
         Surface {
@@ -92,6 +97,7 @@ fun FavoritesScreenContent(
                         }, onLongClick = {
                             Log.d("click", "LongClick Works!")
                         }, onHeartIconClick = {
+                            sabdaToDelete = details
                             isDialogOpened = !isDialogOpened
                         }, details = details, modifier = Modifier.padding(8.dp)
                     )
@@ -105,6 +111,11 @@ fun FavoritesScreenContent(
                 isOpen = isDialogOpened,
                 onDismissRequest = {
                     isDialogOpened = false
+                },
+                onConfirm = {
+                    viewModel.removeSabdaFromFavorites(sabdaToDelete)
+                    isDialogOpened = false
+
                 },
                 modifier = Modifier
                     .clip(MaterialTheme.shapes.extraLarge)
@@ -210,6 +221,7 @@ fun FavoritesSabdaCard(
 
 @Composable
 fun DeletionDialog(
+    onConfirm: () -> Unit,
     isOpen: Boolean,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -233,11 +245,11 @@ fun DeletionDialog(
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(onClick = {}) {
+                        TextButton(onDismissRequest) {
                             Text("Cancel")
                         }
                         Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = {}) {
+                        TextButton(onConfirm) {
                             Text("OK")
                         }
                     }
