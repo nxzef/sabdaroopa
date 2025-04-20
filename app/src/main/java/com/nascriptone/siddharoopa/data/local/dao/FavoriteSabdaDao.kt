@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FavoriteSabdaDao {
@@ -14,7 +15,7 @@ interface FavoriteSabdaDao {
     suspend fun addFavoriteSabda(favoriteSabda: FavoriteSabda)
 
     @Query("SELECT * FROM favorite_sabda")
-    suspend fun getAllSabda(): List<FavoriteSabda>
+    fun getAllSabda(): Flow<List<FavoriteSabda>>
 
     @Query("DELETE FROM favorite_sabda WHERE favSabdaId = :id AND favSabdaCategory = :table")
     suspend fun removeFavoriteSabda(id: Int, table: String)

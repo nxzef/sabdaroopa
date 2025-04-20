@@ -74,6 +74,11 @@ class SiddharoopaViewModel @Inject constructor(
         })
 
 
+    init {
+        observeFavorites()
+    }
+
+
     private fun getStringFromResources(resId: Int): String {
         return context.getString(resId)
     }
@@ -85,44 +90,48 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun fetchFavoriteSabda() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
 
-            val result = runCatching {
-                val favoriteSabda = repository.getAllFavoriteSabda().asReversed()
+    private fun observeFavorites() {
+        viewModelScope.launch {
+            repository.getAllFavoriteSabda().collect { favoriteSabdaList ->
+                    _favoritesUIState.update { it.copy(result = ScreenState.Loading) }
 
-                val favoriteSabdaDetailsUnordered = Table.entries
-                    .map { table ->
-                        val desiredIDs = favoriteSabda
-                            .filter { it.favSabdaCategory == table.name }
-                            .map { it.favSabdaId }
+                    val state = runCatching {
+                        val reversed = favoriteSabdaList.asReversed()
 
-                        if (desiredIDs.isEmpty()) return@map emptyList()
+                        val favoriteSabdaDetailsUnordered = Table.entries.map { table ->
+                                val desiredIDs =
+                                    reversed.filter { it.favSabdaCategory == table.name }
+                                        .map { it.favSabdaId }
 
-                        val sabdaList = when (table) {
-                            Table.GENERAL -> repository.getGeneralFavoritesSabda(desiredIDs)
-                            Table.SPECIFIC -> repository.getSpecificFavoritesSabda(desiredIDs)
+                                if (desiredIDs.isEmpty()) return@map emptyList()
+
+                                val sabdaList = when (table) {
+                                    Table.GENERAL -> repository.getGeneralFavoritesSabda(desiredIDs)
+                                    Table.SPECIFIC -> repository.getSpecificFavoritesSabda(
+                                        desiredIDs
+                                    )
+                                }
+
+                                sabdaList.map { sabda -> EntireSabda(sabda, table) }
+                            }.flatten()
+
+                        val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
+                        val favoriteSabdaList = reversed.mapNotNull { sabda ->
+                            unorderedMap[sabda.favSabdaId]
                         }
 
-                        sabdaList.map { sabda -> EntireSabda(sabda, table) }
+                        ScreenState.Success(data = favoriteSabdaList)
+                    }.getOrElse { e ->
+                        Log.e("error", e.message.orEmpty(), e)
+                        ScreenState.Error(msg = e.message.orEmpty())
                     }
-                    .flatten()
 
-                val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
-                val favoriteSabdaList = favoriteSabda.mapNotNull { sabda ->
-                    unorderedMap[sabda.favSabdaId]
+                    _favoritesUIState.update { it.copy(result = state) }
                 }
-
-                ScreenState.Success(data = favoriteSabdaList)
-            }.getOrElse { e ->
-                Log.e("error", e.message.orEmpty(), e)
-                ScreenState.Error(msg = e.message.orEmpty())
-            }
-
-            _favoritesUIState.update { it.copy(result = result) }
         }
     }
+
 
     fun toggleFavoriteSabda() {
         viewModelScope.launch {

@@ -5,6 +5,7 @@ import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class AppRepository @Inject constructor(
@@ -23,7 +24,7 @@ class AppRepository @Inject constructor(
     suspend fun getSpecificFavoritesSabda(ids: List<Int>): List<Sabda> = specificSabdaDao.getFavoritesSabda(ids)
 
     // Favorite
-    suspend fun getAllFavoriteSabda(): List<FavoriteSabda> = favoriteSabdaDao.getAllSabda()
+    fun getAllFavoriteSabda(): Flow<List<FavoriteSabda>> = favoriteSabdaDao.getAllSabda()
 
     suspend fun addFavoriteSabda(favoriteSabda: FavoriteSabda) {
         favoriteSabdaDao.addFavoriteSabda(favoriteSabda)
