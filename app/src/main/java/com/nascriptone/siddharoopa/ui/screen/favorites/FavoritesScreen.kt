@@ -59,70 +59,7 @@ fun FavoritesScreen(
             CircularProgressIndicator()
         }
 
-        is ScreenState.Error -> CurrentState {
-            Text(result.msg)
-        }
-
-        is ScreenState.Success -> FavoritesScreenContent(
-            favoritesSabdaList = result.data,
-            viewModel = viewModel,
-            modifier = modifier
-        )
-    }
-}
-
-
-@Composable
-fun FavoritesScreenContent(
-    viewModel: SiddharoopaViewModel,
-    favoritesSabdaList: List<EntireSabda>,
-    modifier: Modifier = Modifier
-) {
-
-    var isDialogOpened by rememberSaveable { mutableStateOf(false) }
-    var sabdaToDelete by rememberSaveable { mutableStateOf(favoritesSabdaList.first()) }
-
-    if (favoritesSabdaList.isNotEmpty()) {
-        Surface {
-            LazyColumn(
-                modifier = modifier.padding(horizontal = 4.dp)
-            ) {
-                item {
-                    Spacer(Modifier.height(16.dp))
-                }
-                items(favoritesSabdaList) { details ->
-                    FavoritesSabdaCard(
-                        onClick = {
-
-                        }, onLongClick = {
-                            Log.d("click", "LongClick Works!")
-                        }, onHeartIconClick = {
-                            sabdaToDelete = details
-                            isDialogOpened = !isDialogOpened
-                        }, details = details, modifier = Modifier.padding(8.dp)
-                    )
-                }
-                item {
-                    Spacer(Modifier.height(28.dp))
-                }
-            }
-
-            DeletionDialog(
-                isOpen = isDialogOpened,
-                onDismissRequest = {
-                    isDialogOpened = false
-                },
-                onConfirm = {
-                    viewModel.removeSabdaFromFavorites(sabdaToDelete)
-                    isDialogOpened = false
-
-                },
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.extraLarge)
-            )
-        }
-    } else {
-        CurrentState {
+        is ScreenState.Empty -> CurrentState {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -136,7 +73,72 @@ fun FavoritesScreenContent(
                 Text("Favorites are empty!")
             }
         }
+
+        is ScreenState.Error -> CurrentState {
+            Text(result.msg)
+        }
+
+        is ScreenState.Success -> FavoritesScreenContent(
+            viewModel = viewModel,
+            favoritesUIState = favoritesUIState,
+            favoritesSabdaList = result.data,
+            modifier = modifier
+        )
     }
+}
+
+
+@Composable
+fun FavoritesScreenContent(
+    viewModel: SiddharoopaViewModel,
+    favoritesUIState: FavoritesScreenState,
+    favoritesSabdaList: List<EntireSabda>,
+    modifier: Modifier = Modifier
+) {
+
+    var isDialogOpened by rememberSaveable { mutableStateOf(false) }
+    val sabdaToRemove = favoritesUIState.sabdaToRemove
+
+    Surface {
+        LazyColumn(
+            modifier = modifier.padding(horizontal = 4.dp)
+        ) {
+            item {
+                Spacer(Modifier.height(16.dp))
+            }
+            items(favoritesSabdaList) { details ->
+                FavoritesSabdaCard(
+                    onClick = {
+
+                    }, onLongClick = {
+                        Log.d("click", "LongClick Works!")
+                    }, onHeartIconClick = {
+                        viewModel.updateSabdaToRemove(details)
+                        isDialogOpened = !isDialogOpened
+                    }, details = details, modifier = Modifier.padding(8.dp)
+                )
+            }
+            item {
+                Spacer(Modifier.height(28.dp))
+            }
+        }
+
+        DeletionDialog(
+            isOpen = isDialogOpened,
+            onDismissRequest = {
+                isDialogOpened = false
+            },
+            onConfirm = {
+                if (sabdaToRemove != null) {
+                    viewModel.removeSabdaFromFavorites(sabdaToRemove)
+                }
+                isDialogOpened = false
+            },
+            modifier = Modifier
+                .clip(MaterialTheme.shapes.extraLarge)
+        )
+    }
+
 }
 
 @OptIn(ExperimentalFoundationApi::class)

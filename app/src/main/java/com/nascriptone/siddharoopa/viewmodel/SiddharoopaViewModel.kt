@@ -121,7 +121,9 @@ class SiddharoopaViewModel @Inject constructor(
                         unorderedMap[sabda.favSabdaId]
                     }
 
-                    ScreenState.Success(data = favoriteSabdaList)
+                    if (favoriteSabdaList.isEmpty()) ScreenState.Empty
+                    else ScreenState.Success(data = favoriteSabdaList)
+
                 }.getOrElse { e ->
                     Log.e("error", e.message.orEmpty(), e)
                     ScreenState.Error(msg = e.message.orEmpty())
@@ -167,6 +169,12 @@ class SiddharoopaViewModel @Inject constructor(
             }.getOrElse { e ->
                 Log.d("error", "Add Sabda Error Occur!", e)
             }
+        }
+    }
+
+    fun updateSabdaToRemove(currentSabda: EntireSabda) {
+        _favoritesUIState.update {
+            it.copy(sabdaToRemove = currentSabda)
         }
     }
 
