@@ -34,7 +34,4 @@ class AppRepository @Inject constructor(
         favoriteSabdaDao.removeFavoriteSabda(id, table)
     }
 
-    suspend fun isFavoriteExists(id: Int, table: String): Boolean =
-        favoriteSabdaDao.isFavoriteExists(id, table)
-
 }
