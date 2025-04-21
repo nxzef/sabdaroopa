@@ -71,7 +71,8 @@ fun TableScreen(
 
     LaunchedEffect(Unit) {
         if (!isFetched) {
-            viewModel.parseStringToDeclension()
+            if (tableUIState.currentSabda == null) return@LaunchedEffect
+            viewModel.parseStringToDeclension(tableUIState.currentSabda)
             isFetched = true
         }
     }

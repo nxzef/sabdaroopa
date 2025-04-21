@@ -40,16 +40,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun FavoritesScreen(
     viewModel: SiddharoopaViewModel,
+    navHostController: NavHostController,
     favoritesUIState: FavoritesScreenState,
     modifier: Modifier = Modifier
 ) {
@@ -80,6 +83,7 @@ fun FavoritesScreen(
 
         is ScreenState.Success -> FavoritesScreenContent(
             viewModel = viewModel,
+            navHostController = navHostController,
             favoritesUIState = favoritesUIState,
             favoritesSabdaList = result.data,
             modifier = modifier
@@ -91,6 +95,7 @@ fun FavoritesScreen(
 @Composable
 fun FavoritesScreenContent(
     viewModel: SiddharoopaViewModel,
+    navHostController: NavHostController,
     favoritesUIState: FavoritesScreenState,
     favoritesSabdaList: List<EntireSabda>,
     modifier: Modifier = Modifier
@@ -109,7 +114,8 @@ fun FavoritesScreenContent(
             items(favoritesSabdaList) { details ->
                 FavoritesSabdaCard(
                     onClick = {
-
+                        viewModel.selectSabdaToShowDeclension(details)
+                        navHostController.navigate(SiddharoopaRoutes.Table.name)
                     }, onLongClick = {
                         Log.d("click", "LongClick Works!")
                     }, onHeartIconClick = {
