@@ -24,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.nascriptone.siddharoopa.core.utils.isDarkTheme
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
@@ -33,6 +34,7 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
@@ -120,6 +122,7 @@ fun SiddharoopaApp(
                     composable(SiddharoopaRoutes.Favorites.name) {
                         FavoritesScreen(
                             viewModel = viewModel,
+                            navHostController = navHostController,
                             favoritesUIState = favoritesUIState
                         )
                     }
@@ -127,6 +130,14 @@ fun SiddharoopaApp(
                         SettingsScreen(
                             settingsUIState = settingsUIState, viewModel = viewModel
                         )
+                    }
+                    navigation(
+                        route = SiddharoopaRoutes.Quiz.name,
+                        startDestination = SiddharoopaRoutes.QuizHome.name
+                    ) {
+                        composable(SiddharoopaRoutes.QuizHome.name) {
+                            QuizHomeScreen()
+                        }
                     }
                 }
             }

@@ -221,9 +221,8 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun parseStringToDeclension() {
+    fun parseStringToDeclension(currentSabda: EntireSabda) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentSabda = categoryUIState.value.selectedSabda ?: return@launch
             _tableUIState.update {
                 it.copy(
                     currentSabda = currentSabda,
@@ -249,6 +248,17 @@ class SiddharoopaViewModel @Inject constructor(
         _categoryUIState.update {
             it.copy(
                 selectedSabda = sabda
+            )
+        }
+        categoryUIState.value.selectedSabda?.let {
+            selectSabdaToShowDeclension(it)
+        }
+    }
+
+    fun selectSabdaToShowDeclension(sabda: EntireSabda) {
+        _tableUIState.update {
+            it.copy(
+                currentSabda = sabda
             )
         }
     }

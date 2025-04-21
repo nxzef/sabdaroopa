@@ -5,5 +5,7 @@ enum class SiddharoopaRoutes {
     Category,
     Table,
     Settings,
-    Favorites
+    Favorites,
+    Quiz,
+    QuizHome
 }
