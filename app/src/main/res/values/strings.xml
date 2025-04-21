@@ -80,4 +80,10 @@
     <string name="light">Light</string>
     <string name="dark">Dark</string>
 
+
+    <!-- Favorite Screen -->
+
+    <string name="add_favorite_msg">Added to Favorites</string>
+    <string name="remove_favorite_msg">Removed from Favorites</string>
+
 </resources>

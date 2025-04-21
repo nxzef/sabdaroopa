@@ -113,12 +113,16 @@ class SiddharoopaViewModel @Inject constructor(
                             )
                         }
 
-                        sabdaList.map { sabda -> EntireSabda(sabda, table) }
+                        sabdaList.fastMap { sabda -> EntireSabda(sabda, table) }
                     }.flatten()
 
                     val unorderedMap = favoriteSabdaDetailsUnordered.associateBy { it.sabda.id }
                     val favoriteSabdaList = reversed.mapNotNull { sabda ->
                         unorderedMap[sabda.favSabdaId]
+                    }
+
+                    tableUIState.value.currentSabda?.let { currentSabda ->
+                        _tableUIState.update { it.copy(isItFavorite = favoriteSabdaList.any { it == currentSabda }) }
                     }
 
                     if (favoriteSabdaList.isEmpty()) ScreenState.Empty
@@ -135,14 +139,10 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun toggleFavoriteSabda() {
-        val currentSabda = tableUIState.value.currentSabda ?: return
+    fun toggleFavoriteSabda(currentSabda: EntireSabda) {
         val isItFavorite = tableUIState.value.isItFavorite
-
         if (isItFavorite) removeSabdaFromFavorites(currentSabda)
         else addSabdaToFavorites(currentSabda)
-        val isExist = checkFavoriteSabdaExistence(currentSabda)
-        _tableUIState.update { it.copy(isItFavorite = isExist) }
     }
 
     fun removeSabdaFromFavorites(currentSabda: EntireSabda) {
@@ -182,9 +182,7 @@ class SiddharoopaViewModel @Inject constructor(
         val currentState = favoritesUIState.value.result
         if (currentState !is ScreenState.Success) return false
         val favoriteSabdaList = currentState.data
-        return favoriteSabdaList.any {
-            it.sabda.id == currentSabda.sabda.id && it.table == currentSabda.table
-        }
+        return favoriteSabdaList.any { it == currentSabda }
     }
 
 
