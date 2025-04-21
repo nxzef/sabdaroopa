@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -171,6 +172,8 @@ fun FavoritesSabdaCard(
     val sound = Sound.valueOf(sabda.sound.uppercase())
     val detailedText = "${sabda.anta} $genderInSkt $sabdaSkt"
 
+    val heartIcon = painterResource(R.drawable.heart_minus_24px)
+
     Card(
         modifier = modifier
             .clip(MaterialTheme.shapes.large)
@@ -190,7 +193,7 @@ fun FavoritesSabdaCard(
             ) {
                 Text(sabda.word, style = MaterialTheme.typography.headlineMedium)
                 IconButton(onClick = onHeartIconClick) {
-                    Icon(Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.secondary)
+                    Icon(heartIcon, null, tint = MaterialTheme.colorScheme.secondary)
                 }
             }
             Text(
