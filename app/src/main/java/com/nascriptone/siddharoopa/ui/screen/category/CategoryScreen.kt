@@ -95,21 +95,6 @@ fun CategoryScreenContent(
 
 
     val tabItems = Sound.entries
-
-//    val genderSuggestions: Set<Suggestion> = remember {
-//        setOf(
-//            Suggestion(
-//                skt = R.string.all_skt
-//            ), Suggestion(
-//                gender = Gender.Masculine, skt = R.string.masculine_skt
-//            ), Suggestion(
-//                gender = Gender.Feminine, skt = R.string.feminine_skt
-//            ), Suggestion(
-//                gender = Gender.Neuter, skt = R.string.neuter_skt
-//            )
-//        )
-//    }
-
     val genderSuggestions: Set<Gender?> = setOf(
         null, *Gender.entries.toTypedArray()
     )
