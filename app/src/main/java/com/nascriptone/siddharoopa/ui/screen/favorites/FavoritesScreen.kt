@@ -171,7 +171,7 @@ fun FavoritesSabdaCard(
     val sound = Sound.valueOf(sabda.sound.uppercase())
     val detailedText = "${sabda.anta} $genderInSkt $sabdaSkt"
 
-    val heartIcon = painterResource(R.drawable.heart_minus_24px)
+    val heartIcon = painterResource(R.drawable.heart_minus_24px_1_)
 
     Card(
         modifier = modifier
