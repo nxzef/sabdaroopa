@@ -292,10 +292,7 @@ fun SiddharoopaTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
-    ) {
-        Surface {
-            content()
-        }
-    }
+        content = content
+    )
 }
 
