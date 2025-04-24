@@ -24,52 +24,51 @@ import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTopBar(
-    navHostController: NavHostController,
-    modifier: Modifier = Modifier
+    navHostController: NavHostController, modifier: Modifier = Modifier
 ) {
 
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
 
+    fun navigate(route: SiddharoopaRoutes) {
+        menuExpanded = !menuExpanded
+        navHostController.navigate(route.name)
+    }
+
     TopAppBar(
         title = {
-            Text(stringResource(R.string.app_name))
-        },
-        actions = {
-            Box {
-                IconButton(onClick = {
-                    menuExpanded = !menuExpanded
-                }) {
-                    Icon(Icons.Rounded.MoreVert, null)
-                }
-                DropdownMenu(
-                    menuExpanded,
-                    onDismissRequest = {
-                        menuExpanded = !menuExpanded
-                    },
-                    modifier = Modifier,
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text("Favorites")
-                        },
-                        onClick = {
-                            navHostController.navigate(SiddharoopaRoutes.Favorites.name)
-                            menuExpanded = !menuExpanded
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text("Settings")
-                        },
-                        onClick = {
-                            navHostController.navigate(SiddharoopaRoutes.Settings.name)
-                            menuExpanded = !menuExpanded
-                        }
-                    )
-                }
+        Text(stringResource(R.string.app_name))
+    }, actions = {
+        Box {
+            IconButton(onClick = {
+                menuExpanded = !menuExpanded
+            }) {
+                Icon(Icons.Rounded.MoreVert, null)
             }
-        },
-        modifier = modifier
+            DropdownMenu(
+                menuExpanded,
+                onDismissRequest = {
+                    menuExpanded = !menuExpanded
+                },
+                modifier = Modifier,
+            ) {
+                DropdownMenuItem(text = {
+                    Text("Quiz")
+                }, onClick = {
+                    navigate(SiddharoopaRoutes.Quiz)
+                })
+                DropdownMenuItem(text = {
+                    Text("Favorites")
+                }, onClick = {
+                    navigate(SiddharoopaRoutes.Favorites)
+                })
+                DropdownMenuItem(text = {
+                    Text("Settings")
+                }, onClick = {
+                    navigate(SiddharoopaRoutes.Settings)
+                })
+            }
+        }
+    }, modifier = modifier
     )
 
 }
