@@ -7,18 +7,17 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Table
 
 
 data class CategoryScreenState(
-    val selectedSabda: EntireSabda? = null,
+    val selectedTable: Table? = null,
     val selectedSound: Sound? = null,
     val selectedGender: Gender? = null,
-    val lastFetchedTable: Table? = null,
-    val isDataFetched: Boolean = false,
-    val result: DataFetchState = DataFetchState.Loading,
-    val filteredData: List<EntireSabda> = emptyList()
+    val result: FilterState = FilterState.Loading
 )
 
-sealed class DataFetchState {
-    data object Loading : DataFetchState()
-    data class Error(val msg: String) : DataFetchState()
-    data class Success(val data: List<EntireSabda>) : DataFetchState()
+sealed class FilterState {
+    data object Loading : FilterState()
+    data class Error(val msg: String) : FilterState()
+    data class Success(val filteredData: List<EntireSabda>) : FilterState()
 }
+
+
 

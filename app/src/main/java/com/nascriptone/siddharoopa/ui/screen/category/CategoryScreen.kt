@@ -23,9 +23,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,27 +52,27 @@ fun CategoryScreen(
 ) {
 
     LaunchedEffect(Unit) {
-        viewModel.fetchSabda()
+        viewModel.filterSabda()
     }
 
 
     when (val result = categoryScreenState.result) {
-        is DataFetchState.Loading -> {
+        is FilterState.Loading -> {
             CurrentState {
                 CircularProgressIndicator()
             }
         }
 
-        is DataFetchState.Error -> {
+        is FilterState.Error -> {
             CurrentState {
                 Text(result.msg)
                 Log.e("room_error", result.msg)
             }
         }
 
-        is DataFetchState.Success -> {
+        is FilterState.Success -> {
             CategoryScreenContent(
-                data = categoryScreenState.filteredData,
+                data = result.filteredData,
                 currentSound = categoryScreenState.selectedSound,
                 currentGender = categoryScreenState.selectedGender,
                 viewModel = viewModel,
@@ -103,8 +103,8 @@ fun CategoryScreenContent(
         Column(
             modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TabRow(
-                selectedTabIndex = tabItems.indexOf(currentSound),
+            SecondaryTabRow(
+                selectedTabIndex = tabItems.indexOf(currentSound)
             ) {
                 tabItems.forEach { sound ->
                     val label = stringResource(sound.skt)

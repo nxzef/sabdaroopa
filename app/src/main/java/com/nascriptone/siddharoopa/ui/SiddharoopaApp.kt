@@ -85,8 +85,8 @@ fun SiddharoopaApp(
                         AppTopBar(
                             navHostController = navHostController,
                             currentRoute = currentRoute,
-                            categoryScreenTitle = categoryScreenState.lastFetchedTable,
-                            tableScreenTitle = tableUIState.currentSabda?.sabda?.word
+                            categoryScreenTitle = categoryScreenState.selectedTable,
+                            tableScreenTitle = tableUIState.selectedSabda?.sabda?.word
                         )
                     },
                     snackbarHost = {
@@ -105,7 +105,7 @@ fun SiddharoopaApp(
                             HomeScreen(
                                 viewModel = viewModel,
                                 navHostController = navHostController,
-                                homeUIState = homeUiState,
+                                homeScreenState = homeUiState,
                             )
                         }
                         composable(SiddharoopaRoutes.Category.name) {

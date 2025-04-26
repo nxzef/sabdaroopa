@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,35 +54,18 @@ fun FavoritesScreen(
     modifier: Modifier = Modifier
 ) {
 
-    when (val result = favoritesUIState.result) {
-        is ScreenState.Loading -> CurrentState {
-            CircularProgressIndicator()
-        }
+    val favoriteSabdaList = favoritesUIState.favoriteList
 
-        is ScreenState.Empty -> CurrentState {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    Icons.Rounded.FavoriteBorder,
-                    null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.surfaceTint
-                )
-                Spacer(Modifier.height(8.dp))
-                Text("Favorites are empty!")
-            }
+    if (favoriteSabdaList.isEmpty()) {
+        CurrentState {
+            Text("There is nothing!")
         }
-
-        is ScreenState.Error -> CurrentState {
-            Text(result.msg)
-        }
-
-        is ScreenState.Success -> FavoritesScreenContent(
+    } else {
+        FavoritesScreenContent(
             viewModel = viewModel,
             navHostController = navHostController,
             favoritesUIState = favoritesUIState,
-            favoritesSabdaList = result.data,
+            favoritesSabdaList = favoriteSabdaList,
             modifier = modifier
         )
     }
@@ -114,7 +94,7 @@ fun FavoritesScreenContent(
             items(favoritesSabdaList) { details ->
                 FavoritesSabdaCard(
                     onClick = {
-                        viewModel.selectSabdaToShowDeclension(details)
+                        viewModel.updateSelectedSabda(details)
                         navHostController.navigate(SiddharoopaRoutes.Table.name)
                     }, onLongClick = {
                         Log.d("click", "LongClick Works!")

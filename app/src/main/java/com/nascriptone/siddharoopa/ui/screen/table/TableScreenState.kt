@@ -3,8 +3,7 @@ package com.nascriptone.siddharoopa.ui.screen.table
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 
 data class TableScreenState(
-    val currentSabda: EntireSabda? = null,
-    val isItFavorite: Boolean = false,
+    val selectedSabda: EntireSabda? = null,
     val result: StringParse = StringParse.Loading
 )
 

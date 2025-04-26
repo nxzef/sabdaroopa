@@ -1,17 +1,18 @@
 package com.nascriptone.siddharoopa.data.repository
 
-import com.nascriptone.siddharoopa.data.local.dao.FavoriteSabdaDao
+import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
 import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
-import com.nascriptone.siddharoopa.data.model.entity.FavoriteSabda
+import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject
 
 class AppRepository @Inject constructor(
     private val generalSabdaDao: GeneralSabdaDao,
     private val specificSabdaDao: SpecificSabdaDao,
-    private val favoriteSabdaDao: FavoriteSabdaDao
+    private val restPropDao: RestPropDao
 ) {
 
 
@@ -24,14 +25,14 @@ class AppRepository @Inject constructor(
     suspend fun getSpecificFavoritesSabda(ids: List<Int>): List<Sabda> = specificSabdaDao.getFavoritesSabda(ids)
 
     // Favorite
-    fun getAllFavoriteSabda(): Flow<List<FavoriteSabda>> = favoriteSabdaDao.getAllSabda()
+    fun getAllRestProp(): Flow<List<RestProp>> = restPropDao.getAllRestProp()
 
-    suspend fun addFavoriteSabda(favoriteSabda: FavoriteSabda) {
-        favoriteSabdaDao.addFavoriteSabda(favoriteSabda)
+    suspend fun addFavoriteSabda(favoriteSabda: RestProp) {
+
     }
 
     suspend fun removeFavoriteSabda(id: Int, table: String) {
-        favoriteSabdaDao.removeFavoriteSabda(id, table)
+
     }
 
 }

@@ -71,8 +71,7 @@ fun TableScreen(
 
     LaunchedEffect(Unit) {
         if (!isFetched) {
-            if (tableUIState.currentSabda == null) return@LaunchedEffect
-            viewModel.parseStringToDeclension(tableUIState.currentSabda)
+            viewModel.parseStringToDeclension()
             isFetched = true
         }
     }
@@ -125,8 +124,7 @@ fun DeclensionTable(
 ) {
 
     val scope = rememberCoroutineScope()
-    val currentSabda = tableUIState.currentSabda
-    val isItFavorite = tableUIState.isItFavorite
+    val currentSabda = tableUIState.selectedSabda
 
     val displayText = if (currentSabda != null) {
         val sabda = currentSabda.sabda
@@ -139,7 +137,7 @@ fun DeclensionTable(
     val addFavMsg = stringResource(R.string.add_favorite_msg)
     val removeFavMsg = stringResource(R.string.remove_favorite_msg)
 
-    val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
+//    val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
 
 
     Surface {
@@ -197,11 +195,11 @@ fun DeclensionTable(
                 }
             }
             FavoriteView(
-                isItFavorite = isItFavorite,
+                isItFavorite = false,
                 onClick = {
                     scope.launch {
-                        currentSabda?.let { viewModel.toggleFavoriteSabda(it) }
-                        snackbarHostState.showSnackbar(snackBarMas)
+//                        currentSabda?.let { viewModel.toggleFavoriteSabda(it) }
+//                        snackbarHostState.showSnackbar(snackBarMas)
                     }
                 }
             )

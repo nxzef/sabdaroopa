@@ -13,12 +13,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,6 +30,7 @@ import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
+import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
@@ -35,37 +38,63 @@ import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 fun HomeScreen(
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
-    homeUIState: HomeScreenState,
+    homeScreenState: HomeScreenState,
+    modifier: Modifier = Modifier
+) {
+    when (val result = homeScreenState.result) {
+        is ObserveSabda.Loading -> CurrentState {
+            CircularProgressIndicator()
+        }
+
+        is ObserveSabda.Error -> CurrentState {
+            Text(result.msg)
+        }
+
+        is ObserveSabda.Success -> HomeScreenContent(
+            viewModel = viewModel,
+            navHostController = navHostController
+        )
+    }
+}
+
+@Composable
+fun HomeScreenContent(
+    viewModel: SiddharoopaViewModel,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
-    val tableViews = listOf<TableView>(
-        TableView(
-            table = Table.GENERAL,
-            option = OptionView(
-                sound = Sound.entries,
-                displayWord = DisplayWord(
-                    vowelResId = R.string.general_vowel,
-                    consonantResId = R.string.general_consonant
+    val tableViews = remember {
+        listOf<TableView>(
+            TableView(
+                table = Table.GENERAL,
+                option = OptionView(
+                    sound = Sound.entries,
+                    displayWord = DisplayWord(
+                        vowelResId = R.string.general_vowel,
+                        consonantResId = R.string.general_consonant
+                    )
                 )
-            )
-        ),
-        TableView(
-            table = Table.SPECIFIC,
-            option = OptionView(
-                sound = Sound.entries,
-                displayWord = DisplayWord(
-                    vowelResId = R.string.specific_vowel,
-                    consonantResId = R.string.specific_consonant
+            ),
+            TableView(
+                table = Table.SPECIFIC,
+                option = OptionView(
+                    sound = Sound.entries,
+                    displayWord = DisplayWord(
+                        vowelResId = R.string.specific_vowel,
+                        consonantResId = R.string.specific_consonant
+                    )
                 )
             )
         )
-    )
+    }
+
+    val scrollState = rememberScrollState()
 
 
     Surface {
         Column(
-            modifier = modifier.verticalScroll(rememberScrollState())
+            modifier = modifier.verticalScroll(scrollState)
         ) {
             tableViews.forEach { tables ->
                 val tableName = when (tables.table) {
