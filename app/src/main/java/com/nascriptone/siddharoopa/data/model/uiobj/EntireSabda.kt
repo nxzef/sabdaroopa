@@ -6,7 +6,13 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 
 data class EntireSabda(
     val sabda: Sabda,
-    val table: Table
+    val table: Table,
+    val isFavorite: IsFavorite
+)
+
+data class IsFavorite(
+    val status: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 enum class Table(@StringRes val skt: Int) {
