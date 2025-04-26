@@ -2,19 +2,18 @@ package com.nascriptone.siddharoopa.data.local
 
 import androidx.room.AutoMigration
 import androidx.room.Database
-import androidx.room.DeleteColumn
-import androidx.room.RenameColumn
+import androidx.room.DeleteTable
 import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.nascriptone.siddharoopa.data.local.converter.Converter
-import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
 import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
+import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
 import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
-import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.GeneralSabda
+import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.SpecificSabda
 
 
@@ -38,13 +37,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun restPropDao(): RestPropDao
 
 
-    @RenameTable("favorite_sabda", "rest_prop")
-    @RenameColumn("favorite_sabda", "favSabdaId", "favorite")
-    @DeleteColumn("favorite_sabda", "favSabdaCategory")
+    @DeleteTable("favorite_sabda")
     class AutoMigration3 : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) {
-            super.onPostMigrate(db)
+            db.execSQL("DROP TABLE IF EXISTS favorite_sabda")
         }
     }
+
 
 }
