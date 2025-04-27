@@ -16,8 +16,8 @@ android {
         applicationId = "com.nascriptone.siddharoopa"
         minSdk = 24
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.6.14"
+        versionCode = 15
+        versionName = "1.6.15"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

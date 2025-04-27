@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 
-@Entity(tableName = "rest_prop")
+@Entity(tableName = "rest_props")
 data class RestProp(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

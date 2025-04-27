@@ -13,7 +13,7 @@ interface RestPropDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun addRestProp(restProp: RestProp)
 
-    @Query("SELECT * FROM rest_prop")
+    @Query("SELECT * FROM rest_props")
     fun getAllRestProp(): Flow<List<RestProp>>
 
 ////    @Query("DELETE FROM rest_prop WHERE favSabdaId = :id AND favSabdaCategory = :table")
