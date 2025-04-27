@@ -3,7 +3,6 @@ package com.nascriptone.siddharoopa.data.local
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.DeleteTable
-import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
@@ -37,10 +36,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun restPropDao(): RestPropDao
 
 
-    @DeleteTable("favorite_sabda")
+    @DeleteTable.Entries(
+        DeleteTable(tableName = "favorite_sabda")
+    )
     class AutoMigration3 : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) {
-            db.execSQL("DROP TABLE IF EXISTS favorite_sabda")
+            super.onPostMigrate(db)
         }
     }
 
