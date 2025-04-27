@@ -120,6 +120,7 @@ fun SiddharoopaApp(
                         composable(SiddharoopaRoutes.Table.name) {
                             TableScreen(
                                 tableUIState = tableUIState,
+                                entireSabdaList = entireSabdaList,
                                 viewModel = viewModel,
                                 snackbarHostState = snackbarHostState
                             )
@@ -128,7 +129,8 @@ fun SiddharoopaApp(
                             FavoritesScreen(
                                 viewModel = viewModel,
                                 navHostController = navHostController,
-                                favoritesUIState = favoritesUIState
+                                favoritesUIState = favoritesUIState,
+                                entireSabdaList = entireSabdaList
                             )
                         }
                         composable(SiddharoopaRoutes.Settings.name) {

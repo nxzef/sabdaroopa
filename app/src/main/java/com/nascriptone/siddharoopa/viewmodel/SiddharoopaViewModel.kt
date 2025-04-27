@@ -124,9 +124,7 @@ class SiddharoopaViewModel @Inject constructor(
                             }
                         }
                     }.awaitAll().flatten()
-                    val favoriteList = sabdaList.filter { it.isFavorite.status == true }
                     _entireSabdaList.value = sabdaList
-                    _favoritesUIState.update { it.copy(favoriteList = favoriteList) }
                     ObserveSabda.Success
                 }.getOrElse { e ->
                     Log.e("observeSabda", "Error occurred", e)
@@ -153,9 +151,7 @@ class SiddharoopaViewModel @Inject constructor(
                     table = currentSabda.table,
                     timestamp = currentSabda.isFavorite.timestamp
                 )
-                repository.removeRestProp(
-                    favorite = favorite
-                )
+                repository.removeRestProp(favorite = favorite)
             }.getOrElse { e ->
                 Log.d("error", "Remove Sabda Error Occur!", e)
             }
@@ -178,7 +174,7 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun updateSabdaToRemove(currentSabda: EntireSabda) {
+    fun updateSabdaToRemove(currentSabda: EntireSabda?) {
         _favoritesUIState.update {
             it.copy(sabdaToRemove = currentSabda)
         }
@@ -224,9 +220,8 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun parseStringToDeclension() {
+    fun parseStringToDeclension(currentSabda: EntireSabda) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentSabda = tableUIState.value.selectedSabda ?: return@launch
             _tableUIState.update {
                 it.copy(
                     result = StringParse.Loading

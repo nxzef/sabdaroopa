@@ -53,6 +53,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -61,17 +62,22 @@ import kotlinx.coroutines.launch
 @Composable
 fun TableScreen(
     tableUIState: TableScreenState,
+    entireSabdaList: List<EntireSabda>,
     viewModel: SiddharoopaViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
+
     val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
     var isFetched by rememberSaveable { mutableStateOf(false) }
-
+    val selectedSabda = tableUIState.selectedSabda
+    val currentSabda =
+        entireSabdaList.find { it.sabda == selectedSabda?.sabda && it.table == selectedSabda.table }
+    if (currentSabda == null) return
 
     LaunchedEffect(Unit) {
         if (!isFetched) {
-            viewModel.parseStringToDeclension()
+            viewModel.parseStringToDeclension(currentSabda)
             isFetched = true
         }
     }
@@ -107,7 +113,10 @@ fun TableScreen(
 
         is StringParse.Success -> {
             DeclensionTable(
-                result.declensionTable, tableUIState, viewModel, snackbarHostState
+                result.declensionTable,
+                currentSabda,
+                viewModel,
+                snackbarHostState
             )
         }
     }
@@ -117,27 +126,23 @@ fun TableScreen(
 @Composable
 fun DeclensionTable(
     declensionTable: List<List<String?>>,
-    tableUIState: TableScreenState,
+    currentSabda: EntireSabda,
     viewModel: SiddharoopaViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
 
     val scope = rememberCoroutineScope()
-    val currentSabda = tableUIState.selectedSabda
-    if (currentSabda == null) return
 
     val sabda = currentSabda.sabda
     val gender = Gender.valueOf(sabda.gender.uppercase())
     val genderSkt = stringResource(gender.skt)
     val sabdaSkt = stringResource(R.string.sabda)
+    val addFavMsg = stringResource(R.string.add_favorite_msg)
+    val removeFavMsg = stringResource(R.string.remove_favorite_msg)
     val displayText = "${sabda.anta} $genderSkt \"${sabda.word}\" $sabdaSkt"
 
     val isItFavorite = currentSabda.isFavorite.status
-
-    val addFavMsg = stringResource(R.string.add_favorite_msg)
-    val removeFavMsg = stringResource(R.string.remove_favorite_msg)
-
     val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
 
 

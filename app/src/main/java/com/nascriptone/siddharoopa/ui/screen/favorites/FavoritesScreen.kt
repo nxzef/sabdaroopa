@@ -51,10 +51,12 @@ fun FavoritesScreen(
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
     favoritesUIState: FavoritesScreenState,
+    entireSabdaList: List<EntireSabda>,
     modifier: Modifier = Modifier
 ) {
 
-    val favoriteSabdaList = favoritesUIState.favoriteList
+    val favoriteSabdaList = entireSabdaList.filter { it.isFavorite.status == true }
+        .sortedByDescending { it.isFavorite.timestamp }
 
     if (favoriteSabdaList.isEmpty()) {
         CurrentState {
@@ -82,9 +84,7 @@ fun FavoritesScreenContent(
 ) {
 
     var isDialogOpened by rememberSaveable { mutableStateOf(false) }
-    val sabdaToRemove = favoritesUIState.sabdaToRemove
-
-    val filteredList = favoritesSabdaList.sortedByDescending { it.isFavorite.timestamp }
+    Log.d("remove", "${favoritesUIState.sabdaToRemove}")
 
     Surface {
         LazyColumn(
@@ -93,19 +93,21 @@ fun FavoritesScreenContent(
             item {
                 Spacer(Modifier.height(16.dp))
             }
-            items(filteredList) { details ->
+
+            items(favoritesSabdaList) { sabda ->
                 FavoritesSabdaCard(
                     onClick = {
-                        viewModel.updateSelectedSabda(details)
+                        viewModel.updateSelectedSabda(sabda)
                         navHostController.navigate(SiddharoopaRoutes.Table.name)
                     }, onLongClick = {
                         Log.d("click", "LongClick Works!")
                     }, onHeartIconClick = {
-                        viewModel.updateSabdaToRemove(details)
+                        viewModel.updateSabdaToRemove(sabda)
                         isDialogOpened = !isDialogOpened
-                    }, details = details, modifier = Modifier.padding(8.dp)
+                    }, details = sabda, modifier = Modifier.padding(8.dp)
                 )
             }
+
             item {
                 Spacer(Modifier.height(28.dp))
             }
@@ -114,11 +116,12 @@ fun FavoritesScreenContent(
         DeletionDialog(
             isOpen = isDialogOpened,
             onDismissRequest = {
+                viewModel.updateSabdaToRemove(null)
                 isDialogOpened = false
             },
             onConfirm = {
-                if (sabdaToRemove != null) {
-                    viewModel.toggleFavoriteSabda(sabdaToRemove)
+                favoritesUIState.sabdaToRemove?.let {
+                    viewModel.toggleFavoriteSabda(it)
                 }
                 isDialogOpened = false
             },
