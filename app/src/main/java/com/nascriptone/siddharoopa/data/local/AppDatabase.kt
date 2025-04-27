@@ -24,24 +24,21 @@ import com.nascriptone.siddharoopa.data.model.entity.SpecificSabda
     version = AppDatabase.LATEST_VERSION,
     autoMigrations = [
         AutoMigration(1, 2),
-        AutoMigration(2, 3, AppDatabase.AutoMigration3::class)
+        AutoMigration(2, 3, AppDatabase.AutoMigration3::class),
+        AutoMigration(3, 4, AppDatabase.AutoMigration4::class)
     ],
     exportSchema = true
 )
 @TypeConverters(Converter::class)
 abstract class AppDatabase : RoomDatabase() {
     companion object {
-        const val LATEST_VERSION = 3
+        const val LATEST_VERSION = 4
     }
 
     abstract fun generalSabdaDao(): GeneralSabdaDao
     abstract fun specificSabdaDao(): SpecificSabdaDao
     abstract fun restPropDao(): RestPropDao
 
-
-//    @DeleteTable.Entries(
-//        DeleteTable(tableName = "favorite_sabda")
-//    )
 
     @RenameTable("favorite_sabda", "rest_prop")
     @RenameColumn("favorite_sabda", "favSabdaId", "favorite")
@@ -51,11 +48,16 @@ abstract class AppDatabase : RoomDatabase() {
             super.onPostMigrate(db)
         }
     }
-//    class AutoMigration3 : AutoMigrationSpec {
-//        override fun onPostMigrate(db: SupportSQLiteDatabase) {
-//            super.onPostMigrate(db)
-//        }
-//    }
+
+
+    @DeleteTable.Entries(
+        DeleteTable(tableName = "favorite_sabda")
+    )
+    class AutoMigration4 : AutoMigrationSpec {
+        override fun onPostMigrate(db: SupportSQLiteDatabase) {
+            super.onPostMigrate(db)
+        }
+    }
 
 
 }
