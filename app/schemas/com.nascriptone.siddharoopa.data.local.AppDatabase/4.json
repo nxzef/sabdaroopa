@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "ed97723299c39ec72d5a60194d35fd86",
+    "identityHash": "ed36f0eda227a150dc55957d7b57ddfc",
     "entities": [
       {
         "tableName": "general_sabda",
@@ -113,7 +113,7 @@
         }
       },
       {
-        "tableName": "rest_prop",
+        "tableName": "rest_props",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `favorite` TEXT)",
         "fields": [
           {
@@ -138,7 +138,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ed97723299c39ec72d5a60194d35fd86')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ed36f0eda227a150dc55957d7b57ddfc')"
     ]
   }
 }

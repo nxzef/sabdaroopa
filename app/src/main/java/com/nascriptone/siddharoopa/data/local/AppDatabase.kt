@@ -51,7 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
 
 
     @DeleteTable.Entries(
-        DeleteTable(tableName = "favorite_sabda")
+        DeleteTable(tableName = "rest_prop")
     )
     class AutoMigration4 : AutoMigrationSpec {
         override fun onPostMigrate(db: SupportSQLiteDatabase) {
