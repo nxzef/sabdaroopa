@@ -125,19 +125,20 @@ fun DeclensionTable(
 
     val scope = rememberCoroutineScope()
     val currentSabda = tableUIState.selectedSabda
+    if (currentSabda == null) return
 
-    val displayText = if (currentSabda != null) {
-        val sabda = currentSabda.sabda
-        val gender = Gender.valueOf(sabda.gender.uppercase())
-        val genderSkt = stringResource(gender.skt)
-        val sabdaSkt = stringResource(R.string.sabda)
-        "${sabda.anta} $genderSkt \"${sabda.word}\" $sabdaSkt"
-    } else ""
+    val sabda = currentSabda.sabda
+    val gender = Gender.valueOf(sabda.gender.uppercase())
+    val genderSkt = stringResource(gender.skt)
+    val sabdaSkt = stringResource(R.string.sabda)
+    val displayText = "${sabda.anta} $genderSkt \"${sabda.word}\" $sabdaSkt"
+
+    val isItFavorite = currentSabda.isFavorite.status
 
     val addFavMsg = stringResource(R.string.add_favorite_msg)
     val removeFavMsg = stringResource(R.string.remove_favorite_msg)
 
-//    val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
+    val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
 
 
     Surface {
@@ -195,14 +196,12 @@ fun DeclensionTable(
                 }
             }
             FavoriteView(
-                isItFavorite = false,
-                onClick = {
+                isItFavorite = isItFavorite, onClick = {
                     scope.launch {
-//                        currentSabda?.let { viewModel.toggleFavoriteSabda(it) }
-//                        snackbarHostState.showSnackbar(snackBarMas)
+                        viewModel.toggleFavoriteSabda(currentSabda)
+                        snackbarHostState.showSnackbar(snackBarMas)
                     }
-                }
-            )
+                })
             Spacer(Modifier.height(28.dp))
         }
     }

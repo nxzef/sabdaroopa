@@ -84,6 +84,8 @@ fun FavoritesScreenContent(
     var isDialogOpened by rememberSaveable { mutableStateOf(false) }
     val sabdaToRemove = favoritesUIState.sabdaToRemove
 
+    val filteredList = favoritesSabdaList.sortedByDescending { it.isFavorite.timestamp }
+
     Surface {
         LazyColumn(
             modifier = modifier.padding(horizontal = 4.dp)
@@ -91,7 +93,7 @@ fun FavoritesScreenContent(
             item {
                 Spacer(Modifier.height(16.dp))
             }
-            items(favoritesSabdaList) { details ->
+            items(filteredList) { details ->
                 FavoritesSabdaCard(
                     onClick = {
                         viewModel.updateSelectedSabda(details)
@@ -116,7 +118,7 @@ fun FavoritesScreenContent(
             },
             onConfirm = {
                 if (sabdaToRemove != null) {
-                    viewModel.removeSabdaFromFavorites(sabdaToRemove)
+                    viewModel.toggleFavoriteSabda(sabdaToRemove)
                 }
                 isDialogOpened = false
             },

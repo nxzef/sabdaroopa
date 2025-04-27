@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.entity.Favorite
+import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
@@ -48,12 +50,14 @@ class SiddharoopaViewModel @Inject constructor(
     private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
+    private val _entireSabdaList = MutableStateFlow(listOf<EntireSabda>())
+    val entireSabdaList: StateFlow<List<EntireSabda>> = _entireSabdaList.asStateFlow()
+
     private val _homeUIState = MutableStateFlow(HomeScreenState())
     val homeUIState: StateFlow<HomeScreenState> = _homeUIState.asStateFlow()
 
     private val _categoryUIState = MutableStateFlow(CategoryScreenState())
     val categoryUIState: StateFlow<CategoryScreenState> = _categoryUIState.asStateFlow()
-
 
     private val _tableUIState = MutableStateFlow(TableScreenState())
     val tableUIState: StateFlow<TableScreenState> = _tableUIState.asStateFlow()
@@ -120,10 +124,10 @@ class SiddharoopaViewModel @Inject constructor(
                             }
                         }
                     }.awaitAll().flatten()
-
                     val favoriteList = sabdaList.filter { it.isFavorite.status == true }
+                    _entireSabdaList.value = sabdaList
                     _favoritesUIState.update { it.copy(favoriteList = favoriteList) }
-                    ObserveSabda.Success(data = sabdaList)
+                    ObserveSabda.Success
                 }.getOrElse { e ->
                     Log.e("observeSabda", "Error occurred", e)
                     ObserveSabda.Error(msg = e.message.orEmpty())
@@ -135,17 +139,22 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-//    fun toggleFavoriteSabda(currentSabda: EntireSabda) {
-//        val isItFavorite = tableUIState.value.isItFavorite
-//        if (isItFavorite) removeSabdaFromFavorites(currentSabda)
-//        else addSabdaToFavorites(currentSabda)
-//    }
+    fun toggleFavoriteSabda(currentSabda: EntireSabda) {
+        val isItFavorite = currentSabda.isFavorite.status
+        if (isItFavorite) removeFavoriteFromRestProp(currentSabda)
+        else addFavoriteToRestProp(currentSabda)
+    }
 
-    fun removeSabdaFromFavorites(currentSabda: EntireSabda) {
+    private fun removeFavoriteFromRestProp(currentSabda: EntireSabda) {
         viewModelScope.launch {
             runCatching {
-                repository.removeFavoriteSabda(
-                    id = currentSabda.sabda.id, table = currentSabda.table.name
+                val favorite = Favorite(
+                    id = currentSabda.sabda.id,
+                    table = currentSabda.table,
+                    timestamp = currentSabda.isFavorite.timestamp
+                )
+                repository.removeRestProp(
+                    favorite = favorite
                 )
             }.getOrElse { e ->
                 Log.d("error", "Remove Sabda Error Occur!", e)
@@ -153,19 +162,21 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-//    fun addSabdaToFavorites(currentSabda: EntireSabda) {
-//        viewModelScope.launch {
-//            runCatching {
-//                val favoriteSabda = RestProp(
-//                    favSabdaId = currentSabda.sabda.id,
-//                    favSabdaCategory = currentSabda.table.name
-//                )
-//                repository.addFavoriteSabda(favoriteSabda)
-//            }.getOrElse { e ->
-//                Log.d("error", "Add Sabda Error Occur!", e)
-//            }
-//        }
-//    }
+    private fun addFavoriteToRestProp(currentSabda: EntireSabda) {
+        viewModelScope.launch {
+            runCatching {
+                val restProp = RestProp(
+                    favorite = Favorite(
+                        id = currentSabda.sabda.id,
+                        table = currentSabda.table
+                    )
+                )
+                repository.addRestProp(restProp)
+            }.getOrElse { e ->
+                Log.d("error", "Add Sabda Error Occur!", e)
+            }
+        }
+    }
 
     fun updateSabdaToRemove(currentSabda: EntireSabda) {
         _favoritesUIState.update {
@@ -191,7 +202,7 @@ class SiddharoopaViewModel @Inject constructor(
                 selectedSound = sound, selectedGender = null
             )
         }
-        applyFilter()
+        applyFilter(entireSabdaList.value)
     }
 
     fun updateGenderFilter(gender: Gender?) {
@@ -200,14 +211,10 @@ class SiddharoopaViewModel @Inject constructor(
                 selectedGender = gender
             )
         }
-        applyFilter()
+        applyFilter(entireSabdaList.value)
     }
 
-
-    fun updateTable(
-        selectedTable: Table,
-        selectedSound: Sound,
-    ) {
+    fun updateTable(selectedTable: Table, selectedSound: Sound) {
         _categoryUIState.update {
             it.copy(
                 selectedTable = selectedTable,
@@ -297,12 +304,12 @@ class SiddharoopaViewModel @Inject constructor(
         )
     }
 
-    private fun applyFilter() {
+    private fun applyFilter(data: List<EntireSabda>) {
         viewModelScope.launch(Dispatchers.IO) {
             _categoryUIState.update { it.copy(result = FilterState.Loading) }
             val result = runCatching {
-                val data =
-                    (homeUIState.value.result as? ObserveSabda.Success)?.data ?: emptyList()
+//                val data =
+//                    (homeUIState.value.result as? ObserveSabda.Success)?.data ?: emptyList()
                 val filteredData = data.filter { entireSabda ->
 
                     listOfNotNull(
@@ -320,6 +327,6 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun filterSabda() = applyFilter()
+    fun filterSabda(entireSabdaList: List<EntireSabda>) = applyFilter(entireSabdaList)
 
 }

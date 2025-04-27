@@ -51,6 +51,7 @@ fun SiddharoopaApp(
     navHostController: NavHostController = rememberNavController()
 ) {
 
+    val entireSabdaList by viewModel.entireSabdaList.collectAsStateWithLifecycle()
     val homeUiState by viewModel.homeUIState.collectAsStateWithLifecycle()
     val categoryScreenState by viewModel.categoryUIState.collectAsStateWithLifecycle()
     val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
@@ -112,6 +113,7 @@ fun SiddharoopaApp(
                             CategoryScreen(
                                 viewModel = viewModel,
                                 navHostController = navHostController,
+                                entireSabdaList = entireSabdaList,
                                 categoryScreenState = categoryScreenState
                             )
                         }

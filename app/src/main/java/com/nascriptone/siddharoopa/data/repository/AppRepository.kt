@@ -3,6 +3,7 @@ package com.nascriptone.siddharoopa.data.repository
 import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
 import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
+import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import kotlinx.coroutines.flow.Flow
@@ -24,15 +25,11 @@ class AppRepository @Inject constructor(
     suspend fun getAllSpecificSabda(): List<Sabda> = specificSabdaDao.getAllSabda()
     suspend fun getSpecificFavoritesSabda(ids: List<Int>): List<Sabda> = specificSabdaDao.getFavoritesSabda(ids)
 
-    // Favorite
+    // RestProps
     fun getAllRestProp(): Flow<List<RestProp>> = restPropDao.getAllRestProp()
 
-    suspend fun addFavoriteSabda(favoriteSabda: RestProp) {
+    suspend fun addRestProp(restProp: RestProp) = restPropDao.addFavoriteToRestProp(restProp)
 
-    }
-
-    suspend fun removeFavoriteSabda(id: Int, table: String) {
-
-    }
+    suspend fun removeRestProp(favorite: Favorite) = restPropDao.removeFavoriteFromRestProp(favorite)
 
 }
