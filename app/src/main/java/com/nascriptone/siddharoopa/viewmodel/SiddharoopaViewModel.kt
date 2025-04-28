@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 
@@ -229,9 +230,7 @@ class SiddharoopaViewModel @Inject constructor(
             }
             val result = runCatching {
                 val declensionOBJ = currentSabda.sabda.declension
-                val declension = Gson().fromJson(
-                    declensionOBJ, Declension::class.java
-                )
+                val declension = Json.decodeFromString<Declension>(declensionOBJ)
                 val declensionTable = createDeclensionTable(declension)
                 StringParse.Success(declensionTable = declensionTable)
             }.getOrElse { e ->
