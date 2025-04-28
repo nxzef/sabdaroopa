@@ -180,13 +180,6 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-//    private fun checkFavoriteSabdaExistence(currentSabda: EntireSabda): Boolean {
-//        val currentState = favoritesUIState.value.result
-//        if (currentState !is ScreenState.Success) return false
-//        val favoriteSabdaList = currentState.data
-//        return favoriteSabdaList.any { it == currentSabda }
-//    }
-
 
     fun resetTableState() {
         _tableUIState.value = TableScreenState()
@@ -301,8 +294,6 @@ class SiddharoopaViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _categoryUIState.update { it.copy(result = FilterState.Loading) }
             val result = runCatching {
-//                val data =
-//                    (homeUIState.value.result as? ObserveSabda.Success)?.data ?: emptyList()
                 val filteredData = data.filter { entireSabda ->
 
                     listOfNotNull(
