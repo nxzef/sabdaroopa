@@ -86,4 +86,9 @@
     <string name="add_favorite_msg">Added to Favorites</string>
     <string name="remove_favorite_msg">Removed from Favorites</string>
 
+
+    <!-- Quiz Screen -->
+
+    <string name="start_your_quiz">Start Your Quiz</string>
+
 </resources>
