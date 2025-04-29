@@ -85,7 +85,7 @@ fun QuestionRangeSlider(
         valueRange = 1F..100F,
         onValueChangeFinished = {})
 
-    RangeSlider(state = rangeSliderState)
+    RangeSlider(state = rangeSliderState, modifier = modifier)
 }
 
 @Composable
