@@ -9,13 +9,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +33,13 @@ import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 
 @Composable
 fun QuizHomeScreen(modifier: Modifier = Modifier) {
+    val scrollState = rememberScrollState()
     Surface {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier.padding(horizontal = 8.dp)
+            modifier = modifier
+                .padding(horizontal = 8.dp)
+                .verticalScroll(scrollState)
         ) {
             Spacer(Modifier.height(20.dp))
             QuizChooseOptionView(
@@ -50,17 +59,54 @@ fun QuizHomeScreen(modifier: Modifier = Modifier) {
                 title = "Question Type"
             ) {
                 QuizChooseOption(
-                    optionName = ""
+                    optionName = "MCQ"
                 )
+                HorizontalDivider()
                 QuizChooseOption(
-                    optionName = ""
+                    optionName = "Fill in the blanks"
                 )
+                HorizontalDivider()
                 QuizChooseOption(
-                    optionName = ""
+                    optionName = "Find Gender"
                 )
             }
+            QuizChooseOptionView(
+                title = "Question Range"
+            ) {
+                StepSlider(
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            Spacer(Modifier.height(28.dp))
+            Button(
+                onClick = {}, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Text("Start Quiz")
+            }
+            Spacer(Modifier.height(32.dp))
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StepSlider(
+    modifier: Modifier = Modifier
+) {
+
+    val sliderState = rememberSliderState(
+        value = 10F,
+        steps = 4,
+        valueRange = 5F..30F
+    )
+
+    Slider(
+        state = sliderState,
+        modifier = modifier
+    )
+
 }
 
 @Composable
@@ -71,7 +117,7 @@ fun QuizChooseOptionView(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 12.dp)
+            .padding(vertical = 20.dp)
             .fillMaxWidth(0.9F)
     ) {
         Text(
@@ -98,7 +144,7 @@ fun QuizChooseOption(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .padding(12.dp),
+            .padding(horizontal = 4.dp, vertical = 8.dp),
     ) {
         RadioButton(
             selected = false,
