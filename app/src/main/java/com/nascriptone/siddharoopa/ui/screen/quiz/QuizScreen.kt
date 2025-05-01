@@ -28,11 +28,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 
 @Composable
-fun QuizHomeScreen(modifier: Modifier = Modifier) {
+fun QuizHomeScreen(
+    navHostController: NavHostController,
+    modifier: Modifier = Modifier
+) {
     val scrollState = rememberScrollState()
     Surface {
         Column(
@@ -59,15 +65,15 @@ fun QuizHomeScreen(modifier: Modifier = Modifier) {
                 title = "Question Type"
             ) {
                 QuizChooseOption(
-                    optionName = "MCQ"
+                    optionName = "Multiple Choice (MCQ)"
                 )
                 HorizontalDivider()
                 QuizChooseOption(
-                    optionName = "Fill in the blanks"
+                    optionName = "Fill in the Blanks"
                 )
                 HorizontalDivider()
                 QuizChooseOption(
-                    optionName = "Find Gender"
+                    optionName = "Match the Following"
                 )
             }
             QuizChooseOptionView(
@@ -79,11 +85,12 @@ fun QuizHomeScreen(modifier: Modifier = Modifier) {
             }
             Spacer(Modifier.height(28.dp))
             Button(
-                onClick = {}, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                onClick = {
+                    navHostController.navigate(SiddharoopaRoutes.QuizQuestion.name)
+                }, modifier = Modifier
+                    .fillMaxWidth(0.9F)
             ) {
-                Text("Start Quiz")
+                Text("Begin Quiz")
             }
             Spacer(Modifier.height(32.dp))
         }
@@ -173,6 +180,7 @@ fun QuizChooseOption(
 fun QuizHomeScreenContentPreview() {
     SiddharoopaTheme(true) {
         QuizHomeScreen(
+            navHostController = rememberNavController(),
             modifier = Modifier.fillMaxSize()
         )
     }
