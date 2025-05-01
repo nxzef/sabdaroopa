@@ -8,5 +8,8 @@ enum class SiddharoopaRoutes {
     Favorites,
     Quiz,
     QuizHome,
-    QuizQuestion
+    QuizQuestion,
+    QuizInstruction,
+    QuizResult,
+    QuizReview
 }
