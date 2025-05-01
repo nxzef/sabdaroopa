@@ -36,7 +36,10 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizQuestionScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
@@ -150,6 +153,15 @@ fun SiddharoopaApp(
                             }
                             composable(SiddharoopaRoutes.QuizQuestion.name) {
                                 QuizQuestionScreen()
+                            }
+                            composable(SiddharoopaRoutes.QuizInstruction.name) {
+                                QuizInstructionScreen()
+                            }
+                            composable(SiddharoopaRoutes.QuizResult.name) {
+                                QuizResultScreen()
+                            }
+                            composable(SiddharoopaRoutes.QuizReview.name) {
+                                QuizReviewScreen()
                             }
                         }
                     }

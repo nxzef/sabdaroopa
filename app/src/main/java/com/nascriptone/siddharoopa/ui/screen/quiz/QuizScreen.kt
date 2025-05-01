@@ -1,5 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -8,27 +10,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,15 +56,25 @@ fun QuizHomeScreen(
                 .padding(horizontal = 8.dp)
                 .verticalScroll(scrollState)
         ) {
-            Spacer(Modifier.height(20.dp))
-            OutlinedIconButton(onClick = {
 
-            }) {
-                Icon(Icons.Rounded.Info, null)
+            IconButton(
+                onClick = {
+                    navHostController.navigate(SiddharoopaRoutes.QuizInstruction.name)
+                }, modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(vertical = 8.dp)
+            ) {
+                Icon(Icons.Outlined.Info, null)
             }
+
             QuizChooseOptionView(
                 title = "Choose Category"
             ) {
+                QuizChooseOption(
+                    optionName = "All Category",
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
+                )
+                HorizontalDivider()
                 QuizChooseOption(
                     optionName = stringResource(R.string.general_table),
                     optionSubTitle = stringResource(R.string.general_subhead_eng)
@@ -73,6 +88,11 @@ fun QuizHomeScreen(
             QuizChooseOptionView(
                 title = "Question Type"
             ) {
+                QuizChooseOption(
+                    optionName = "All Question Type",
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer)
+                )
+                HorizontalDivider()
                 QuizChooseOption(
                     optionName = "Multiple Choice (MCQ)"
                 )
@@ -88,20 +108,19 @@ fun QuizHomeScreen(
             QuizChooseOptionView(
                 title = "Question Range"
             ) {
-                StepSlider(
-                    modifier = Modifier.padding(12.dp)
-                )
+                StepSlider()
             }
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = {
                     navHostController.navigate(SiddharoopaRoutes.QuizQuestion.name)
                 }, modifier = Modifier
-                    .fillMaxWidth(0.9F)
+                    .fillMaxWidth()
+                    .padding(8.dp)
             ) {
                 Text("Begin Quiz")
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(48.dp))
         }
     }
 }
@@ -118,11 +137,40 @@ fun StepSlider(
         valueRange = 5F..30F
     )
 
-    Slider(
-        state = sliderState,
-        modifier = modifier
-    )
+    val range = sliderState.value.toInt().toString()
 
+    Column(modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+        Text(
+            "Questions: $range",
+            modifier = Modifier.padding(start = 14.dp),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(Modifier.height(8.dp))
+        Slider(
+            state = sliderState,
+            colors = SliderDefaults.colors(
+                thumbColor = Color.Transparent
+            ),
+            thumb = {
+                Box(
+                    Modifier
+                        .size(24.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            CircleShape
+                        )
+                )
+            },
+            track = {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -133,8 +181,7 @@ fun QuizChooseOptionView(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 20.dp)
-            .fillMaxWidth(0.9F)
+            .padding(vertical = 20.dp, horizontal = 8.dp)
     ) {
         Text(
             title,
@@ -142,9 +189,7 @@ fun QuizChooseOptionView(
         )
         Spacer(Modifier.height(16.dp))
         OutlinedCard(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+            modifier = Modifier.padding(horizontal = 8.dp)
         ) {
             content()
         }
@@ -157,27 +202,30 @@ fun QuizChooseOption(
     modifier: Modifier = Modifier,
     optionSubTitle: String? = null
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-    ) {
-        RadioButton(
-            selected = false,
-            onClick = {},
-        )
-        Spacer(Modifier.width(8.dp))
-        Column {
-            Text(
-                optionName,
-                style = MaterialTheme.typography.titleMedium,
+    Box(modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 8.dp),
+        ) {
+            RadioButton(
+                selected = false,
+                onClick = {},
             )
-            if (optionSubTitle != null) {
+            Spacer(Modifier.width(8.dp))
+            Column {
                 Text(
-                    optionSubTitle,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(0.7F)
+                    optionName,
+                    style = MaterialTheme.typography.titleMedium,
                 )
+                if (optionSubTitle != null) {
+                    Text(
+                        optionSubTitle,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(0.7F)
+                    )
+                }
             }
         }
     }
@@ -187,7 +235,7 @@ fun QuizChooseOption(
 @Preview
 @Composable
 fun QuizHomeScreenContentPreview() {
-    SiddharoopaTheme(true) {
+    SiddharoopaTheme {
         QuizHomeScreen(
             navHostController = rememberNavController(),
             modifier = Modifier.fillMaxSize()
