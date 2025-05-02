@@ -90,5 +90,11 @@
     <!-- Quiz Screen -->
 
     <string name="start_your_quiz">Start Your Quiz</string>
+    <string name="all_category">All Category</string>
+
+    <string name="all_question_type">All Question Type</string>
+    <string name="multiple_choice_question">Multiple Choice (MCQ)</string>
+    <string name="fill_in_the_blanks">Fill in the Blanks</string>
+    <string name="match_the_following">Match the Following</string>
 
 </resources>

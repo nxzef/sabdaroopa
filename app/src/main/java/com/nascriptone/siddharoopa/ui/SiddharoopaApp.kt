@@ -150,7 +150,8 @@ fun SiddharoopaApp(
                             composable(SiddharoopaRoutes.QuizHome.name) {
                                 QuizHomeScreen(
                                     navHostController = navHostController,
-                                    quizSectionState = quizUIState
+                                    quizSectionState = quizUIState,
+                                    viewModel = viewModel
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizQuestion.name) {

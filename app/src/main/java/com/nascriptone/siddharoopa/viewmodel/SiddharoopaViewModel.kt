@@ -20,6 +20,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
@@ -137,6 +138,31 @@ class SiddharoopaViewModel @Inject constructor(
 
                 _homeUIState.update { it.copy(result = result) }
             }
+        }
+    }
+
+
+    fun updateQuizQuestionTable(table: Table?) {
+        _quizUIState.update {
+            it.copy(
+                questionFrom = table,
+            )
+        }
+    }
+
+    fun updateQuizQuestionType(type: QuestionType) {
+        _quizUIState.update {
+            it.copy(
+                questionType = type,
+            )
+        }
+    }
+
+    fun updateQuizQuestionRange(range: Float) {
+        _quizUIState.update {
+            it.copy(
+                questionRange = range,
+            )
         }
     }
 

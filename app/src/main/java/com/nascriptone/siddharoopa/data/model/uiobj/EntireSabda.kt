@@ -15,9 +15,9 @@ data class IsFavorite(
     val timestamp: Long = System.currentTimeMillis()
 )
 
-enum class Table(@StringRes val skt: Int) {
-    GENERAL(R.string.general_table),
-    SPECIFIC(R.string.specific_table)
+enum class Table(@StringRes val skt: Int, @StringRes val subEng: Int) {
+    GENERAL(R.string.general_table, R.string.general_subhead_eng),
+    SPECIFIC(R.string.specific_table, R.string.specific_subhead_eng)
 }
 
 enum class Sound(@StringRes val eng: Int, @StringRes val skt: Int) {
