@@ -60,6 +60,7 @@ fun SiddharoopaApp(
     val categoryScreenState by viewModel.categoryUIState.collectAsStateWithLifecycle()
     val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
     val favoritesUIState by viewModel.favoritesUIState.collectAsStateWithLifecycle()
+    val quizUIState by viewModel.quizUIState.collectAsStateWithLifecycle()
     val settingsUIState by viewModel.settingsUIState.collectAsStateWithLifecycle()
 
     val backStackEntry by navHostController.currentBackStackEntryAsState()
@@ -148,7 +149,8 @@ fun SiddharoopaApp(
                         ) {
                             composable(SiddharoopaRoutes.QuizHome.name) {
                                 QuizHomeScreen(
-                                    navHostController = navHostController
+                                    navHostController = navHostController,
+                                    quizSectionState = quizUIState
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizQuestion.name) {

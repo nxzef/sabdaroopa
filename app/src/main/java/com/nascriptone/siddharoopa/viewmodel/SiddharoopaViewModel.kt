@@ -20,6 +20,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -64,6 +65,9 @@ class SiddharoopaViewModel @Inject constructor(
 
     private val _favoritesUIState = MutableStateFlow(FavoritesScreenState())
     val favoritesUIState: StateFlow<FavoritesScreenState> = _favoritesUIState.asStateFlow()
+
+    private val _quizUIState = MutableStateFlow(QuizSectionState())
+    val quizUIState: StateFlow<QuizSectionState> = _quizUIState.asStateFlow()
 
     val settingsUIState: StateFlow<SettingsScreenState> = preferencesRepository.currentTheme.map {
         SettingsScreenState(currentTheme = it)

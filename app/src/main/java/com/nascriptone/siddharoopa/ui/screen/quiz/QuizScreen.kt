@@ -46,6 +46,7 @@ import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 @Composable
 fun QuizHomeScreen(
     navHostController: NavHostController,
+    quizSectionState: QuizSectionState,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -238,6 +239,7 @@ fun QuizHomeScreenContentPreview() {
     SiddharoopaTheme {
         QuizHomeScreen(
             navHostController = rememberNavController(),
+            quizSectionState = QuizSectionState(),
             modifier = Modifier.fillMaxSize()
         )
     }
