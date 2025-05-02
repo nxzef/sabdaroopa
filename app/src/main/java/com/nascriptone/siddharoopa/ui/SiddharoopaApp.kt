@@ -155,7 +155,9 @@ fun SiddharoopaApp(
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizQuestion.name) {
-                                QuizQuestionScreen()
+                                QuizQuestionScreen(
+                                    quizSectionState = quizUIState,
+                                )
                             }
                             composable(SiddharoopaRoutes.QuizInstruction.name) {
                                 QuizInstructionScreen()
@@ -194,7 +196,7 @@ fun AppTopBar(
 
     AnimatedVisibility(currentRoute == SiddharoopaRoutes.Category) {
         CategoryScreenTopBar(
-            title = categoryScreenTitle?.let { stringResource(it.skt) } ?: "",
+            title = categoryScreenTitle?.let { stringResource(it.skt) }.orEmpty(),
             onBackPress = onBackPress
         )
     }
@@ -203,7 +205,7 @@ fun AppTopBar(
         currentRoute == SiddharoopaRoutes.Table
     ) {
         TableScreenTopBar(
-            title = tableScreenTitle ?: "", onBackPress = onBackPress
+            title = tableScreenTitle.orEmpty(), onBackPress = onBackPress
         )
     }
 

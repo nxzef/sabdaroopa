@@ -20,6 +20,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
@@ -138,6 +139,32 @@ class SiddharoopaViewModel @Inject constructor(
 
                 _homeUIState.update { it.copy(result = result) }
             }
+        }
+    }
+
+
+    fun createQuizQuestions() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _quizUIState.update { it.copy(result = CreationState.Loading) }
+            val entireSabdaList = entireSabdaList.value
+            val userSelectedTable = quizUIState.value.questionFrom
+            val userSelectedQuestionType = quizUIState.value.questionType
+            val userSelectedQuestionRange = quizUIState.value.questionRange
+            val result = runCatching {
+
+                val chosenData = entireSabdaList.filter { sabda ->
+                    listOfNotNull(
+                        userSelectedTable?.let { it == sabda.table }
+                    ).all { it }
+                }
+                val randomPickedSabda =
+                    chosenData.shuffled().take(userSelectedQuestionRange.toInt())
+                CreationState.Success(data = randomPickedSabda)
+            }.getOrElse { e ->
+                Log.d("error", "Question Creation error", e)
+                CreationState.Error(e.message.orEmpty())
+            }
+            _quizUIState.update { it.copy(result = result) }
         }
     }
 

@@ -123,6 +123,7 @@ fun QuizHomeScreen(
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = {
+                    viewModel.createQuizQuestions()
                     navHostController.navigate(SiddharoopaRoutes.QuizQuestion.name)
                 }, modifier = Modifier
                     .fillMaxWidth()
@@ -236,9 +237,7 @@ fun QuizChooseOption(
 ) {
     Box(
         modifier = modifier
-            .clickable {
-
-            }
+            .clickable(onClick = onClick)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
