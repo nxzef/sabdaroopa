@@ -39,13 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
