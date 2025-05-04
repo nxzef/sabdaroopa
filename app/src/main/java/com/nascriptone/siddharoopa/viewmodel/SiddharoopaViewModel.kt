@@ -12,6 +12,9 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.data.model.uiobj.IsFavorite
+import com.nascriptone.siddharoopa.data.model.uiobj.MCQ
+import com.nascriptone.siddharoopa.data.model.uiobj.MTF
+import com.nascriptone.siddharoopa.data.model.uiobj.Phrase
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.data.repository.AppRepository
@@ -22,6 +25,7 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
@@ -153,7 +157,7 @@ class SiddharoopaViewModel @Inject constructor(
                 val userSelectedTable = quizUIState.value.questionFrom
                 val userSelectedQuestionType = quizUIState.value.questionType
                 val userSelectedQuestionRange = quizUIState.value.questionRange.toInt()
-                val maxMCQ = ((userSelectedQuestionRange * 70.0) / 100).roundToInt()
+                val maxMCQ = (userSelectedQuestionRange * 70) / 100
 
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
@@ -163,18 +167,49 @@ class SiddharoopaViewModel @Inject constructor(
                 val randomPickedSabda =
                     chosenData.shuffled().take(userSelectedQuestionRange)
 
-                randomPickedSabda.forEachIndexed { index, entireSabda ->
+                val data = randomPickedSabda.mapIndexed { index, entireSabda ->
                     val questionCollection = when (userSelectedQuestionType) {
                         QuestionType.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions else QuizQuestion.mtfQuestions
                         QuestionType.MCQ -> QuizQuestion.mcqQuestions
                         QuestionType.MTF -> QuizQuestion.mtfQuestions
                     }
                     val randomTemplate = questionCollection.random()
+                    val question = randomTemplate.questionResId
 
-                    Log.d("eachSpec", "$randomTemplate")
+                    val option = when (val result = randomTemplate.phrase) {
+                        is Phrase.McqKey -> when (result.mcqData) {
+                            MCQ.ONE -> ""
+                            MCQ.TWO -> ""
+                            MCQ.THREE -> ""
+                            MCQ.FOUR -> ""
+                            MCQ.FIVE -> ""
+                            MCQ.SIX -> ""
+                            MCQ.SEVEN -> ""
+                            MCQ.EIGHT -> ""
+                            MCQ.NINE -> ""
+                            MCQ.TEN -> ""
+                        }
+
+                        is Phrase.MtfKey -> when (result.mtfData) {
+                            MTF.ONE -> ""
+                            MTF.TWO -> ""
+                            MTF.THREE -> ""
+                            MTF.FOUR -> ""
+                            MTF.FIVE -> ""
+                            MTF.SIX -> ""
+                            MTF.SEVEN -> ""
+                            MTF.EIGHT -> ""
+                            MTF.NINE -> ""
+                            MTF.TEN -> ""
+                        }
+                    }
+                    QuestionOption(
+                        question = question,
+                        option = option
+                    )
                 }
 
-                CreationState.Success(data = randomPickedSabda)
+                CreationState.Success(data = data)
             }.getOrElse { e ->
                 Log.d("error", "Question Creation error", e)
                 CreationState.Error(e.message.orEmpty())

@@ -12,8 +12,8 @@ enum class MTF {
 }
 
 sealed class Phrase {
-    data class McqKey(val data: MCQ) : Phrase()
-    data class MtfKey(val data: MTF) : Phrase()
+    data class McqKey(val mcqData: MCQ) : Phrase()
+    data class MtfKey(val mtfData: MTF) : Phrase()
 }
 
 

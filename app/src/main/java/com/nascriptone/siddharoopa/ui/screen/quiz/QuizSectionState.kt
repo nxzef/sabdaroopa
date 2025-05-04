@@ -18,8 +18,13 @@ enum class QuestionType(@StringRes val uiName: Int) {
     MTF(R.string.match_the_following)
 }
 
+data class QuestionOption(
+    val question: Int,
+    val option: String
+)
+
 sealed class CreationState {
     data object Loading : CreationState()
     data class Error(val msg: String) : CreationState()
-    data class Success(val data: List<EntireSabda>) : CreationState()
+    data class Success(val data: List<QuestionOption>) : CreationState()
 }

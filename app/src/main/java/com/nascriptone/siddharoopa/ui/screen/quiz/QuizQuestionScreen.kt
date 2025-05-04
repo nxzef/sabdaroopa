@@ -1,14 +1,21 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -17,6 +24,8 @@ fun QuizQuestionScreen(
     quizSectionState: QuizSectionState,
     modifier: Modifier = Modifier
 ) {
+
+    var questionIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val scrollState = rememberScrollState()
     Surface {
@@ -33,25 +42,23 @@ fun QuizQuestionScreen(
                     Text(result.msg)
                 }
 
-                is CreationState.Success -> Column {
-                    result.data.forEach { each ->
-                        Text(each.sabda.word)
-                        Text(each.sabda.id.toString())
-                        Text(each.sabda.gender)
+                is CreationState.Success -> CurrentState {
+                    result.data.forEachIndexed { index, each ->
+                        AnimatedVisibility(index == questionIndex) {
+                            val text = stringResource(each.question)
+                            Text(text)
+                        }
                     }
+                    Button(onClick = {
+                        if (questionIndex < result.data.lastIndex) {
+                            questionIndex++
+                        } else {
+                            questionIndex = 0
+                        }
+                    }) { Text("Increase") }
                 }
             }
         }
     }
 }
 
-
-//@Preview
-//@Composable
-//fun QuizQuestionScreenPreview() {
-//    SiddharoopaTheme {
-//        QuizQuestionScreen(
-//            modifier = Modifier.fillMaxSize()
-//        )
-//    }
-//}
