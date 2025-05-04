@@ -18,9 +18,16 @@ enum class QuestionType(@StringRes val uiName: Int) {
     MTF(R.string.match_the_following)
 }
 
+
+
+sealed class Option {
+    data class McqOption(val options: String) : Option()
+    data class MtfOption(val options: Unit) : Option()
+}
+
 data class QuestionOption(
     val question: Int,
-    val option: String
+    val option: Option
 )
 
 sealed class CreationState {

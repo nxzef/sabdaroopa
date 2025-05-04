@@ -25,6 +25,7 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
+import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
@@ -49,7 +50,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 
 @HiltViewModel
@@ -177,30 +177,36 @@ class SiddharoopaViewModel @Inject constructor(
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
-                        is Phrase.McqKey -> when (result.mcqData) {
-                            MCQ.ONE -> ""
-                            MCQ.TWO -> ""
-                            MCQ.THREE -> ""
-                            MCQ.FOUR -> ""
-                            MCQ.FIVE -> ""
-                            MCQ.SIX -> ""
-                            MCQ.SEVEN -> ""
-                            MCQ.EIGHT -> ""
-                            MCQ.NINE -> ""
-                            MCQ.TEN -> ""
+                        is Phrase.McqKey -> {
+                            val mcqOption = when (result.mcqData) {
+                                MCQ.ONE -> ""
+                                MCQ.TWO -> ""
+                                MCQ.THREE -> ""
+                                MCQ.FOUR -> ""
+                                MCQ.FIVE -> ""
+                                MCQ.SIX -> ""
+                                MCQ.SEVEN -> ""
+                                MCQ.EIGHT -> ""
+                                MCQ.NINE -> ""
+                                MCQ.TEN -> ""
+                            }
+                            Option.McqOption(mcqOption)
                         }
 
-                        is Phrase.MtfKey -> when (result.mtfData) {
-                            MTF.ONE -> ""
-                            MTF.TWO -> ""
-                            MTF.THREE -> ""
-                            MTF.FOUR -> ""
-                            MTF.FIVE -> ""
-                            MTF.SIX -> ""
-                            MTF.SEVEN -> ""
-                            MTF.EIGHT -> ""
-                            MTF.NINE -> ""
-                            MTF.TEN -> ""
+                        is Phrase.MtfKey -> {
+                            val mtfOption = when (result.mtfData) {
+                                MTF.ONE -> {}
+                                MTF.TWO -> {}
+                                MTF.THREE -> {}
+                                MTF.FOUR -> {}
+                                MTF.FIVE -> {}
+                                MTF.SIX -> {}
+                                MTF.SEVEN -> {}
+                                MTF.EIGHT -> {}
+                                MTF.NINE -> {}
+                                MTF.TEN -> {}
+                            }
+                            Option.MtfOption(mtfOption)
                         }
                     }
                     QuestionOption(
