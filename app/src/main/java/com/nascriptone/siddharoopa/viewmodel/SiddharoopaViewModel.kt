@@ -1,10 +1,8 @@
 package com.nascriptone.siddharoopa.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.local.QuizQuestion
 import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
@@ -34,7 +32,6 @@ import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -54,7 +51,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SiddharoopaViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val repository: AppRepository,
     private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
@@ -91,11 +87,6 @@ class SiddharoopaViewModel @Inject constructor(
 
     init {
         observeSabda()
-    }
-
-
-    private fun getStringFromResources(resId: Int): String {
-        return context.getString(resId)
     }
 
 
@@ -173,6 +164,7 @@ class SiddharoopaViewModel @Inject constructor(
                         QuestionType.MCQ -> QuizQuestion.mcqQuestions
                         QuestionType.MTF -> QuizQuestion.mtfQuestions
                     }
+                    val declension = Json.decodeFromString<Declension>(entireSabda.sabda.declension)
                     val randomTemplate = questionCollection.random()
                     val question = randomTemplate.questionResId
 
@@ -328,17 +320,13 @@ class SiddharoopaViewModel @Inject constructor(
 
     fun parseStringToDeclension(currentSabda: EntireSabda) {
         viewModelScope.launch(Dispatchers.IO) {
-            _tableUIState.update {
-                it.copy(
-                    result = StringParse.Loading
-                )
-            }
+            _tableUIState.update { it.copy(result = StringParse.Loading) }
             val result = runCatching {
-                val declensionOBJ = currentSabda.sabda.declension
-                val declension = Json.decodeFromString<Declension>(declensionOBJ)
-                val declensionTable = createDeclensionTable(declension)
-                StringParse.Success(declensionTable = declensionTable)
+                val declensionString = currentSabda.sabda.declension
+                val declension = Json.decodeFromString<Declension>(declensionString)
+                StringParse.Success(declension = declension)
             }.getOrElse { e ->
+                Log.d("parseError", e.message.orEmpty(), e)
                 StringParse.Error(msg = e.message ?: "Can't find declension table.")
             }
             _tableUIState.update { it.copy(result = result) }
@@ -351,56 +339,6 @@ class SiddharoopaViewModel @Inject constructor(
                 selectedSabda = sabda
             )
         }
-    }
-
-    private fun createDeclensionTable(declension: Declension): List<List<String?>> {
-        val vibakti = getStringFromResources(R.string.vibakti)
-        val single = getStringFromResources(R.string.single)
-        val dual = getStringFromResources(R.string.dual)
-        val plural = getStringFromResources(R.string.plural)
-        return listOf(
-            listOf(vibakti, single, dual, plural), listOf(
-                getStringFromResources(R.string.nominative),
-                declension.nominative?.single,
-                declension.nominative?.dual,
-                declension.nominative?.plural
-            ), listOf(
-                getStringFromResources(R.string.vocative),
-                declension.vocative?.single,
-                declension.vocative?.dual,
-                declension.vocative?.plural
-            ), listOf(
-                getStringFromResources(R.string.accusative),
-                declension.accusative?.single,
-                declension.accusative?.dual,
-                declension.accusative?.plural
-            ), listOf(
-                getStringFromResources(R.string.instrumental),
-                declension.instrumental?.single,
-                declension.instrumental?.dual,
-                declension.instrumental?.plural
-            ), listOf(
-                getStringFromResources(R.string.dative),
-                declension.dative?.single,
-                declension.dative?.dual,
-                declension.dative?.plural
-            ), listOf(
-                getStringFromResources(R.string.ablative),
-                declension.ablative?.single,
-                declension.ablative?.dual,
-                declension.ablative?.plural
-            ), listOf(
-                getStringFromResources(R.string.genitive),
-                declension.genitive?.single,
-                declension.genitive?.dual,
-                declension.genitive?.plural
-            ), listOf(
-                getStringFromResources(R.string.locative),
-                declension.locative?.single,
-                declension.locative?.dual,
-                declension.locative?.plural
-            )
-        )
     }
 
     private fun applyFilter(data: List<EntireSabda>) {

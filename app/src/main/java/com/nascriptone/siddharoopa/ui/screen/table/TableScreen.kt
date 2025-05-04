@@ -1,9 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,18 +13,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,6 +49,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
@@ -112,8 +109,8 @@ fun TableScreen(
         }
 
         is StringParse.Success -> {
-            DeclensionTable(
-                result.declensionTable,
+            TableScreenContent(
+                result.declension,
                 currentSabda,
                 viewModel,
                 snackbarHostState
@@ -124,13 +121,14 @@ fun TableScreen(
 
 
 @Composable
-fun DeclensionTable(
-    declensionTable: List<List<String?>>,
+fun TableScreenContent(
+    declension: Declension,
     currentSabda: EntireSabda,
     viewModel: SiddharoopaViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
+
 
     val scope = rememberCoroutineScope()
 
@@ -153,53 +151,13 @@ fun DeclensionTable(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-
-
             Spacer(Modifier.height(16.dp))
-
             Text(
                 displayText,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(16.dp)
             )
-
-            Column(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-                    .border(
-                        BorderStroke(DividerDefaults.Thickness, DividerDefaults.color),
-                        RoundedCornerShape(16.dp)
-                    )
-            ) {
-
-                declensionTable.forEachIndexed { rowIndex, row ->
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                    ) {
-
-                        row.forEachIndexed { cellIndex, cell ->
-                            key(rowIndex to cellIndex) {
-                                DeclensionCell(
-                                    cell = cell,
-                                    cellIndex = cellIndex,
-                                    rowIndex = rowIndex,
-                                    row = row,
-                                    declensionTable = declensionTable,
-                                    modifier = Modifier.weight(1F)
-                                )
-                            }
-
-                        }
-                    }
-                    if (rowIndex != declensionTable.lastIndex) {
-                        HorizontalDivider()
-                    }
-                }
-            }
+            DeclensionTable(declension)
             FavoriteView(
                 isItFavorite = isItFavorite, onClick = {
                     scope.launch {
@@ -208,6 +166,72 @@ fun DeclensionTable(
                     }
                 })
             Spacer(Modifier.height(28.dp))
+        }
+    }
+}
+
+@Composable
+fun DeclensionTable(
+    declension: Declension,
+    modifier: Modifier = Modifier
+) {
+
+    val columnFirstItems = listOf(
+        R.string.vibakti,
+        R.string.single,
+        R.string.dual,
+        R.string.plural
+    )
+
+    val rowFirstItems = listOf(
+        R.string.nominative,
+        R.string.vocative,
+        R.string.accusative,
+        R.string.instrumental,
+        R.string.dative,
+        R.string.ablative,
+        R.string.genitive,
+        R.string.locative
+    )
+
+    OutlinedCard(
+        modifier = modifier
+            .padding(vertical = 24.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .height(54.dp)
+        ) {
+            columnFirstItems.forEachIndexed { i, e ->
+                val cellValue = stringResource(e)
+                key(i to e) {
+                    DeclensionCell(cellValue, isPredefined = true, modifier = Modifier.weight(1F))
+                }
+                if (i != columnFirstItems.lastIndex) VerticalDivider()
+            }
+        }
+        HorizontalDivider()
+        val caseEntries = declension.entries.toList()
+        caseEntries.forEachIndexed { i, case ->
+            Row(
+                modifier = Modifier.height(54.dp)
+            ) {
+                val predefinedId = rowFirstItems[i]
+                val cellValue = stringResource(predefinedId)
+                DeclensionCell(
+                    value = cellValue,
+                    isPredefined = true,
+                    modifier = Modifier.weight(1F)
+                )
+                VerticalDivider()
+                val formEntries = case.value.entries.toList()
+                formEntries.forEachIndexed { i, form ->
+                    val cellValue = form.value
+                    DeclensionCell(value = cellValue, modifier = Modifier.weight(1F))
+                    if (i != formEntries.lastIndex) VerticalDivider()
+                }
+            }
+            if (i != caseEntries.lastIndex) HorizontalDivider()
         }
     }
 }
@@ -249,64 +273,39 @@ fun FavoriteView(
 
 @Composable
 fun DeclensionCell(
-    cell: String?,
-    row: List<String?>,
-    rowIndex: Int,
-    cellIndex: Int,
-    declensionTable: List<List<String?>>,
-    modifier: Modifier = Modifier
+    value: String?,
+    modifier: Modifier = Modifier,
+    isPredefined: Boolean = false,
 ) {
 
-    val shape = setShape(
-        rowIndex, cellIndex, row.lastIndex, declensionTable.lastIndex
-    )
-
-    fun <T> isHeaderCell(yes: T, no: T): T {
-        return separationValuesForHeader(
-            cellIndex, rowIndex, yes, no
-        )
+    val sepColor = if (isPredefined) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
     }
 
-    val sepColor = isHeaderCell(
-        MaterialTheme.colorScheme.surfaceContainerHigh,
-        MaterialTheme.colorScheme.surfaceContainerLow
-    )
-
-    val setFontWeight = isHeaderCell(
-        FontWeight.W700, LocalTextStyle.current.fontWeight
-    )
+    val setFontWeight = if (isPredefined) {
+        FontWeight.W700
+    } else {
+        LocalTextStyle.current.fontWeight
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(sepColor, shape),
+            .background(sepColor),
         contentAlignment = Alignment.Center
     ) {
-        if (cell != null) {
+
+        value?.let {
             Text(
-                cell,
+                it,
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = setFontWeight
             )
         }
     }
-    if (cellIndex != row.lastIndex) {
-        VerticalDivider()
-    }
-}
-
-fun <T> separationValuesForHeader(c: Int, r: Int, yes: T, no: T) = if (c == 0 || r == 0) yes else no
-
-fun setShape(
-    rowIndex: Int, cellIndex: Int, rowSize: Int, tableSize: Int
-): Shape {
-    return RoundedCornerShape(
-        topStart = if (rowIndex == 0 && cellIndex == 0) 16.dp else 0.dp,
-        topEnd = if (rowIndex == 0 && cellIndex == rowSize) 16.dp else 0.dp,
-        bottomStart = if (rowIndex == tableSize && cellIndex == 0) 16.dp else 0.dp,
-        bottomEnd = if (rowIndex == tableSize && cellIndex == rowSize) 16.dp else 0.dp
-    )
 }
 
 

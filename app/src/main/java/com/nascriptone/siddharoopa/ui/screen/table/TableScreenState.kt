@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
+import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 
 data class TableScreenState(
@@ -9,6 +10,6 @@ data class TableScreenState(
 
 sealed class StringParse {
     data object Loading : StringParse()
-    data class Success(val declensionTable: List<List<String?>>) : StringParse()
+    data class Success(val declension: Declension) : StringParse()
     data class Error(val msg: String) : StringParse()
 }
