@@ -1,7 +1,12 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -44,9 +49,18 @@ fun QuizQuestionScreen(
 
                 is CreationState.Success -> CurrentState {
                     result.data.forEachIndexed { index, each ->
-                        AnimatedVisibility(index == questionIndex) {
+                        AnimatedVisibility(
+                            index == questionIndex,
+                            enter = slideInHorizontally(
+                                initialOffsetX = { it / 2 }
+                            ) + fadeIn(),
+                            exit = slideOutHorizontally() + fadeOut()
+                        ) {
                             val text = stringResource(each.question)
-                            Text(text)
+                            Row {
+                                Text("Q ${index + 1}. ")
+                                Text(text)
+                            }
                         }
                     }
                     Button(onClick = {
