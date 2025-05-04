@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.local.QuizQuestion
 import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 
 @HiltViewModel
@@ -146,11 +148,12 @@ class SiddharoopaViewModel @Inject constructor(
     fun createQuizQuestions() {
         viewModelScope.launch(Dispatchers.IO) {
             _quizUIState.update { it.copy(result = CreationState.Loading) }
-            val entireSabdaList = entireSabdaList.value
-            val userSelectedTable = quizUIState.value.questionFrom
-            val userSelectedQuestionType = quizUIState.value.questionType
-            val userSelectedQuestionRange = quizUIState.value.questionRange
             val result = runCatching {
+                val entireSabdaList = entireSabdaList.value
+                val userSelectedTable = quizUIState.value.questionFrom
+                val userSelectedQuestionType = quizUIState.value.questionType
+                val userSelectedQuestionRange = quizUIState.value.questionRange.toInt()
+                val maxMCQ = ((userSelectedQuestionRange * 70.0) / 100).roundToInt()
 
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
@@ -158,7 +161,19 @@ class SiddharoopaViewModel @Inject constructor(
                     ).all { it }
                 }
                 val randomPickedSabda =
-                    chosenData.shuffled().take(userSelectedQuestionRange.toInt())
+                    chosenData.shuffled().take(userSelectedQuestionRange)
+
+                randomPickedSabda.forEachIndexed { index, entireSabda ->
+                    val questionCollection = when (userSelectedQuestionType) {
+                        QuestionType.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions else QuizQuestion.mtfQuestions
+                        QuestionType.MCQ -> QuizQuestion.mcqQuestions
+                        QuestionType.MTF -> QuizQuestion.mtfQuestions
+                    }
+                    val randomTemplate = questionCollection.random()
+
+                    Log.d("eachSpec", "$randomTemplate")
+                }
+
                 CreationState.Success(data = randomPickedSabda)
             }.getOrElse { e ->
                 Log.d("error", "Question Creation error", e)

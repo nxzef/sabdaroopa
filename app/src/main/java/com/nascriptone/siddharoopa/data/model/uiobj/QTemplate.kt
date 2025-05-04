@@ -2,28 +2,24 @@ package com.nascriptone.siddharoopa.data.model.uiobj
 
 import androidx.annotation.StringRes
 
-data class QTemplate(
-    @StringRes val templateId: Int,
-    val phrase: LogicKey = LogicKey.Mcq.CaseFormSabda
-)
 
-sealed interface LogicKey {
-
-    sealed interface Mcq : LogicKey {
-        object CaseFormSabda : Mcq
-        object GenderPick : Mcq
-        object VachanaPick : Mcq
-        object SabdaCategory : Mcq
-        object SabdaMeaning : Mcq
-    }
-
-    sealed interface Mtf : LogicKey {
-        object VibhaktiMatch : Mtf
-        object FormMatch : Mtf
-        object VachanaMatch : Mtf
-        object GenderMatch : Mtf
-        object WordTranslationMatch : Mtf
-    }
-
+enum class MCQ {
+    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN
 }
 
+enum class MTF {
+    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN
+}
+
+sealed class Phrase {
+    data class McqKey(val data: MCQ) : Phrase()
+    data class MtfKey(val data: MTF) : Phrase()
+}
+
+
+
+
+data class QTemplate(
+    @StringRes val questionResId: Int,
+    val phrase: Phrase
+)
