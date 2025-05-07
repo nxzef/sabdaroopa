@@ -2,7 +2,7 @@
 agp = "8.10.0"
 animation = "1.8.0"
 coreSplashscreen = "1.0.1"
-datastorePreferences = "1.1.4"
+datastorePreferences = "1.1.5"
 gson = "2.12.1"
 hiltAndroid = "2.51.1"
 hiltNavigationCompose = "1.2.0"

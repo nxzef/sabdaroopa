@@ -206,27 +206,9 @@ class SiddharoopaViewModel @Inject constructor(
         var trueOption: String = ""
         var questionKey: Map<String, String> = emptyMap()
         when (type) {
-            MCQ.ONE -> {
-
-                val randomVibhakti = declension.keys.random()
-                val randomVachana = declension.values.random().keys.random()
-
-
-            }
-
-            else -> McqGeneratedData(options, trueOption, questionKey)
-
-//            MCQ.TWO -> ""
-//            MCQ.THREE -> ""
-//            MCQ.FOUR -> ""
-//            MCQ.FIVE -> ""
-//            MCQ.SIX -> ""
-//            MCQ.SEVEN -> ""
-//            MCQ.EIGHT -> ""
-//            MCQ.NINE -> ""
-//            MCQ.TEN -> ""
+            MCQ.ONE -> {}
+            else -> {}
         }
-
         return McqGeneratedData(options, trueOption, questionKey)
     }
 
