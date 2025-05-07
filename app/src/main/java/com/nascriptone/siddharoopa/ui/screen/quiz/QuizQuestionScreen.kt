@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -95,7 +94,6 @@ fun QuizQuestionScreenContent(
                                     val stringRes = stringResource(e.question)
                                     val text =
                                         replacePlaceholders(stringRes, state.data.questionKey)
-                                    Log.d("text", text)
                                     Text(text)
                                 }
 
@@ -103,8 +101,6 @@ fun QuizQuestionScreenContent(
 
                                 }
                             }
-
-                            Text(stringResource(e.question))
                         }
                     }
                 }
