@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.data.local.QuizQuestion
 import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
@@ -23,6 +24,7 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
+import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
@@ -164,40 +166,19 @@ class SiddharoopaViewModel @Inject constructor(
                         QuestionType.MCQ -> QuizQuestion.mcqQuestions
                         QuestionType.MTF -> QuizQuestion.mtfQuestions
                     }
-                    val declension = Json.decodeFromString<Declension>(entireSabda.sabda.declension)
+                    val sabda = entireSabda.sabda
+                    val declension = Json.decodeFromString<Declension>(sabda.declension)
                     val randomTemplate = questionCollection.random()
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
                         is Phrase.McqKey -> {
-                            val mcqOption = when (result.mcqData) {
-                                MCQ.ONE -> ""
-                                MCQ.TWO -> ""
-                                MCQ.THREE -> ""
-                                MCQ.FOUR -> ""
-                                MCQ.FIVE -> ""
-                                MCQ.SIX -> ""
-                                MCQ.SEVEN -> ""
-                                MCQ.EIGHT -> ""
-                                MCQ.NINE -> ""
-                                MCQ.TEN -> ""
-                            }
+                            val mcqOption = generateMcqOption(result.mcqData, sabda, declension)
                             Option.McqOption(mcqOption)
                         }
 
                         is Phrase.MtfKey -> {
-                            val mtfOption = when (result.mtfData) {
-                                MTF.ONE -> {}
-                                MTF.TWO -> {}
-                                MTF.THREE -> {}
-                                MTF.FOUR -> {}
-                                MTF.FIVE -> {}
-                                MTF.SIX -> {}
-                                MTF.SEVEN -> {}
-                                MTF.EIGHT -> {}
-                                MTF.NINE -> {}
-                                MTF.TEN -> {}
-                            }
+                            val mtfOption = generateMtfOption(result.mtfData, sabda, declension)
                             Option.MtfOption(mtfOption)
                         }
                     }
@@ -213,6 +194,54 @@ class SiddharoopaViewModel @Inject constructor(
                 CreationState.Error(e.message.orEmpty())
             }
             _quizUIState.update { it.copy(result = result) }
+        }
+    }
+
+    private fun generateMcqOption(
+        type: MCQ,
+        sabda: Sabda,
+        declension: Declension
+    ): McqGeneratedData {
+        var options: Set<String> = emptySet()
+        var trueOption: String = ""
+        var questionKey: Map<String, String> = emptyMap()
+        when (type) {
+            MCQ.ONE -> {
+
+                val randomVibhakti = declension.keys.random()
+                val randomVachana = declension.values.random().keys.random()
+
+
+            }
+
+            else -> McqGeneratedData(options, trueOption, questionKey)
+
+//            MCQ.TWO -> ""
+//            MCQ.THREE -> ""
+//            MCQ.FOUR -> ""
+//            MCQ.FIVE -> ""
+//            MCQ.SIX -> ""
+//            MCQ.SEVEN -> ""
+//            MCQ.EIGHT -> ""
+//            MCQ.NINE -> ""
+//            MCQ.TEN -> ""
+        }
+
+        return McqGeneratedData(options, trueOption, questionKey)
+    }
+
+    private fun generateMtfOption(type: MTF, sabda: Sabda, declension: Declension): Unit {
+        when (type) {
+            MTF.ONE -> {}
+            MTF.TWO -> {}
+            MTF.THREE -> {}
+            MTF.FOUR -> {}
+            MTF.FIVE -> {}
+            MTF.SIX -> {}
+            MTF.SEVEN -> {}
+            MTF.EIGHT -> {}
+            MTF.NINE -> {}
+            MTF.TEN -> {}
         }
     }
 

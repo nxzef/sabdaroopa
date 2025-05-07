@@ -3,18 +3,7 @@ package com.nascriptone.siddharoopa.data.model.uiobj
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-//@Serializable
-//data class Declension(
-//    val cases: Map<CaseName, Map<FormName, String?>>
-//)
-
-
 typealias Declension = Map<CaseName, Map<FormName, String?>>
-
-//@Serializable
-//data class CaseForm(
-//    val forms: Map<FormName, String?>
-//)
 
 @Serializable
 enum class CaseName {

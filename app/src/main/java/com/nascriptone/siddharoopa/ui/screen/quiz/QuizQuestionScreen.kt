@@ -57,9 +57,15 @@ fun QuizQuestionScreen(
                             exit = slideOutHorizontally() + fadeOut()
                         ) {
                             val text = stringResource(each.question)
-                            Row {
-                                Text("Q ${index + 1}. ")
-                                Text(text)
+                            Column {
+                                Row {
+                                    Text("Q ${index + 1}. ")
+                                    Text(text)
+                                }
+                                when (val option = each.option) {
+                                    is Option.McqOption -> {}
+                                    is Option.MtfOption -> option.data
+                                }
                             }
                         }
                     }
