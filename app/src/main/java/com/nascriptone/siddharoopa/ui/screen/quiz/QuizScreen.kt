@@ -192,18 +192,6 @@ fun StepSlider(
 }
 
 
-//@Preview
-//@Composable
-//fun StepSliderPreview() {
-//    SiddharoopaTheme {
-//        Surface {
-//            StepSlider(
-//                quizSectionState = QuizSectionState()
-//            )
-//        }
-//    }
-//}
-
 @Composable
 fun QuizChooseOptionView(
     title: String,
@@ -220,7 +208,7 @@ fun QuizChooseOptionView(
         )
         Spacer(Modifier.height(16.dp))
         OutlinedCard(
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             content()
         }
@@ -267,17 +255,3 @@ fun QuizChooseOption(
     }
 }
 
-//data class CategoryOption(val table: Table)
-
-
-//@Preview
-//@Composable
-//fun QuizHomeScreenContentPreview() {
-//    SiddharoopaTheme {
-//        QuizHomeScreen(
-//            navHostController = rememberNavController(),
-//            quizSectionState = QuizSectionState(),
-//            modifier = Modifier.fillMaxSize()
-//        )
-//    }
-//}

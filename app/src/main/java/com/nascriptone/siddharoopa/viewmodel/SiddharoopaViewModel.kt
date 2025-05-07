@@ -221,8 +221,6 @@ class SiddharoopaViewModel @Inject constructor(
                     "vachana" to randomForm.name,
                     "sabda" to sabda.word
                 )
-
-                Log.d("currentValue", "Values: $randomCase, $randomForm, $trueValue")
             }
 
             else -> {}

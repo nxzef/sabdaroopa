@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -91,16 +92,14 @@ fun QuizQuestionScreenContent(
 
                             when (val state = e.option) {
                                 is Option.McqOption -> {
-                                    val stringRes = stringResource(e.question)
-                                    val text =
-                                        replacePlaceholders(stringRes, state.data.questionKey)
-                                    Text(text)
+                                    RegexText(e.question, state.data.questionKey)
                                 }
 
                                 is Option.MtfOption -> {
 
                                 }
                             }
+
                         }
                     }
                 }
@@ -119,12 +118,19 @@ fun QuizQuestionScreenContent(
     }
 }
 
-//private fun replacePlaceholders(template: String, values: Map<String, String>): String {
-//    return Regex("""\{(\w+)}""").replace(template) { matchResult ->
-//        val key = matchResult.groupValues[1]
-//        values[key] ?: matchResult.value
-//    }
-//}
+
+@Composable
+fun RegexText(
+    @StringRes template: Int,
+    key: Map<String, String>,
+    modifier: Modifier = Modifier
+) {
+    val stringRes = stringResource(template)
+    val text =
+        replacePlaceholders(stringRes, key)
+    Text(text, modifier = modifier)
+}
+
 
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
     return template.replace(Regex("\\{(\\w+)\\}")) { match ->
@@ -147,41 +153,4 @@ fun QuizQuestionScreenPreview() {
         )
     }
 }
-
-
-//CurrentState {
-//    result.data.forEachIndexed { index, each ->
-//        AnimatedVisibility(
-//            index == questionIndex,
-//            enter = slideInHorizontally(
-//                initialOffsetX = { it / 2 }
-//            ) + fadeIn(),
-//            exit = slideOutHorizontally() + fadeOut()
-//        ) {
-//
-//            when (val option = each.option) {
-//                is Option.McqOption -> {
-//                    val fromString = stringResource(each.question)
-//                    val text =
-//                        replacePlaceholders(fromString, option.data.questionKey)
-//                    Column {
-//                        Row {
-//                            Text("Q ${index + 1}. ")
-//                            Text(text)
-//                        }
-//                    }
-//                }
-//
-//                is Option.MtfOption -> {}
-//            }
-//        }
-//    }
-//    Button(onClick = {
-//        if (questionIndex < result.data.lastIndex) {
-//            questionIndex++
-//        } else {
-//            questionIndex = 0
-//        }
-//    }) { Text("Increase") }
-//}
 
