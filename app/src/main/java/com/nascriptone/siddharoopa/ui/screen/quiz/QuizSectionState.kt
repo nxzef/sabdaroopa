@@ -31,7 +31,7 @@ data class QuestionOption(
 data class McqGeneratedData(
     val options: Set<String>,
     val trueOption: String,
-    val questionKey: MutableMap<String, String>
+    val questionKey: Map<String, String>
 )
 
 

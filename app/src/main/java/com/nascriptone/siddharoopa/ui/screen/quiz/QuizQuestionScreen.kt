@@ -93,6 +93,9 @@ fun QuizQuestionScreenContent(
                             when (val state = e.option) {
                                 is Option.McqOption -> {
                                     RegexText(e.question, state.data.questionKey)
+                                    state.data.options.forEachIndexed { i, option ->
+                                        Text(option)
+                                    }
                                 }
 
                                 is Option.MtfOption -> {
@@ -122,24 +125,26 @@ fun QuizQuestionScreenContent(
 @Composable
 fun RegexText(
     @StringRes template: Int,
-    key: MutableMap<String, String>,
+    key: Map<String, String>,
     modifier: Modifier = Modifier
 ) {
+    val mutableKey = key.toMutableMap()
     val stringRes = stringResource(template)
     val vibaktiKey = "vibhakti"
     val vachanaKey = "vachana"
-    if (key.containsKey(vibaktiKey) || key.containsKey(vachanaKey)) {
+    if (mutableKey.containsKey(vibaktiKey) || mutableKey.containsKey(vachanaKey)) {
         val vibaktiValue = key.getValue(vibaktiKey)
         val vachanaValue = key.getValue(vachanaKey)
         val vibaktiEnum = CaseName.valueOf(vibaktiValue)
         val vachanaEnum = FormName.valueOf(vachanaValue)
         val vibaktiSktName = stringResource(vibaktiEnum.sktName)
         val vachanaSktName = stringResource(vachanaEnum.sktName)
-        key[vibaktiKey] = vibaktiSktName
-        key[vachanaKey] = vachanaSktName
+        mutableKey[vibaktiKey] = vibaktiSktName
+        mutableKey[vachanaKey] = vachanaSktName
     }
+    val finalKey = mutableKey.toMap()
     val text =
-        replacePlaceholders(stringRes, key)
+        replacePlaceholders(stringRes, finalKey)
     Text(text, modifier = modifier)
 }
 

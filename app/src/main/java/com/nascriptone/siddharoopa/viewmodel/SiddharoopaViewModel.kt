@@ -7,8 +7,10 @@ import com.nascriptone.siddharoopa.data.local.QuizQuestion
 import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
 import com.nascriptone.siddharoopa.data.model.uiobj.Declension
 import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.data.model.uiobj.IsFavorite
 import com.nascriptone.siddharoopa.data.model.uiobj.MCQ
@@ -168,7 +170,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection.random()
+                    val randomTemplate = questionCollection[0]
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
@@ -204,19 +206,23 @@ class SiddharoopaViewModel @Inject constructor(
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption = ""
-        var questionKey = mutableMapOf<String, String>()
+        var questionKey: Map<String, String> = emptyMap()
+        val allWords = declension.values.flatMap { it.values }
         when (type) {
             MCQ.ONE -> {
-                val randomCase = declension.keys.random()
-                val randomForm = declension.getValue(randomCase).keys.random()
-                val trueValue = declension.getValue(randomCase).getValue(randomForm)
 
-                val allWords = declension.values.flatMap { it.values }
-                val getAllString = allWords.mapNotNull { it }
+                var trueValue: String?
+                var randomCase: CaseName
+                var randomForm: FormName
+                do {
+                    randomCase = declension.keys.random()
+                    randomForm = declension.getValue(randomCase).keys.random()
+                    trueValue = declension.getValue(randomCase).getValue(randomForm)
+                } while (trueValue == null)
 
-                options = getAllString.shuffled().take(4).toSet()
-                trueOption = trueValue.orEmpty()
-                questionKey = mutableMapOf(
+                options = getUniqueShuffledSet(allWords, trueValue)
+                trueOption = trueValue
+                questionKey = mapOf(
                     "vibhakti" to randomCase.name,
                     "vachana" to randomForm.name,
                     "sabda" to sabda.word
@@ -241,6 +247,32 @@ class SiddharoopaViewModel @Inject constructor(
             MTF.NINE -> {}
             MTF.TEN -> {}
         }
+    }
+
+    private fun getUniqueShuffledSet(
+        originalList: List<String?>,
+        newItem: String
+    ): Set<String> {
+        // Step 1: Remove nulls and duplicates
+        val cleanedList = originalList.filterNotNull().toSet()
+
+        // Step 2: Exclude the newItem if it exists in the original cleanedList
+        val candidates = cleanedList - newItem
+
+        // If less than 3 items to pick from, fallback to whatever we can
+        if (candidates.size < 3) {
+            val fallback = candidates.toMutableList().apply { add(newItem) }.shuffled().toSet()
+            return fallback
+        }
+
+        // Step 3: Keep shuffling until the selected 3 items do not include the new item
+        var randomThree: List<String>
+        do {
+            randomThree = candidates.shuffled().take(3)
+        } while (newItem in randomThree)
+
+        // Step 4: Add newItem, shuffle again, and return as a set
+        return (randomThree + newItem).shuffled().toSet()
     }
 
 
