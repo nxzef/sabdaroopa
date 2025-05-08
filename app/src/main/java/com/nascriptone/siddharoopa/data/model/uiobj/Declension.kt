@@ -1,47 +1,49 @@
 package com.nascriptone.siddharoopa.data.model.uiobj
 
+import androidx.annotation.StringRes
+import com.nascriptone.siddharoopa.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 typealias Declension = Map<CaseName, Map<FormName, String?>>
 
 @Serializable
-enum class CaseName {
+enum class CaseName(@StringRes val sktName: Int) {
     @SerialName("nominative")
-    NOMINATIVE,
+    NOMINATIVE(R.string.nominative),
 
     @SerialName("vocative")
-    VOCATIVE,
+    VOCATIVE(R.string.vocative),
 
     @SerialName("accusative")
-    ACCUSATIVE,
+    ACCUSATIVE(R.string.accusative),
 
     @SerialName("instrumental")
-    INSTRUMENTAL,
+    INSTRUMENTAL(R.string.instrumental),
 
     @SerialName("dative")
-    DATIVE,
+    DATIVE(R.string.dative),
 
     @SerialName("ablative")
-    ABLATIVE,
+    ABLATIVE(R.string.ablative),
 
     @SerialName("genitive")
-    GENITIVE,
+    GENITIVE(R.string.genitive),
 
     @SerialName("locative")
-    LOCATIVE
+    LOCATIVE(R.string.locative)
 }
 
 @Serializable
-enum class FormName {
+enum class FormName(@StringRes val sktName: Int) {
     @SerialName("single")
-    SINGLE,
+    SINGLE(R.string.single),
 
     @SerialName("dual")
-    DUAL,
+    DUAL(R.string.dual),
 
     @SerialName("plural")
-    PLURAL
+    PLURAL(R.string.plural)
 }
 
 

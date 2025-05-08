@@ -204,7 +204,7 @@ class SiddharoopaViewModel @Inject constructor(
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption = ""
-        var questionKey: Map<String, String> = emptyMap()
+        var questionKey = mutableMapOf<String, String>()
         when (type) {
             MCQ.ONE -> {
                 val randomCase = declension.keys.random()
@@ -214,9 +214,9 @@ class SiddharoopaViewModel @Inject constructor(
                 val allWords = declension.values.flatMap { it.values }
                 val getAllString = allWords.mapNotNull { it }
 
-                options = getAllString.shuffled().take(3).toSet()
+                options = getAllString.shuffled().take(4).toSet()
                 trueOption = trueValue.orEmpty()
-                questionKey = mapOf(
+                questionKey = mutableMapOf(
                     "vibhakti" to randomCase.name,
                     "vachana" to randomForm.name,
                     "sabda" to sabda.word

@@ -25,10 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
+import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -122,10 +122,22 @@ fun QuizQuestionScreenContent(
 @Composable
 fun RegexText(
     @StringRes template: Int,
-    key: Map<String, String>,
+    key: MutableMap<String, String>,
     modifier: Modifier = Modifier
 ) {
     val stringRes = stringResource(template)
+    val vibaktiKey = "vibhakti"
+    val vachanaKey = "vachana"
+    if (key.containsKey(vibaktiKey) || key.containsKey(vachanaKey)) {
+        val vibaktiValue = key.getValue(vibaktiKey)
+        val vachanaValue = key.getValue(vachanaKey)
+        val vibaktiEnum = CaseName.valueOf(vibaktiValue)
+        val vachanaEnum = FormName.valueOf(vachanaValue)
+        val vibaktiSktName = stringResource(vibaktiEnum.sktName)
+        val vachanaSktName = stringResource(vachanaEnum.sktName)
+        key[vibaktiKey] = vibaktiSktName
+        key[vachanaKey] = vachanaSktName
+    }
     val text =
         replacePlaceholders(stringRes, key)
     Text(text, modifier = modifier)
@@ -135,22 +147,6 @@ fun RegexText(
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
     return template.replace(Regex("\\{(\\w+)\\}")) { match ->
         values[match.groupValues[1]] ?: match.value
-    }
-}
-
-
-//values.entries.fold(template) { acc, entry ->
-//    acc.replace("{${entry.key}}", entry.value)
-//}
-
-
-@Preview
-@Composable
-fun QuizQuestionScreenPreview() {
-    SiddharoopaTheme {
-        QuizQuestionScreen(
-            QuizSectionState()
-        )
     }
 }
 
