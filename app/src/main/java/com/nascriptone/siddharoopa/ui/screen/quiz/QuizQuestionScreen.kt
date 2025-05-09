@@ -90,16 +90,22 @@ fun QuizQuestionScreenContent(
                             exit = slideOutHorizontally() + fadeOut()
                         ) {
 
-                            when (val state = e.option) {
-                                is Option.McqOption -> {
-                                    RegexText(e.question, state.data.questionKey)
-                                    state.data.options.forEachIndexed { i, option ->
-                                        Text(option)
+                            Column {
+                                when (val state = e.option) {
+                                    is Option.McqOption -> {
+                                        RegexText(e.question, state.data.questionKey)
+                                        Spacer(Modifier.height(20.dp))
+                                        state.data.options.forEachIndexed { i, option ->
+                                            Text(
+                                                option,
+                                                style = MaterialTheme.typography.headlineMedium
+                                            )
+                                        }
                                     }
-                                }
 
-                                is Option.MtfOption -> {
+                                    is Option.MtfOption -> {
 
+                                    }
                                 }
                             }
 
@@ -145,7 +151,7 @@ fun RegexText(
     val finalKey = mutableKey.toMap()
     val text =
         replacePlaceholders(stringRes, finalKey)
-    Text(text, modifier = modifier)
+    Text(text, modifier = modifier, style = MaterialTheme.typography.displaySmall)
 }
 
 

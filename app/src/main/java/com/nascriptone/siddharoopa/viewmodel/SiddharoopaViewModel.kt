@@ -153,7 +153,8 @@ class SiddharoopaViewModel @Inject constructor(
                 val userSelectedQuestionType = quizUIState.value.questionType
                 val userSelectedQuestionRange = quizUIState.value.questionRange.toInt()
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
-
+                val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
+                val allWords = entireSabdaList.map { it.sabda.word }.toSet()
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
                         userSelectedTable?.let { it == sabda.table }
@@ -170,12 +171,13 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection[0]
+                    val randomTemplate = questionCollection[3]
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
                         is Phrase.McqKey -> {
-                            val mcqOption = generateMcqOption(result.mcqData, sabda, declension)
+                            val mcqOption =
+                                generateMcqOption(result.mcqData, sabda, declension, allGenders)
                             Option.McqOption(mcqOption)
                         }
 
@@ -202,36 +204,46 @@ class SiddharoopaViewModel @Inject constructor(
     private fun generateMcqOption(
         type: MCQ,
         sabda: Sabda,
-        declension: Declension
+        declension: Declension,
+        genders: Set<String>
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
-        var trueOption = ""
+        var trueOption: String? = null
         var questionKey: Map<String, String> = emptyMap()
-        val allWords = declension.values.flatMap { it.values }
+        val allForm = declension.values.flatMap { it.values }
         when (type) {
-            MCQ.ONE -> {
+            MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.TEN -> {
 
-                var trueValue: String?
                 var randomCase: CaseName
                 var randomForm: FormName
                 do {
                     randomCase = declension.keys.random()
                     randomForm = declension.getValue(randomCase).keys.random()
-                    trueValue = declension.getValue(randomCase).getValue(randomForm)
-                } while (trueValue == null)
+                    trueOption = declension.getValue(randomCase).getValue(randomForm)
+                } while (trueOption == null)
 
-                options = getUniqueShuffledSet(allWords, trueValue)
-                trueOption = trueValue
+
+                options = getUniqueShuffledSet(allForm, trueOption)
                 questionKey = mapOf(
                     "vibhakti" to randomCase.name,
                     "vachana" to randomForm.name,
+                    "sabda" to sabda.word
+                )
+
+            }
+
+            MCQ.FOUR -> {
+                val listOfGenders = genders.toList()
+                trueOption = sabda.gender
+                options = getUniqueShuffledSet(listOfGenders, trueOption)
+                questionKey = mapOf(
                     "sabda" to sabda.word
                 )
             }
 
             else -> {}
         }
-        return McqGeneratedData(options, trueOption, questionKey)
+        return McqGeneratedData(options, trueOption.orEmpty(), questionKey)
     }
 
     private fun generateMtfOption(type: MTF, sabda: Sabda, declension: Declension): Unit {
@@ -253,25 +265,16 @@ class SiddharoopaViewModel @Inject constructor(
         originalList: List<String?>,
         newItem: String
     ): Set<String> {
-        // Step 1: Remove nulls and duplicates
         val cleanedList = originalList.filterNotNull().toSet()
-
-        // Step 2: Exclude the newItem if it exists in the original cleanedList
         val candidates = cleanedList - newItem
-
-        // If less than 3 items to pick from, fallback to whatever we can
         if (candidates.size < 3) {
             val fallback = candidates.toMutableList().apply { add(newItem) }.shuffled().toSet()
             return fallback
         }
-
-        // Step 3: Keep shuffling until the selected 3 items do not include the new item
         var randomThree: List<String>
         do {
             randomThree = candidates.shuffled().take(3)
         } while (newItem in randomThree)
-
-        // Step 4: Add newItem, shuffle again, and return as a set
         return (randomThree + newItem).shuffled().toSet()
     }
 
