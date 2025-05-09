@@ -98,7 +98,7 @@ fun QuizQuestionScreenContent(
                                         state.data.options.forEachIndexed { i, option ->
                                             Text(
                                                 option,
-                                                style = MaterialTheme.typography.headlineMedium
+                                                style = MaterialTheme.typography.titleLarge
                                             )
                                         }
                                     }
@@ -151,7 +151,7 @@ fun RegexText(
     val finalKey = mutableKey.toMap()
     val text =
         replacePlaceholders(stringRes, finalKey)
-    Text(text, modifier = modifier, style = MaterialTheme.typography.displaySmall)
+    Text(text, modifier = modifier, style = MaterialTheme.typography.headlineSmall)
 }
 
 

@@ -106,12 +106,12 @@
     <string name="mcq_template_2">Which of the following is the correct {vibhakti} form in {vachana} for {sabda}?</string>
     <string name="mcq_template_3">Select the correct form of {sabda} in {vibhakti} {vachana}.</string>
     <string name="mcq_template_4">What is the gender of the word {sabda}?</string>
-    <string name="mcq_template_5">Choose the correct vachana (number) for the form {form} of {sabda}.</string>
+    <string name="mcq_template_5">Choose the correct वचन (number) for the form {form} of {sabda}.</string>
     <string name="mcq_template_6">Which category does the word {sabda} belong to?</string>
     <string name="mcq_template_7">What does the Sanskrit word {sabda} mean?</string>
-    <string name="mcq_template_8">Which is the correct {vibhakti} form of {sabda} used in the sentence?</string>
-    <string name="mcq_template_9">Identify the correct {vibhakti} case ending for {sabda}.</string>
-    <string name="mcq_template_10">What is the correct form of {sabda} in {vibhakti} and {vachana}?</string>
+<!--    <string name="mcq_template_8">Which is the correct {vibhakti} form of {sabda} used in the sentence?</string>-->
+    <string name="mcq_template_8">Identify the correct {vibhakti} case ending for {sabda}.</string>
+    <string name="mcq_template_9">What is the correct form of {sabda} in {vibhakti} and {vachana}?</string>
 
     <!-- MTF -->
 
@@ -119,11 +119,11 @@
     <string name="mtf_template_2">Match the given forms of {sabda} with their correct vibhakti.</string>
     <string name="mtf_template_3">Match each root form to its correct derived form in {vachana}.</string>
     <string name="mtf_template_4">Match the Sanskrit words with their English meanings.</string>
-    <string name="mtf_template_5">Match the vibhaktis with the usage examples.</string>
-    <string name="mtf_template_6">Match the following Sanskrit words with their gender.</string>
-    <string name="mtf_template_7">Match the shabda (noun) type with examples.</string>
-    <string name="mtf_template_8">Match each form of {sabda} with its number (vachana).</string>
-    <string name="mtf_template_9">Match case names with their definitions.</string>
-    <string name="mtf_template_10">Match each form of {sabda} with its appropriate grammatical tag.</string>
+<!--    <string name="mtf_template_5">Match the vibhaktis with the usage examples.</string>-->
+    <string name="mtf_template_5">Match the following Sanskrit words with their gender.</string>
+    <string name="mtf_template_6">Match the sabda (noun) type with examples.</string>
+    <string name="mtf_template_7">Match each form of {sabda} with its number (vachana).</string>
+    <string name="mtf_template_8">Match case names with their definitions.</string>
+    <string name="mtf_template_9">Match each form of {sabda} with its appropriate grammatical tag.</string>
 
 </resources>

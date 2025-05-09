@@ -171,7 +171,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection[3]
+                    val randomTemplate = questionCollection.random()
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
@@ -212,7 +212,7 @@ class SiddharoopaViewModel @Inject constructor(
         var questionKey: Map<String, String> = emptyMap()
         val allForm = declension.values.flatMap { it.values }
         when (type) {
-            MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.TEN -> {
+            MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.NINE -> {
 
                 var randomCase: CaseName
                 var randomForm: FormName
@@ -249,15 +249,7 @@ class SiddharoopaViewModel @Inject constructor(
     private fun generateMtfOption(type: MTF, sabda: Sabda, declension: Declension): Unit {
         when (type) {
             MTF.ONE -> {}
-            MTF.TWO -> {}
-            MTF.THREE -> {}
-            MTF.FOUR -> {}
-            MTF.FIVE -> {}
-            MTF.SIX -> {}
-            MTF.SEVEN -> {}
-            MTF.EIGHT -> {}
-            MTF.NINE -> {}
-            MTF.TEN -> {}
+            else -> {}
         }
     }
 

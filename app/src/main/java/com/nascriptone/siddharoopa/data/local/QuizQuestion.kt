@@ -16,8 +16,7 @@ object QuizQuestion {
         QTemplate(R.string.mcq_template_6, Phrase.McqKey(MCQ.SIX)),
         QTemplate(R.string.mcq_template_7, Phrase.McqKey(MCQ.SEVEN)),
         QTemplate(R.string.mcq_template_8, Phrase.McqKey(MCQ.EIGHT)),
-        QTemplate(R.string.mcq_template_9, Phrase.McqKey(MCQ.NINE)),
-        QTemplate(R.string.mcq_template_10, Phrase.McqKey(MCQ.TEN))
+        QTemplate(R.string.mcq_template_9, Phrase.McqKey(MCQ.NINE))
     )
     val mtfQuestions = listOf(
         QTemplate(R.string.mtf_template_1, Phrase.MtfKey(MTF.ONE)),
@@ -29,6 +28,5 @@ object QuizQuestion {
         QTemplate(R.string.mtf_template_7, Phrase.MtfKey(MTF.SEVEN)),
         QTemplate(R.string.mtf_template_8, Phrase.MtfKey(MTF.EIGHT)),
         QTemplate(R.string.mtf_template_9, Phrase.MtfKey(MTF.NINE)),
-        QTemplate(R.string.mtf_template_10, Phrase.MtfKey(MTF.TEN))
     )
 }
