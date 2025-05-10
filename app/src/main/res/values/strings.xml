@@ -107,11 +107,11 @@
     <string name="mcq_template_3">Select the correct form of {sabda} in {vibhakti} {vachana}.</string>
     <string name="mcq_template_4">What is the gender of the word {sabda}?</string>
     <string name="mcq_template_5">Choose the correct वचन (number) for the form {form} of {sabda}.</string>
-    <string name="mcq_template_6">Which category does the word {sabda} belong to?</string>
-    <string name="mcq_template_7">What does the Sanskrit word {sabda} mean?</string>
+<!--    <string name="mcq_template_6">Which category does the word {sabda} belong to?</string>-->
+    <string name="mcq_template_6">What does the Sanskrit word {sabda} mean?</string>
 <!--    <string name="mcq_template_8">Which is the correct {vibhakti} form of {sabda} used in the sentence?</string>-->
-    <string name="mcq_template_8">Identify the correct {vibhakti} case ending for {sabda}.</string>
-    <string name="mcq_template_9">What is the correct form of {sabda} in {vibhakti} and {vachana}?</string>
+    <string name="mcq_template_7">Identify the correct {vibhakti} case ending for {sabda}.</string>
+    <string name="mcq_template_8">What is the correct form of {sabda} in {vibhakti} and {vachana}?</string>
 
     <!-- MTF -->
 

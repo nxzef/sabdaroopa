@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 
 
 enum class MCQ {
-    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
+    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT
 }
 
 enum class MTF {

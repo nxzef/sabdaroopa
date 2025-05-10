@@ -155,6 +155,7 @@ class SiddharoopaViewModel @Inject constructor(
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
                 val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
                 val allWords = entireSabdaList.map { it.sabda.word }.toSet()
+                val allVachana = setOf("एकवचन", "द्विवचन", "बहुवचन")
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
                         userSelectedTable?.let { it == sabda.table }
@@ -177,7 +178,13 @@ class SiddharoopaViewModel @Inject constructor(
                     val option = when (val result = randomTemplate.phrase) {
                         is Phrase.McqKey -> {
                             val mcqOption =
-                                generateMcqOption(result.mcqData, sabda, declension, allGenders)
+                                generateMcqOption(
+                                    result.mcqData,
+                                    sabda,
+                                    declension,
+                                    allGenders,
+                                    allVachana
+                                )
                             Option.McqOption(mcqOption)
                         }
 
@@ -205,14 +212,15 @@ class SiddharoopaViewModel @Inject constructor(
         type: MCQ,
         sabda: Sabda,
         declension: Declension,
-        genders: Set<String>
+        genders: Set<String>,
+        vachana: Set<String>
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption: String? = null
         var questionKey: Map<String, String> = emptyMap()
         val allForm = declension.values.flatMap { it.values }
         when (type) {
-            MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.NINE -> {
+            MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.EIGHT -> {
 
                 var randomCase: CaseName
                 var randomForm: FormName
@@ -239,6 +247,30 @@ class SiddharoopaViewModel @Inject constructor(
                 questionKey = mapOf(
                     "sabda" to sabda.word
                 )
+            }
+
+            MCQ.FIVE -> {
+
+                val listOfVachana = vachana.toList()
+                var selectedForm: FormName
+                var chosenFormValue: String? = null
+                do {
+                    val randomCase = declension.keys.random()
+                    selectedForm = declension.getValue(randomCase).keys.random()
+                    chosenFormValue = declension.getValue(randomCase).getValue(selectedForm)
+                } while (chosenFormValue == null)
+
+                trueOption = selectedForm.name
+                options = getUniqueShuffledSet(listOfVachana, trueOption)
+                questionKey = mapOf(
+                    "form" to chosenFormValue,
+                    "sabda" to sabda.word
+                )
+
+            }
+
+            MCQ.SIX -> {
+
             }
 
             else -> {}
