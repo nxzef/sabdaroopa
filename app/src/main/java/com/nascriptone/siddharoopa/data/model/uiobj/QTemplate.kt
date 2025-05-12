@@ -8,7 +8,7 @@ enum class MCQ {
 }
 
 enum class MTF {
-    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
+    ONE, TWO, THREE, FOUR, FIVE, SIX
 }
 
 sealed class Phrase {

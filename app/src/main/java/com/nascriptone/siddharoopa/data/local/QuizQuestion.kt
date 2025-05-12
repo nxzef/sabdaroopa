@@ -24,8 +24,5 @@ object QuizQuestion {
         QTemplate(R.string.mtf_template_4, Phrase.MtfKey(MTF.FOUR)),
         QTemplate(R.string.mtf_template_5, Phrase.MtfKey(MTF.FIVE)),
         QTemplate(R.string.mtf_template_6, Phrase.MtfKey(MTF.SIX)),
-        QTemplate(R.string.mtf_template_7, Phrase.MtfKey(MTF.SEVEN)),
-        QTemplate(R.string.mtf_template_8, Phrase.MtfKey(MTF.EIGHT)),
-        QTemplate(R.string.mtf_template_9, Phrase.MtfKey(MTF.NINE)),
     )
 }
