@@ -104,7 +104,7 @@ fun QuizQuestionScreenContent(
                                     }
 
                                     is Option.MtfOption -> {
-
+//                                        RegexText(e.question, state.data)
                                     }
                                 }
                             }

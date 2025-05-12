@@ -20,7 +20,7 @@ enum class QuestionType(@StringRes val uiName: Int) {
 
 sealed class Option {
     data class McqOption(val data: McqGeneratedData) : Option()
-    data class MtfOption(val data: Unit) : Option()
+    data class MtfOption(val data: MtfGeneratedData) : Option()
 }
 
 data class QuestionOption(
@@ -31,6 +31,11 @@ data class QuestionOption(
 data class McqGeneratedData(
     val options: Set<String>,
     val trueOption: String,
+    val questionKey: Map<String, String>
+)
+
+data class MtfGeneratedData(
+    val options: Map<String, String>,
     val questionKey: Map<String, String>
 )
 

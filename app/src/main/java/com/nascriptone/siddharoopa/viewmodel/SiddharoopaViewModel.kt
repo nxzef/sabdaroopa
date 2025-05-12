@@ -27,6 +27,7 @@ import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
+import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
@@ -272,9 +273,7 @@ class SiddharoopaViewModel @Inject constructor(
 
             }
 
-            MCQ.SIX -> {
-
-            }
+            MCQ.SIX -> {}
 
             MCQ.SEVEN -> {
 
@@ -289,11 +288,24 @@ class SiddharoopaViewModel @Inject constructor(
         return McqGeneratedData(options, trueOption.orEmpty(), questionKey)
     }
 
-    private fun generateMtfOption(type: MTF, sabda: Sabda, declension: Declension): Unit {
+    private fun generateMtfOption(
+        type: MTF,
+        sabda: Sabda,
+        declension: Declension
+    ): MtfGeneratedData {
+
+
+        var questionKey: Map<String, String> = emptyMap()
+
         when (type) {
-            MTF.ONE -> {}
+            MTF.ONE -> {
+
+            }
+
             else -> {}
         }
+
+        return MtfGeneratedData(emptyMap(), questionKey)
     }
 
     private fun getUniqueShuffledSet(
