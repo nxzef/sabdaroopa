@@ -155,6 +155,7 @@ class SiddharoopaViewModel @Inject constructor(
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
                 val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
                 val allWords = entireSabdaList.map { it.sabda.word }.toSet()
+                val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
                 val allVachana = setOf("एकवचन", "द्विवचन", "बहुवचन")
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
@@ -183,7 +184,8 @@ class SiddharoopaViewModel @Inject constructor(
                                     sabda,
                                     declension,
                                     allGenders,
-                                    allVachana
+                                    allVachana,
+                                    allAntas
                                 )
                             Option.McqOption(mcqOption)
                         }
@@ -213,7 +215,8 @@ class SiddharoopaViewModel @Inject constructor(
         sabda: Sabda,
         declension: Declension,
         genders: Set<String>,
-        vachana: Set<String>
+        vachana: Set<String>,
+        anta: Set<String>
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption: String? = null
@@ -261,7 +264,7 @@ class SiddharoopaViewModel @Inject constructor(
                 } while (chosenFormValue == null)
 
                 trueOption = selectedForm.name
-                options = getUniqueShuffledSet(listOfVachana, trueOption)
+                options = listOfVachana.shuffled().toSet()
                 questionKey = mapOf(
                     "form" to chosenFormValue,
                     "sabda" to sabda.word
@@ -273,7 +276,15 @@ class SiddharoopaViewModel @Inject constructor(
 
             }
 
-            else -> {}
+            MCQ.SEVEN -> {
+
+                val listOfAntas = anta.toList()
+                trueOption = sabda.anta
+                options = getUniqueShuffledSet(listOfAntas, trueOption)
+                questionKey = mapOf(
+                    "sabda" to sabda.word
+                )
+            }
         }
         return McqGeneratedData(options, trueOption.orEmpty(), questionKey)
     }
