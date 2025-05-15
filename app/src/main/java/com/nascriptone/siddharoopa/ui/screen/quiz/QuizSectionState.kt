@@ -36,6 +36,7 @@ data class McqGeneratedData(
 
 data class MtfGeneratedData(
     val options: Map<String, String>,
+    val trueOption: Map<String, String>,
     val questionKey: Map<String, String>
 )
 

@@ -174,7 +174,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection.random()
+                    val randomTemplate = questionCollection[0]
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
@@ -294,18 +294,57 @@ class SiddharoopaViewModel @Inject constructor(
         declension: Declension
     ): MtfGeneratedData {
 
-
+        var options: Map<String, String> = emptyMap()
+        var trueOption: Map<String, String> = emptyMap()
         var questionKey: Map<String, String> = emptyMap()
 
+        val shuffledDeclension = declension.toList().shuffled().toMap()
+
         when (type) {
+
+
             MTF.ONE -> {
+
+                val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
+                var extraOption = ""
+
+                for (form in forms) {
+                    val formSet = declension.mapNotNull { it.value.getValue(form) }.toMutableSet()
+                    val validEntries = shuffledDeclension.filterValues {
+                        val currentForm = it[form]
+                        val validForm = currentForm in formSet
+                        formSet.remove(currentForm)
+                        validForm
+                    }
+                    if (validEntries.size >= 4) {
+
+                    }
+                }
+
+
+                val fullOptionMap = trueOption + ("" to extraOption)
+                val shuffledValues = fullOptionMap.values.shuffled()
+                options = fullOptionMap.keys.zip(shuffledValues).toMap()
+                questionKey = mapOf(
+                    "sabda" to sabda.word
+                )
 
             }
 
+            MTF.TWO -> {
+
+
+                questionKey = mapOf(
+                    "sabda" to sabda.word
+                )
+            }
+
             else -> {}
+
+
         }
 
-        return MtfGeneratedData(emptyMap(), questionKey)
+        return MtfGeneratedData(options, trueOption, questionKey)
     }
 
     private fun getUniqueShuffledSet(

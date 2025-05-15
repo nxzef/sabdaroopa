@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -104,7 +105,20 @@ fun QuizQuestionScreenContent(
                                     }
 
                                     is Option.MtfOption -> {
-//                                        RegexText(e.question, state.data)
+                                        RegexText(e.question, state.data.questionKey)
+                                        Spacer(Modifier.height(20.dp))
+                                        Row {
+                                            Column {
+                                                state.data.options.forEach { option ->
+                                                    Text(option.key)
+                                                }
+                                            }
+                                            Column {
+                                                state.data.options.forEach { option ->
+                                                    Text(option.value)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
