@@ -157,6 +157,7 @@ fun SiddharoopaApp(
                             composable(SiddharoopaRoutes.QuizQuestion.name) {
                                 QuizQuestionScreen(
                                     quizSectionState = quizUIState,
+                                    viewModel = viewModel
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizInstruction.name) {

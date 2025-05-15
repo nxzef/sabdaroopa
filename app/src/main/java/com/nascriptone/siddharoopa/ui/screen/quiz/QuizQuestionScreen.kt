@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -30,13 +31,21 @@ import androidx.compose.ui.unit.dp
 import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
 import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuizQuestionScreen(
     quizSectionState: QuizSectionState,
+    viewModel: SiddharoopaViewModel,
     modifier: Modifier = Modifier
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.createQuizQuestions()
+    }
+
+
     when (val result = quizSectionState.result) {
         is CreationState.Loading -> CurrentState {
             CircularProgressIndicator()

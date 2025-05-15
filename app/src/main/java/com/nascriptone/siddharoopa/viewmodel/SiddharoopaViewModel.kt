@@ -295,7 +295,7 @@ class SiddharoopaViewModel @Inject constructor(
     ): MtfGeneratedData {
 
         var options: Map<String, String> = emptyMap()
-        var trueOption: Map<String, String> = emptyMap()
+        var correctOptionMap: Map<String, String> = emptyMap()
         var questionKey: Map<String, String> = emptyMap()
 
         val shuffledDeclension = declension.toList().shuffled().toMap()
@@ -306,23 +306,30 @@ class SiddharoopaViewModel @Inject constructor(
             MTF.ONE -> {
 
                 val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
-                var extraOption = ""
+                var extraOption: String? = null
 
                 for (form in forms) {
-                    val formSet = declension.mapNotNull { it.value.getValue(form) }.toMutableSet()
+                    val formSet = declension.mapNotNull { it.value[form] }.toMutableSet()
                     val validEntries = shuffledDeclension.filterValues {
                         val currentForm = it[form]
-                        val validForm = currentForm in formSet
-                        formSet.remove(currentForm)
-                        validForm
+//                        val validForm = currentForm in formSet
+//                        formSet.remove(currentForm)
+//                        validForm
+                        currentForm != null && formSet.remove(currentForm)
                     }
                     if (validEntries.size >= 4) {
-
+                        val correctOptions = validEntries.entries.take(3)
+                        val distractorCandidates = validEntries.entries.toList() - correctOptions
+                        correctOptionMap =
+                            correctOptions.associate { (k, v) -> k.name to v[form]!! }
+                        extraOption = distractorCandidates.randomOrNull()?.value[form]
+                        break
                     }
                 }
 
 
-                val fullOptionMap = trueOption + ("" to extraOption)
+                val fullOptionMap =
+                    if (extraOption != null) correctOptionMap + ("" to extraOption) else correctOptionMap
                 val shuffledValues = fullOptionMap.values.shuffled()
                 options = fullOptionMap.keys.zip(shuffledValues).toMap()
                 questionKey = mapOf(
@@ -344,7 +351,7 @@ class SiddharoopaViewModel @Inject constructor(
 
         }
 
-        return MtfGeneratedData(options, trueOption, questionKey)
+        return MtfGeneratedData(options, correctOptionMap, questionKey)
     }
 
     private fun getUniqueShuffledSet(

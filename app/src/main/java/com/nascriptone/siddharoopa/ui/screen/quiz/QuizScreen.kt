@@ -123,7 +123,6 @@ fun QuizHomeScreen(
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = {
-                    viewModel.createQuizQuestions()
                     navHostController.navigate(SiddharoopaRoutes.QuizQuestion.name)
                 }, modifier = Modifier
                     .fillMaxWidth()
