@@ -160,11 +160,9 @@ class SiddharoopaViewModel @Inject constructor(
                 val allVachana = setOf("एकवचन", "द्विवचन", "बहुवचन")
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
-                        userSelectedTable?.let { it == sabda.table }
-                    ).all { it }
+                        userSelectedTable?.let { it == sabda.table }).all { it }
                 }
-                val randomPickedSabda =
-                    chosenData.shuffled().take(userSelectedQuestionRange)
+                val randomPickedSabda = chosenData.shuffled().take(userSelectedQuestionRange)
 
                 val data = randomPickedSabda.mapIndexed { index, entireSabda ->
                     val questionCollection = when (userSelectedQuestionType) {
@@ -179,15 +177,9 @@ class SiddharoopaViewModel @Inject constructor(
 
                     val option = when (val result = randomTemplate.phrase) {
                         is Phrase.McqKey -> {
-                            val mcqOption =
-                                generateMcqOption(
-                                    result.mcqData,
-                                    sabda,
-                                    declension,
-                                    allGenders,
-                                    allVachana,
-                                    allAntas
-                                )
+                            val mcqOption = generateMcqOption(
+                                result.mcqData, sabda, declension, allGenders, allVachana, allAntas
+                            )
                             Option.McqOption(mcqOption)
                         }
 
@@ -197,8 +189,7 @@ class SiddharoopaViewModel @Inject constructor(
                         }
                     }
                     QuestionOption(
-                        question = question,
-                        option = option
+                        question = question, option = option
                     )
                 }
 
@@ -267,8 +258,7 @@ class SiddharoopaViewModel @Inject constructor(
                 trueOption = selectedForm.name
                 options = listOfVachana.shuffled().toSet()
                 questionKey = mapOf(
-                    "form" to chosenFormValue,
-                    "sabda" to sabda.word
+                    "form" to chosenFormValue, "sabda" to sabda.word
                 )
 
             }
@@ -289,9 +279,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun generateMtfOption(
-        type: MTF,
-        sabda: Sabda,
-        declension: Declension
+        type: MTF, sabda: Sabda, declension: Declension
     ): MtfGeneratedData {
 
         var options: Map<String, String> = emptyMap()
@@ -303,7 +291,7 @@ class SiddharoopaViewModel @Inject constructor(
         when (type) {
 
 
-            MTF.ONE -> {
+            MTF.ONE, MTF.TWO -> {
 
                 val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
                 var extraOption: String? = null
@@ -317,13 +305,20 @@ class SiddharoopaViewModel @Inject constructor(
                     if (validEntries.size >= 4) {
                         val correctOptions = validEntries.entries.take(3)
                         val distractorCandidates = validEntries.entries.drop(3)
-                        correctOptionMap =
-                            correctOptions.associate { (k, v) -> k.name to v[form]!! }
-                        extraOption = distractorCandidates.randomOrNull()?.value[form]
+                        correctOptionMap = correctOptions.associate { (k, v) ->
+                            when (type) {
+                                MTF.ONE -> k.name to v[form]!!
+                                else -> v[form]!! to k.name
+                            }
+                        }
+                        val candidate = distractorCandidates.randomOrNull()
+                        extraOption = when (type) {
+                            MTF.ONE -> candidate?.value?.get(form)
+                            else -> candidate?.key?.name
+                        }
                         break
                     }
                 }
-
 
                 val fullOptionMap =
                     if (extraOption != null) correctOptionMap + ("" to extraOption) else correctOptionMap
@@ -333,14 +328,6 @@ class SiddharoopaViewModel @Inject constructor(
                     "sabda" to sabda.word
                 )
 
-            }
-
-            MTF.TWO -> {
-
-
-                questionKey = mapOf(
-                    "sabda" to sabda.word
-                )
             }
 
             MTF.THREE -> {}
@@ -355,8 +342,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun getUniqueShuffledSet(
-        originalList: List<String?>,
-        newItem: String
+        originalList: List<String?>, newItem: String
     ): Set<String> {
         val cleanedList = originalList.filterNotNull().toSet()
         val candidates = cleanedList - newItem
@@ -423,8 +409,7 @@ class SiddharoopaViewModel @Inject constructor(
             runCatching {
                 val restProp = RestProp(
                     favorite = Favorite(
-                        id = currentSabda.sabda.id,
-                        table = currentSabda.table
+                        id = currentSabda.sabda.id, table = currentSabda.table
                     )
                 )
                 repository.addRestProp(restProp)
@@ -466,9 +451,7 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateTable(selectedTable: Table, selectedSound: Sound) {
         _categoryUIState.update {
             it.copy(
-                selectedTable = selectedTable,
-                selectedSound = selectedSound,
-                selectedGender = null
+                selectedTable = selectedTable, selectedSound = selectedSound, selectedGender = null
             )
         }
     }
@@ -505,8 +488,7 @@ class SiddharoopaViewModel @Inject constructor(
                     listOfNotNull(
                         categoryUIState.value.selectedTable?.let { it == entireSabda.table },
                         categoryUIState.value.selectedSound?.let { it.name.lowercase() == entireSabda.sabda.sound },
-                        categoryUIState.value.selectedGender?.let { it.name.lowercase() == entireSabda.sabda.gender }
-                    ).all { it }
+                        categoryUIState.value.selectedGender?.let { it.name.lowercase() == entireSabda.sabda.gender }).all { it }
                 }
                 FilterState.Success(filteredData = filteredData)
             }.getOrElse { e ->
