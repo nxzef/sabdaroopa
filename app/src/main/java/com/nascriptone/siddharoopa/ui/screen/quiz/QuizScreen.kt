@@ -147,11 +147,11 @@ fun StepSlider(
 
     val sliderState = rememberSliderState(
         value = sliderPosition,
-        steps = 4,
+        steps = 2,
         onValueChangeFinished = {
             viewModel.updateQuizQuestionRange(sliderPosition)
         },
-        valueRange = 5F..30F
+        valueRange = 5F..20F
     )
     sliderPosition = sliderState.value
     val sliderPosToUi = sliderPosition.toInt()

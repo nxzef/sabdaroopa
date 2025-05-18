@@ -8,15 +8,13 @@ enum class MCQ {
 }
 
 enum class MTF {
-    ONE, TWO, THREE, FOUR, FIVE, SIX
+    ONE, TWO, THREE, FOUR, FIVE
 }
 
 sealed class Phrase {
     data class McqKey(val mcqData: MCQ) : Phrase()
     data class MtfKey(val mtfData: MTF) : Phrase()
 }
-
-
 
 
 data class QTemplate(

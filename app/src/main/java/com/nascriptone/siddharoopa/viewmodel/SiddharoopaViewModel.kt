@@ -155,7 +155,7 @@ class SiddharoopaViewModel @Inject constructor(
                 val userSelectedQuestionRange = quizUIState.value.questionRange.toInt()
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
                 val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
-                val allWords = entireSabdaList.map { it.sabda.word }.toSet()
+                val allSabda = entireSabdaList.map { it.sabda }.toSet()
                 val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
                 val allVachana = setOf("एकवचन", "द्विवचन", "बहुवचन")
                 val chosenData = entireSabdaList.filter { sabda ->
@@ -282,9 +282,9 @@ class SiddharoopaViewModel @Inject constructor(
         type: MTF, sabda: Sabda, declension: Declension
     ): MtfGeneratedData {
 
-        var options: Map<String, String> = emptyMap()
-        var correctOptionMap: Map<String, String> = emptyMap()
-        var questionKey: Map<String, String> = emptyMap()
+        var options = mapOf<String, String>()
+        var correctOptionMap = mapOf<String, String>()
+        var questionKey = mapOf<String, String>()
 
         val shuffledDeclension = declension.toList().shuffled().toMap()
 
@@ -330,11 +330,11 @@ class SiddharoopaViewModel @Inject constructor(
 
             }
 
-            MTF.THREE -> {}
+            MTF.THREE -> {
+
+            }
             MTF.FOUR -> {}
             MTF.FIVE -> {}
-            MTF.SIX -> {}
-
 
         }
 
