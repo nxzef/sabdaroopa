@@ -174,7 +174,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection[0]
+                    val randomTemplate = questionCollection.random()
                     val question = randomTemplate.questionResId
 
                     val option = when (val result = randomTemplate.phrase) {
@@ -312,14 +312,11 @@ class SiddharoopaViewModel @Inject constructor(
                     val formSet = declension.mapNotNull { it.value[form] }.toMutableSet()
                     val validEntries = shuffledDeclension.filterValues {
                         val currentForm = it[form]
-//                        val validForm = currentForm in formSet
-//                        formSet.remove(currentForm)
-//                        validForm
                         currentForm != null && formSet.remove(currentForm)
                     }
                     if (validEntries.size >= 4) {
                         val correctOptions = validEntries.entries.take(3)
-                        val distractorCandidates = validEntries.entries.toList() - correctOptions
+                        val distractorCandidates = validEntries.entries.drop(3)
                         correctOptionMap =
                             correctOptions.associate { (k, v) -> k.name to v[form]!! }
                         extraOption = distractorCandidates.randomOrNull()?.value[form]
@@ -346,7 +343,10 @@ class SiddharoopaViewModel @Inject constructor(
                 )
             }
 
-            else -> {}
+            MTF.THREE -> {}
+            MTF.FOUR -> {}
+            MTF.FIVE -> {}
+            MTF.SIX -> {}
 
 
         }
