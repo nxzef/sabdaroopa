@@ -361,6 +361,12 @@ class SiddharoopaViewModel @Inject constructor(
 
             MTF.FIVE -> {
 
+
+
+                questionKey = mapOf(
+                    "sabda" to sabda.word
+                )
+
             }
 
         }
