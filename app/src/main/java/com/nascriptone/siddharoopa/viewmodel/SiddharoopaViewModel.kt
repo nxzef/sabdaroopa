@@ -184,7 +184,14 @@ class SiddharoopaViewModel @Inject constructor(
                         }
 
                         is Phrase.MtfKey -> {
-                            val mtfOption = generateMtfOption(result.mtfData, sabda, declension)
+                            val mtfOption =
+                                generateMtfOption(
+                                    result.mtfData,
+                                    sabda,
+                                    declension,
+                                    allGenders,
+                                    allSabda
+                                )
                             Option.MtfOption(mtfOption)
                         }
                     }
@@ -263,7 +270,7 @@ class SiddharoopaViewModel @Inject constructor(
 
             }
 
-            MCQ.SIX -> {}
+            MCQ.SIX -> {} // Sixth Question business logic will set after the additional sabda insertion.
 
             MCQ.SEVEN -> {
 
@@ -279,7 +286,11 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun generateMtfOption(
-        type: MTF, sabda: Sabda, declension: Declension
+        type: MTF,
+        sabda: Sabda,
+        declension: Declension,
+        genders: Set<String>,
+        allSabda: Set<Sabda>
     ): MtfGeneratedData {
 
         var options = mapOf<String, String>()
@@ -330,11 +341,27 @@ class SiddharoopaViewModel @Inject constructor(
 
             }
 
-            MTF.THREE -> {
+            MTF.THREE -> {} // Third Question business logic will set after the additional data insertion
+
+
+            MTF.FOUR -> {
+
+                val sabdaByGender = allSabda.groupBy { it.gender }
+                val shuffledGenders = genders.shuffled()
+                correctOptionMap = shuffledGenders.mapNotNull { gender ->
+                    sabdaByGender[gender]?.random()
+                }.associate { sabda -> sabda.gender to sabda.word }
+
+
+                val shuffledValues = correctOptionMap.values.shuffled()
+                options = correctOptionMap.keys.zip(shuffledValues).toMap()
 
             }
-            MTF.FOUR -> {}
-            MTF.FIVE -> {}
+
+
+            MTF.FIVE -> {
+
+            }
 
         }
 

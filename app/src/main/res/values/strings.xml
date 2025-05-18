@@ -115,7 +115,6 @@
 
     <string name="mtf_template_1">Match each case (विभक्ति) with the correct form of {sabda}.</string>
     <string name="mtf_template_2">Match the given forms of {sabda} with their correct विभक्ति.</string>
-<!--    <string name="mtf_template_3">Match each root form to its correct derived form in {vachana}.</string>-->
     <string name="mtf_template_3">Match the Sanskrit words with their English meanings.</string>
     <string name="mtf_template_4">Match the following Sanskrit words with their gender.</string>
     <string name="mtf_template_5">Match each form of {sabda} with its number (वचन).</string>
