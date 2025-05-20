@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -189,6 +190,7 @@ class SiddharoopaViewModel @Inject constructor(
                                     result.mtfData,
                                     sabda,
                                     declension,
+                                    allVachana,
                                     allGenders,
                                     allSabda
                                 )
@@ -289,6 +291,7 @@ class SiddharoopaViewModel @Inject constructor(
         type: MTF,
         sabda: Sabda,
         declension: Declension,
+        vachana: Set<String>,
         genders: Set<String>,
         allSabda: Set<Sabda>
     ): MtfGeneratedData {
@@ -296,7 +299,6 @@ class SiddharoopaViewModel @Inject constructor(
         var options = mapOf<String, String>()
         var correctOptionMap = mapOf<String, String>()
         var questionKey = mapOf<String, String>()
-
         val shuffledDeclension = declension.toList().shuffled().toMap()
 
         when (type) {
@@ -361,13 +363,57 @@ class SiddharoopaViewModel @Inject constructor(
 
             MTF.FIVE -> {
 
+                var currentDeclension = declension
+                val invalidDeclensionSet = mutableSetOf<Sabda>()
+                while (true) {
+                    val keySet = currentDeclension.values.flatMap { it.keys }.toSet()
+                    val hasEmptyKey = keySet.any { key ->
+                        currentDeclension.values.mapNotNull { it[key] }.toSet().isEmpty()
+                    }
 
+                    if (hasEmptyKey) {
+                        val encoded = Json.encodeToString(currentDeclension)
+                        val currentSabda = allSabda.find { it.declension == encoded }
+                            ?: error("Current declension not found in allSabda")
+                        invalidDeclensionSet.add(currentSabda)
+                        val remaining = allSabda.subtract(invalidDeclensionSet)
+                        if (remaining.isEmpty()) break
+                        val randomSabda = remaining.random()
+                        val newDeclension =
+                            Json.decodeFromString<Declension>(randomSabda.declension)
+                        currentDeclension = newDeclension
+                    } else {
+
+                        val previousValues = mutableSetOf<String>()
+                        correctOptionMap = keySet.shuffled().associate { key ->
+
+                            val currentSet =
+                                currentDeclension.values.mapNotNull { it[key] }.toSet()
+                            val available = currentSet.minus(previousValues)
+
+                            require(available.isNotEmpty()) {
+                                "No unique value available for key: ${key.name}"
+                            }
+
+                            val chosen = available.random()
+                            previousValues.add(chosen)
+                            key.name to chosen
+
+                        }
+
+                        Log.d("correctOptionMap", "$correctOptionMap")
+
+
+                        break
+                    }
+                }
 
                 questionKey = mapOf(
                     "sabda" to sabda.word
                 )
 
             }
+
 
         }
 
