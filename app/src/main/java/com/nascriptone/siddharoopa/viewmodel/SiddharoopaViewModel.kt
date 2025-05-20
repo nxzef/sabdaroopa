@@ -190,7 +190,6 @@ class SiddharoopaViewModel @Inject constructor(
                                     result.mtfData,
                                     sabda,
                                     declension,
-                                    allVachana,
                                     allGenders,
                                     allSabda
                                 )
@@ -291,7 +290,6 @@ class SiddharoopaViewModel @Inject constructor(
         type: MTF,
         sabda: Sabda,
         declension: Declension,
-        vachana: Set<String>,
         genders: Set<String>,
         allSabda: Set<Sabda>
     ): MtfGeneratedData {
@@ -401,7 +399,8 @@ class SiddharoopaViewModel @Inject constructor(
 
                         }
 
-                        Log.d("correctOptionMap", "$correctOptionMap")
+                        val shufflesValues = correctOptionMap.values.shuffled()
+                        options = correctOptionMap.keys.zip(shufflesValues).toMap()
 
 
                         break
