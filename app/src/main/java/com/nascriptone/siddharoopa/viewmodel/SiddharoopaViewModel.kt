@@ -50,7 +50,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
@@ -368,10 +367,11 @@ class SiddharoopaViewModel @Inject constructor(
                     val hasEmptyKey = keySet.any { key ->
                         currentDeclension.values.mapNotNull { it[key] }.toSet().isEmpty()
                     }
-
                     if (hasEmptyKey) {
-                        val encoded = Json.encodeToString(currentDeclension)
-                        val currentSabda = allSabda.find { it.declension == encoded }
+                        val currentSabda = allSabda.find {
+                            val decoded = Json.decodeFromString<Declension>(it.declension)
+                            decoded == currentDeclension
+                        }
                             ?: error("Current declension not found in allSabda")
                         invalidDeclensionSet.add(currentSabda)
                         val remaining = allSabda.subtract(invalidDeclensionSet)
@@ -381,28 +381,20 @@ class SiddharoopaViewModel @Inject constructor(
                             Json.decodeFromString<Declension>(randomSabda.declension)
                         currentDeclension = newDeclension
                     } else {
-
                         val previousValues = mutableSetOf<String>()
                         correctOptionMap = keySet.shuffled().associate { key ->
-
                             val currentSet =
                                 currentDeclension.values.mapNotNull { it[key] }.toSet()
                             val available = currentSet.minus(previousValues)
-
                             require(available.isNotEmpty()) {
                                 "No unique value available for key: ${key.name}"
                             }
-
                             val chosen = available.random()
                             previousValues.add(chosen)
                             key.name to chosen
-
                         }
-
                         val shufflesValues = correctOptionMap.values.shuffled()
                         options = correctOptionMap.keys.zip(shufflesValues).toMap()
-
-
                         break
                     }
                 }
