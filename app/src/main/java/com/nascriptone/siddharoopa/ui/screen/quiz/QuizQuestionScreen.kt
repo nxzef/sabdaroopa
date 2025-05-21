@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -78,63 +78,26 @@ fun QuizQuestionScreenContent(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
+                .padding(vertical = 24.dp)
         ) {
             Spacer(Modifier.height(24.dp))
             Text(
-                "${questionIndex + 1} / $questionCount",
+                "Question ${questionIndex + 1} of $questionCount",
                 style = MaterialTheme.typography.titleLarge
             )
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .weight(1F),
                 contentAlignment = Alignment.Center
             ) {
-                data.forEachIndexed { i, e ->
-                    Column {
-                        AnimatedVisibility(
-                            i == questionIndex,
-                            enter = slideInHorizontally(
-                                initialOffsetX = { it / 2 }
-                            ) + fadeIn(),
-                            exit = slideOutHorizontally() + fadeOut()
-                        ) {
 
-                            Column {
-                                when (val state = e.option) {
-                                    is Option.McqOption -> {
-                                        RegexText(e.question, state.data.questionKey)
-                                        Spacer(Modifier.height(20.dp))
-                                        state.data.options.forEachIndexed { i, option ->
-                                            Text(
-                                                option,
-                                                style = MaterialTheme.typography.titleLarge
-                                            )
-                                        }
-                                    }
-
-                                    is Option.MtfOption -> {
-                                        RegexText(e.question, state.data.questionKey)
-                                        Spacer(Modifier.height(20.dp))
-                                        Row {
-                                            Column {
-                                                state.data.options.forEach { option ->
-                                                    Text(option.key)
-                                                }
-                                            }
-                                            Column {
-                                                state.data.options.forEach { option ->
-                                                    Text(option.value)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                        }
-                    }
+                data.forEachIndexed { index, each ->
+                    QuestionOption(
+                        isVisible = index == questionIndex,
+                        each = each
+                    )
                 }
+
             }
             Button(onClick = {
                 if (questionIndex < (questionCount - 1)) {
@@ -146,6 +109,55 @@ fun QuizQuestionScreenContent(
                 Text("NEXT")
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+
+@Composable
+fun QuestionOption(
+    isVisible: Boolean,
+    each: QuestionOption,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        isVisible,
+        enter = slideInHorizontally(
+            initialOffsetX = { it / 2 }
+        ) + fadeIn(),
+        exit = slideOutHorizontally() + fadeOut(),
+        modifier = modifier
+    ) {
+        Column {
+            when (val state = each.option) {
+                is Option.McqOption -> {
+                    RegexText(each.question, state.data.questionKey)
+                    Spacer(Modifier.height(20.dp))
+                    state.data.options.forEachIndexed { i, option ->
+                        Text(
+                            option,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                }
+
+                is Option.MtfOption -> {
+                    RegexText(each.question, state.data.questionKey)
+                    Spacer(Modifier.height(20.dp))
+                    Row {
+                        Column {
+                            state.data.options.forEach { option ->
+                                Text(option.key)
+                            }
+                        }
+                        Column {
+                            state.data.options.forEach { option ->
+                                Text(option.value)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
