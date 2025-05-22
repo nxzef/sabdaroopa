@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -34,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -89,6 +92,7 @@ fun QuizQuestionScreenContent(
 
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
+    var selectedOption by rememberSaveable { mutableStateOf<Int?>(null) }
     val questionCount = quizSectionState.questionRange.toInt()
 
     Surface {
@@ -124,19 +128,42 @@ fun QuizQuestionScreenContent(
                 data.forEachIndexed { index, each ->
                     QuestionOption(
                         isVisible = index == questionIndex,
+                        onValueChange = { selectedOption = it },
+                        selectedOption = selectedOption,
                         each = each
                     )
                 }
 
             }
-            Button(onClick = {
-                if (questionIndex < (questionCount - 1)) {
-                    questionIndex++
-                } else {
-                    questionIndex = 0
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        if (questionIndex < (questionCount - 1)) {
+                            questionIndex++
+                        } else {
+                            questionIndex = 0
+                        }
+                    },
+                    modifier = Modifier.weight(1F)
+                ) {
+                    Text("SKIP")
                 }
-            }) {
-                Text("NEXT")
+                Spacer(Modifier.width(12.dp))
+                Button(
+                    enabled = selectedOption != null,
+                    onClick = {
+                        if (questionIndex < (questionCount - 1)) {
+                            questionIndex++
+                        } else {
+                            questionIndex = 0
+                        }
+                    },
+                    modifier = Modifier.weight(1F)
+                ) {
+                    Text("SUBMIT")
+                }
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -147,9 +174,12 @@ fun QuizQuestionScreenContent(
 @Composable
 fun QuestionOption(
     isVisible: Boolean,
+    onValueChange: (Int) -> Unit,
+    selectedOption: Int?,
     each: QuestionOption,
     modifier: Modifier = Modifier
 ) {
+
     AnimatedVisibility(
         isVisible,
         enter = slideInHorizontally(
@@ -173,13 +203,17 @@ fun QuestionOption(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(
-                                    MaterialTheme.colorScheme.surfaceContainer,
-                                    MaterialTheme.shapes.medium
-                                )
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(MaterialTheme.colorScheme.surfaceContainer)
+                                .clickable { onValueChange(i) }
                                 .padding(8.dp)
                         ) {
-                            RadioButton(false, onClick = {})
+                            RadioButton(
+                                selected = if (selectedOption != null) {
+                                    selectedOption == i
+                                } else false,
+                                onClick = { onValueChange(i) }
+                            )
                             Spacer(Modifier.width(12.dp))
                             OptionText(
                                 text = option,
