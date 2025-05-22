@@ -6,19 +6,30 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,9 +38,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.DefaultStrokeLineCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEachIndexed
 import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
 import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
@@ -81,12 +95,25 @@ fun QuizQuestionScreenContent(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
-                .padding(vertical = 24.dp)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(24.dp))
             Text(
                 "Question ${questionIndex + 1} of $questionCount",
                 style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(Modifier.height(20.dp))
+            LinearProgressIndicator(
+                progress = { ((questionIndex + 1).toDouble() / questionCount).toFloat() },
+                gapSize = 0.dp,
+                strokeCap = DefaultStrokeLineCap,
+                drawStopIndicator = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+                    .height(16.dp)
+                    .clip(CircleShape),
             )
             Box(
                 modifier = Modifier
@@ -126,43 +153,77 @@ fun QuestionOption(
     AnimatedVisibility(
         isVisible,
         enter = slideInHorizontally(
-            initialOffsetX = { it / 2 }
+            initialOffsetX = { (it * 70) / 100 }
         ) + fadeIn(),
-        exit = slideOutHorizontally() + fadeOut(),
+        exit = slideOutHorizontally(
+            targetOffsetX = { -it / 4 }
+        ) + fadeOut(),
         modifier = modifier
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 8.dp)
+        ) {
             when (val state = each.option) {
                 is Option.McqOption -> {
                     RegexText(each.question, state.data.questionKey)
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(40.dp))
                     state.data.options.forEachIndexed { i, option ->
-                        OptionText(
-                            text = option,
-                            style = MaterialTheme.typography.titleLarge
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceContainer,
+                                    MaterialTheme.shapes.medium
+                                )
+                                .padding(8.dp)
+                        ) {
+                            RadioButton(false, onClick = {})
+                            Spacer(Modifier.width(12.dp))
+                            OptionText(
+                                text = option,
+                            )
+                        }
                     }
+
                 }
 
                 is Option.MtfOption -> {
+                    val options = state.data.options.toList()
                     RegexText(each.question, state.data.questionKey)
-                    Spacer(Modifier.height(20.dp))
-                    Row {
-                        Column {
-                            state.data.options.forEach { option ->
-                                OptionText(
-                                    text = option.key,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
+                    Spacer(Modifier.height(40.dp))
+                    OutlinedCard {
+                        options.fastForEachIndexed { index, (key, value) ->
+                            Row(
+                                modifier = Modifier
+                                    .height(56.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1F)
+                                        .fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    OptionText(
+                                        key,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                }
+                                VerticalDivider()
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1F)
+                                        .fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    OptionText(
+                                        value,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                }
                             }
-                        }
-                        Column {
-                            state.data.options.forEach { option ->
-                                OptionText(
-                                    text = option.value,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            }
+                            if (index != options.lastIndex) HorizontalDivider()
                         }
                     }
                 }
@@ -180,7 +241,7 @@ private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
 fun OptionText(
     text: String,
     modifier: Modifier = Modifier,
-    style: TextStyle = LocalTextStyle.current
+    style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     val keyText = text.uppercase()
     val adjustedText = when (keyText) {
@@ -205,7 +266,7 @@ fun OptionText(
     Text(
         adjustedText,
         style = style,
-        modifier = modifier
+        modifier = modifier.then(Modifier)
     )
 }
 
@@ -233,7 +294,7 @@ fun RegexText(
     val finalKey = mutableKey.toMap()
     val text =
         replacePlaceholders(stringRes, finalKey)
-    Text(text, modifier = modifier, style = MaterialTheme.typography.headlineSmall)
+    Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
 }
 
 
