@@ -157,14 +157,17 @@ fun SiddharoopaApp(
                             composable(SiddharoopaRoutes.QuizQuestion.name) {
                                 QuizQuestionScreen(
                                     quizSectionState = quizUIState,
-                                    viewModel = viewModel
+                                    viewModel = viewModel,
+                                    navHostController = navHostController
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizInstruction.name) {
                                 QuizInstructionScreen()
                             }
                             composable(SiddharoopaRoutes.QuizResult.name) {
-                                QuizResultScreen()
+                                QuizResultScreen(
+                                    navHostController = navHostController
+                                )
                             }
                             composable(SiddharoopaRoutes.QuizReview.name) {
                                 QuizReviewScreen()
