@@ -53,6 +53,11 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
+private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
+private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
+private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
+
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuizQuestionScreen(
@@ -90,16 +95,15 @@ fun QuizQuestionScreenContent(
     modifier: Modifier = Modifier
 ) {
 
-
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
-    var selectedOption by rememberSaveable { mutableStateOf<Int?>(null) }
+    var isSubmitEnabled by rememberSaveable { mutableStateOf(false) }
     val questionCount = quizSectionState.questionRange.toInt()
 
     Surface {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
-                .padding(16.dp)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(24.dp))
@@ -115,7 +119,7 @@ fun QuizQuestionScreenContent(
                 drawStopIndicator = {},
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
+                    .padding(horizontal = 16.dp)
                     .height(16.dp)
                     .clip(CircleShape),
             )
@@ -128,15 +132,17 @@ fun QuizQuestionScreenContent(
                 data.forEachIndexed { index, each ->
                     QuestionOption(
                         isVisible = index == questionIndex,
-                        onValueChange = { selectedOption = it },
-                        selectedOption = selectedOption,
+                        onValueChange = {
+                            isSubmitEnabled = it != null
+                        },
                         each = each
                     )
                 }
 
             }
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 8.dp)
             ) {
                 OutlinedButton(
                     onClick = {
@@ -152,7 +158,7 @@ fun QuizQuestionScreenContent(
                 }
                 Spacer(Modifier.width(12.dp))
                 Button(
-                    enabled = selectedOption != null,
+                    enabled = isSubmitEnabled,
                     onClick = {
                         if (questionIndex < (questionCount - 1)) {
                             questionIndex++
@@ -174,8 +180,7 @@ fun QuizQuestionScreenContent(
 @Composable
 fun QuestionOption(
     isVisible: Boolean,
-    onValueChange: (Int) -> Unit,
-    selectedOption: Int?,
+    onValueChange: (Int?) -> Unit,
     each: QuestionOption,
     modifier: Modifier = Modifier
 ) {
@@ -190,6 +195,10 @@ fun QuestionOption(
         ) + fadeOut(),
         modifier = modifier
     ) {
+
+        var selectedOption by rememberSaveable { mutableStateOf<Int?>(null) }
+        onValueChange(selectedOption)
+
         Column(
             modifier = Modifier
                 .padding(horizontal = 8.dp)
@@ -205,14 +214,15 @@ fun QuestionOption(
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                                .clickable { onValueChange(i) }
+                                .clickable {
+                                    selectedOption = i
+                                }
                                 .padding(8.dp)
                         ) {
                             RadioButton(
-                                selected = if (selectedOption != null) {
-                                    selectedOption == i
-                                } else false,
-                                onClick = { onValueChange(i) }
+                                selected = if (selectedOption == null) false
+                                else selectedOption == i,
+                                onClick = { selectedOption = i }
                             )
                             Spacer(Modifier.width(12.dp))
                             OptionText(
@@ -265,10 +275,6 @@ fun QuestionOption(
         }
     }
 }
-
-private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
-private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
-private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
 
 
 @Composable
