@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -47,10 +48,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
 import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
@@ -63,6 +66,7 @@ private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
 fun QuizQuestionScreen(
     quizSectionState: QuizSectionState,
     viewModel: SiddharoopaViewModel,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
@@ -83,6 +87,7 @@ fun QuizQuestionScreen(
         is CreationState.Success -> QuizQuestionScreenContent(
             result.data,
             quizSectionState,
+            navHostController = navHostController,
             modifier = modifier
         )
     }
@@ -92,6 +97,7 @@ fun QuizQuestionScreen(
 fun QuizQuestionScreenContent(
     data: List<QuestionOption>,
     quizSectionState: QuizSectionState,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
@@ -149,7 +155,7 @@ fun QuizQuestionScreenContent(
                         if (questionIndex < (questionCount - 1)) {
                             questionIndex++
                         } else {
-                            questionIndex = 0
+                            navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
                         }
                     },
                     modifier = Modifier.weight(1F)
@@ -163,12 +169,15 @@ fun QuizQuestionScreenContent(
                         if (questionIndex < (questionCount - 1)) {
                             questionIndex++
                         } else {
-                            questionIndex = 0
+                            navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
                         }
                     },
                     modifier = Modifier.weight(1F)
                 ) {
-                    Text("SUBMIT")
+                    Text(
+                        if (questionIndex == (questionCount - 1)) "SUBMIT"
+                        else "NEXT"
+                    )
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -197,7 +206,9 @@ fun QuestionOption(
     ) {
 
         var selectedOption by rememberSaveable { mutableStateOf<Int?>(null) }
-        onValueChange(selectedOption)
+        LaunchedEffect(selectedOption) {
+            onValueChange(selectedOption)
+        }
 
         Column(
             modifier = Modifier
@@ -241,7 +252,7 @@ fun QuestionOption(
                         options.fastForEachIndexed { index, (key, value) ->
                             Row(
                                 modifier = Modifier
-                                    .height(56.dp)
+                                    .requiredHeight(64.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
