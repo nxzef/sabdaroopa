@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,6 +56,8 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
 private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
@@ -85,6 +88,7 @@ fun QuizQuestionScreen(
         }
 
         is CreationState.Success -> QuizQuestionScreenContent(
+            viewModel,
             result.data,
             quizSectionState,
             navHostController = navHostController,
@@ -95,6 +99,7 @@ fun QuizQuestionScreen(
 
 @Composable
 fun QuizQuestionScreenContent(
+    viewModel: SiddharoopaViewModel,
     data: List<QuestionOption>,
     quizSectionState: QuizSectionState,
     navHostController: NavHostController,
@@ -102,8 +107,9 @@ fun QuizQuestionScreenContent(
 ) {
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
-    var isSubmitEnabled by rememberSaveable { mutableStateOf(false) }
     val questionCount = quizSectionState.questionRange.toInt()
+    val lastQuestionIndex = questionCount - 1
+    val scope = rememberCoroutineScope()
 
     Surface {
         Column(
@@ -138,9 +144,7 @@ fun QuizQuestionScreenContent(
                 data.forEachIndexed { index, each ->
                     QuestionOption(
                         isVisible = index == questionIndex,
-                        onValueChange = {
-                            isSubmitEnabled = it != null
-                        },
+                        onValueChange = { answer -> viewModel.updateUserAnswer(answer) },
                         each = each
                     )
                 }
@@ -152,10 +156,12 @@ fun QuizQuestionScreenContent(
             ) {
                 OutlinedButton(
                     onClick = {
-                        if (questionIndex < (questionCount - 1)) {
-                            questionIndex++
-                        } else {
-                            navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                        scope.launch {
+                            if (questionIndex < (questionCount - 1)) {
+                                questionIndex++
+                            } else {
+                                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                            }
                         }
                     },
                     modifier = Modifier.weight(1F)
@@ -164,18 +170,24 @@ fun QuizQuestionScreenContent(
                 }
                 Spacer(Modifier.width(12.dp))
                 Button(
-                    enabled = isSubmitEnabled,
+                    enabled = quizSectionState.currentAnswer != Answer.Unspecified,
                     onClick = {
-                        if (questionIndex < (questionCount - 1)) {
-                            questionIndex++
-                        } else {
-                            navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                        scope.launch {
+                            if (questionIndex < questionCount) {
+                                // Submit the answer
+                                delay(1000)
+                                if (questionIndex == lastQuestionIndex) {
+                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                                } else {
+                                    questionIndex++
+                                }
+                            }
                         }
                     },
                     modifier = Modifier.weight(1F)
                 ) {
                     Text(
-                        if (questionIndex == (questionCount - 1)) "SUBMIT"
+                        if (questionIndex == lastQuestionIndex) "SUBMIT"
                         else "NEXT"
                     )
                 }
@@ -189,7 +201,7 @@ fun QuizQuestionScreenContent(
 @Composable
 fun QuestionOption(
     isVisible: Boolean,
-    onValueChange: (Int?) -> Unit,
+    onValueChange: (Answer) -> Unit,
     each: QuestionOption,
     modifier: Modifier = Modifier
 ) {
@@ -205,10 +217,11 @@ fun QuestionOption(
         modifier = modifier
     ) {
 
-        var selectedOption by rememberSaveable { mutableStateOf<Int?>(null) }
-        LaunchedEffect(selectedOption) {
-            onValueChange(selectedOption)
-        }
+//        val option = each.option
+//        var currentOption by rememberSaveable { mutableStateOf<Option>(option) }
+//        LaunchedEffect(currentOption) {
+//            onValueChange(currentOption)
+//        }
 
         Column(
             modifier = Modifier
@@ -216,24 +229,25 @@ fun QuestionOption(
         ) {
             when (val state = each.option) {
                 is Option.McqOption -> {
+                    val options = state.data.options
+                    var answer by rememberSaveable { mutableStateOf(state.data.answer) }
+                    LaunchedEffect(answer) { onValueChange(Answer.Mcq(answer)) }
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
-                    state.data.options.forEachIndexed { i, option ->
+                    options.forEachIndexed { i, option ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceContainer)
-                                .clickable {
-                                    selectedOption = i
-                                }
+                                .clickable { answer = option }
                                 .padding(8.dp)
                         ) {
                             RadioButton(
-                                selected = if (selectedOption == null) false
-                                else selectedOption == i,
-                                onClick = { selectedOption = i }
+                                selected = if (answer == null) false
+                                else answer == option,
+                                onClick = { answer = option }
                             )
                             Spacer(Modifier.width(12.dp))
                             OptionText(
@@ -241,11 +255,12 @@ fun QuestionOption(
                             )
                         }
                     }
-
                 }
 
                 is Option.MtfOption -> {
                     val options = state.data.options.toList()
+                    var answer by rememberSaveable { mutableStateOf(state.data.answer) }
+                    LaunchedEffect(answer) { onValueChange(Answer.Mtf(answer)) }
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
                     OutlinedCard {
