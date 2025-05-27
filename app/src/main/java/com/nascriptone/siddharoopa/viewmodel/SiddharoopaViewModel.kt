@@ -25,6 +25,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
@@ -141,6 +142,30 @@ class SiddharoopaViewModel @Inject constructor(
 
                 _homeUIState.update { it.copy(result = result) }
             }
+        }
+    }
+
+
+    fun updateUserAnswer(answer: Answer) {
+
+        val specifiedAnswer = when (answer) {
+            is Answer.Mcq -> {
+                if (answer.mcqValue != null) Answer.Mcq(answer.mcqValue)
+                else Answer.Unspecified
+            }
+
+            is Answer.Mtf -> {
+                if (answer.mtfValue != null) Answer.Mtf(answer.mtfValue)
+                else Answer.Unspecified
+            }
+
+            is Answer.Unspecified -> return
+        }
+
+        _quizUIState.update {
+            it.copy(
+                currentAnswer = specifiedAnswer
+            )
         }
     }
 
