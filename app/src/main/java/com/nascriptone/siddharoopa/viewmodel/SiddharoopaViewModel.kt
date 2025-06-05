@@ -25,7 +25,6 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
-import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
@@ -146,30 +145,6 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun updateUserAnswer(answer: Answer) {
-
-        val specifiedAnswer = when (answer) {
-            is Answer.Mcq -> {
-                if (answer.mcqValue != null) Answer.Mcq(answer.mcqValue)
-                else Answer.Unspecified
-            }
-
-            is Answer.Mtf -> {
-                if (answer.mtfValue != null) Answer.Mtf(answer.mtfValue)
-                else Answer.Unspecified
-            }
-
-            is Answer.Unspecified -> return
-        }
-
-        _quizUIState.update {
-            it.copy(
-                currentAnswer = specifiedAnswer
-            )
-        }
-    }
-
-
     fun createQuizQuestions() {
         viewModelScope.launch(Dispatchers.IO) {
             _quizUIState.update { it.copy(result = CreationState.Loading) }
@@ -209,14 +184,9 @@ class SiddharoopaViewModel @Inject constructor(
                         }
 
                         is Phrase.MtfKey -> {
-                            val mtfOption =
-                                generateMtfOption(
-                                    result.mtfData,
-                                    sabda,
-                                    declension,
-                                    allGenders,
-                                    allSabda
-                                )
+                            val mtfOption = generateMtfOption(
+                                result.mtfData, sabda, declension, allGenders, allSabda
+                            )
                             Option.MtfOption(mtfOption)
                         }
                     }
@@ -311,11 +281,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun generateMtfOption(
-        type: MTF,
-        sabda: Sabda,
-        declension: Declension,
-        genders: Set<String>,
-        allSabda: Set<Sabda>
+        type: MTF, sabda: Sabda, declension: Declension, genders: Set<String>, allSabda: Set<Sabda>
     ): MtfGeneratedData {
 
         var options = mapOf<String, String>()
@@ -396,8 +362,7 @@ class SiddharoopaViewModel @Inject constructor(
                         val currentSabda = allSabda.find {
                             val decoded = Json.decodeFromString<Declension>(it.declension)
                             decoded == currentDeclension
-                        }
-                            ?: error("Current declension not found in allSabda")
+                        } ?: error("Current declension not found in allSabda")
                         invalidDeclensionSet.add(currentSabda)
                         val remaining = allSabda.subtract(invalidDeclensionSet)
                         if (remaining.isEmpty()) break
@@ -408,8 +373,7 @@ class SiddharoopaViewModel @Inject constructor(
                     } else {
                         val previousValues = mutableSetOf<String>()
                         correctOptionMap = keySet.shuffled().associate { key ->
-                            val currentSet =
-                                currentDeclension.values.mapNotNull { it[key] }.toSet()
+                            val currentSet = currentDeclension.values.mapNotNull { it[key] }.toSet()
                             val available = currentSet.minus(previousValues)
                             require(available.isNotEmpty()) {
                                 "No unique value available for key: ${key.name}"
