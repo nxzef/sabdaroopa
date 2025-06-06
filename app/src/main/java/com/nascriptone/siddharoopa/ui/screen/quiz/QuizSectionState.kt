@@ -8,7 +8,8 @@ data class QuizSectionState(
     val questionFrom: Table? = null,
     val questionType: QuestionType = QuestionType.All,
     val questionRange: Float = 10F,
-    val result: CreationState = CreationState.Loading
+    val currentAnswer: Answer = Answer.Unspecified,
+    val result: CreationState = CreationState.Loading,
 )
 
 enum class QuestionType(@StringRes val uiName: Int) {
@@ -26,21 +27,26 @@ sealed class Option {
 data class QuestionOption(
     val question: Int,
     val option: Option,
+    val answer: Answer = Answer.Unspecified
 )
 
 data class McqGeneratedData(
     val options: Set<String>,
     val trueOption: String,
     val questionKey: Map<String, String>,
-    val answer: String? = null
 )
 
 data class MtfGeneratedData(
     val options: Map<String, String>,
     val trueOption: Map<String, String>,
     val questionKey: Map<String, String>,
-    val answer: Map<String, String>? = null
 )
+
+sealed class Answer {
+    data object Unspecified : Answer()
+    data class Mcq(val ans: String) : Answer()
+    data class Mtf(val ans: Map<String, String>) : Answer()
+}
 
 
 sealed class CreationState {
