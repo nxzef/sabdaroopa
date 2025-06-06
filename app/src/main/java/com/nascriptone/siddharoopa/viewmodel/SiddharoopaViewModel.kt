@@ -25,6 +25,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
@@ -144,6 +145,33 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
+    fun submitAnswer(qID: Int) {
+        val result = quizUIState.value.result
+        if (result !is CreationState.Success) return
+
+        val questionOptions = result.data
+        val questionOptionsToMutable = questionOptions.toMutableList()
+        val answer = quizUIState.value.currentAnswer
+        val targetObject = questionOptionsToMutable[qID]
+        val updatedObject = targetObject.copy(answer = answer)
+        questionOptionsToMutable[qID] = updatedObject
+        val updatedList = questionOptionsToMutable.toList()
+
+        _quizUIState.update {
+            it.copy(
+                result = CreationState.Success(data = updatedList)
+            )
+        }
+    }
+
+
+    fun updateCurrentAnswer(answer: Answer) {
+        _quizUIState.update {
+            it.copy(
+                currentAnswer = answer
+            )
+        }
+    }
 
     fun createQuizQuestions() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -157,7 +185,6 @@ class SiddharoopaViewModel @Inject constructor(
                 val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
                 val allSabda = entireSabdaList.map { it.sabda }.toSet()
                 val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
-                val allVachana = setOf("एकवचन", "द्विवचन", "बहुवचन")
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
                         userSelectedTable?.let { it == sabda.table }).all { it }
@@ -178,7 +205,7 @@ class SiddharoopaViewModel @Inject constructor(
                     val option = when (val result = randomTemplate.phrase) {
                         is Phrase.McqKey -> {
                             val mcqOption = generateMcqOption(
-                                result.mcqData, sabda, declension, allGenders, allVachana, allAntas
+                                result.mcqData, sabda, declension, allGenders, allAntas
                             )
                             Option.McqOption(mcqOption)
                         }
@@ -209,13 +236,13 @@ class SiddharoopaViewModel @Inject constructor(
         sabda: Sabda,
         declension: Declension,
         genders: Set<String>,
-        vachana: Set<String>,
         anta: Set<String>
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption: String? = null
         var questionKey: Map<String, String> = emptyMap()
         val allForm = declension.values.flatMap { it.values }
+        val allVachana = declension.values.flatMap { it.keys }.toSet().map { it.name }
         when (type) {
             MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.EIGHT -> {
 
@@ -248,7 +275,6 @@ class SiddharoopaViewModel @Inject constructor(
 
             MCQ.FIVE -> {
 
-                val listOfVachana = vachana.toList()
                 var selectedForm: FormName
                 var chosenFormValue: String? = null
                 do {
@@ -258,7 +284,7 @@ class SiddharoopaViewModel @Inject constructor(
                 } while (chosenFormValue == null)
 
                 trueOption = selectedForm.name
-                options = listOfVachana.shuffled().toSet()
+                options = allVachana.shuffled().toSet()
                 questionKey = mapOf(
                     "form" to chosenFormValue, "sabda" to sabda.word
                 )
@@ -281,7 +307,11 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun generateMtfOption(
-        type: MTF, sabda: Sabda, declension: Declension, genders: Set<String>, allSabda: Set<Sabda>
+        type: MTF,
+        sabda: Sabda,
+        declension: Declension,
+        genders: Set<String>,
+        allSabda: Set<Sabda>
     ): MtfGeneratedData {
 
         var options = mapOf<String, String>()
