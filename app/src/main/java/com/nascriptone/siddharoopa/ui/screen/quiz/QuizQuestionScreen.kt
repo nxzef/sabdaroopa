@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -38,12 +37,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -109,6 +110,7 @@ fun QuizQuestionScreenContent(
     val questionCount = quizSectionState.questionRange.toInt()
     val lastQuestionIndex = questionCount - 1
     val scope = rememberCoroutineScope()
+    var isClickable by rememberSaveable { mutableStateOf(false) }
 
     Surface {
         Column(
@@ -135,15 +137,18 @@ fun QuizQuestionScreenContent(
                     .clip(CircleShape),
             )
             Box(
-                modifier = Modifier
-                    .weight(1F),
-                contentAlignment = Alignment.Center
+                modifier = Modifier.weight(1F), contentAlignment = Alignment.Center
             ) {
-
                 data.forEachIndexed { index, each ->
                     QuestionOption(
                         isVisible = index == questionIndex,
                         each = each,
+                        onValueChange = { answer ->
+                            viewModel.updateCurrentAnswer(answer)
+                            isClickable = true
+                        },
+                        currentAnswer = quizSectionState.currentAnswer,
+                        isClickable = isClickable
                     )
                 }
 
@@ -155,38 +160,31 @@ fun QuizQuestionScreenContent(
                 OutlinedButton(
                     onClick = {
                         scope.launch {
-                            if (questionIndex < (questionCount - 1)) {
+                            if (questionIndex < lastQuestionIndex) {
                                 questionIndex++
                             } else {
                                 navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
                             }
                         }
-                    },
-                    modifier = Modifier.weight(1F)
+                    }, modifier = Modifier.weight(1F)
                 ) {
                     Text("SKIP")
                 }
                 Spacer(Modifier.width(12.dp))
                 Button(
-                    enabled = true,
+                    enabled = quizSectionState.currentAnswer != Answer.Unspecified && isClickable,
                     onClick = {
                         scope.launch {
-                            if (questionIndex < questionCount) {
-
-                                // Submit the answer
-                                delay(1000)
-                                if (questionIndex == lastQuestionIndex) {
-                                    Log.d("list", "$data")
-                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
-                                } else {
-                                    questionIndex++
-                                }
-
-
+                            isClickable = false
+                            viewModel.submitAnswer(questionIndex)
+                            delay(2000)
+                            if (questionIndex == lastQuestionIndex) {
+                                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                            } else {
+                                questionIndex++
                             }
                         }
-                    },
-                    modifier = Modifier.weight(1F)
+                    }, modifier = Modifier.weight(1F)
                 ) {
                     Text(
                         if (questionIndex == lastQuestionIndex) "SUBMIT"
@@ -204,24 +202,24 @@ fun QuizQuestionScreenContent(
 fun QuestionOption(
     isVisible: Boolean,
     each: QuestionOption,
+    onValueChange: (Answer) -> Unit,
+    currentAnswer: Answer,
+    isClickable: Boolean,
     modifier: Modifier = Modifier
 ) {
 
     AnimatedVisibility(
-        isVisible,
-        enter = slideInHorizontally(
-            initialOffsetX = { (it * 70) / 100 }
-        ) + fadeIn(),
-        exit = slideOutHorizontally(
-            targetOffsetX = { -it / 4 }
-        ) + fadeOut(),
-        modifier = modifier
+        isVisible, enter = slideInHorizontally(
+            initialOffsetX = { (it * 70) / 100 }) + fadeIn(), exit = slideOutHorizontally(
+            targetOffsetX = { -it / 4 }) + fadeOut(), modifier = modifier
     ) {
 
+        val exactAnswer = each.answer
+        val answer = currentAnswer
+        LaunchedEffect(Unit) { onValueChange(exactAnswer) }
 
         Column(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp)
         ) {
             when (val state = each.option) {
                 is Option.McqOption -> {
@@ -229,19 +227,31 @@ fun QuestionOption(
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
                     options.forEachIndexed { i, option ->
+                        val isCorrectOption =
+                            option == state.data.trueOption && exactAnswer is Answer.Mcq
+                        val isWrongSelectedOption =
+                            exactAnswer is Answer.Mcq && exactAnswer.ans == option && !isCorrectOption
+                        val backgroundColor = when {
+                            isCorrectOption -> MaterialTheme.colorScheme.tertiaryContainer
+                            isWrongSelectedOption -> MaterialTheme.colorScheme.errorContainer
+                            else -> Color.Transparent
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                .clickable { }
-                                .padding(8.dp)
-                        ) {
+                                .background(backgroundColor)
+                                .clickable(enabled = isClickable) {
+                                    if (isClickable) onValueChange(
+                                        Answer.Mcq(option)
+                                    )
+                                }
+                                .padding(8.dp)) {
                             RadioButton(
-                                selected = false,
-                                onClick = { }
-                            )
+                                enabled = isClickable,
+                                selected = if (answer is Answer.Mcq) option == answer.ans else false,
+                                onClick = { if (isClickable) onValueChange(Answer.Mcq(option)) })
                             Spacer(Modifier.width(12.dp))
                             OptionText(
                                 text = option,
@@ -257,8 +267,7 @@ fun QuestionOption(
                     OutlinedCard {
                         options.fastForEachIndexed { index, (key, value) ->
                             Row(
-                                modifier = Modifier
-                                    .requiredHeight(64.dp)
+                                modifier = Modifier.requiredHeight(64.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -267,8 +276,7 @@ fun QuestionOption(
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     OptionText(
-                                        key,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                        key, modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
                                 VerticalDivider()
@@ -279,8 +287,7 @@ fun QuestionOption(
                                     contentAlignment = Alignment.CenterStart
                                 ) {
                                     OptionText(
-                                        value,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                        value, modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
                             }
@@ -321,18 +328,14 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        adjustedText,
-        style = style,
-        modifier = modifier.then(Modifier)
+        adjustedText, style = style, modifier = modifier.then(Modifier)
     )
 }
 
 
 @Composable
 fun RegexText(
-    @StringRes template: Int,
-    key: Map<String, String>,
-    modifier: Modifier = Modifier
+    @StringRes template: Int, key: Map<String, String>, modifier: Modifier = Modifier
 ) {
     val mutableKey = key.toMutableMap()
     val stringRes = stringResource(template)
@@ -349,8 +352,7 @@ fun RegexText(
         mutableKey[vachanaKey] = vachanaSktName
     }
     val finalKey = mutableKey.toMap()
-    val text =
-        replacePlaceholders(stringRes, finalKey)
+    val text = replacePlaceholders(stringRes, finalKey)
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
 }
 
