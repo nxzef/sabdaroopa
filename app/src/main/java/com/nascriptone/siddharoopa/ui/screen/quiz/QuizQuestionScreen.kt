@@ -2,12 +2,15 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,12 +22,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -177,7 +185,7 @@ fun QuizQuestionScreenContent(
                         scope.launch {
                             isClickable = false
                             viewModel.submitAnswer(questionIndex)
-                            delay(2000)
+                            delay(1000)
                             if (questionIndex == lastQuestionIndex) {
                                 navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
                             } else {
@@ -219,7 +227,7 @@ fun QuestionOption(
         LaunchedEffect(Unit) { onValueChange(exactAnswer) }
 
         Column(
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             when (val state = each.option) {
                 is Option.McqOption -> {
@@ -232,8 +240,8 @@ fun QuestionOption(
                         val isWrongSelectedOption =
                             exactAnswer is Answer.Mcq && exactAnswer.ans == option && !isCorrectOption
                         val backgroundColor = when {
-                            isCorrectOption -> MaterialTheme.colorScheme.tertiaryContainer
-                            isWrongSelectedOption -> MaterialTheme.colorScheme.errorContainer
+                            isCorrectOption -> Color(0x1600FF00)
+                            isWrongSelectedOption -> Color(0x16FF0000)
                             else -> Color.Transparent
                         }
                         Row(
@@ -242,20 +250,30 @@ fun QuestionOption(
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(backgroundColor)
-                                .clickable(enabled = isClickable) {
-                                    if (isClickable) onValueChange(
-                                        Answer.Mcq(option)
-                                    )
-                                }
-                                .padding(8.dp)) {
-                            RadioButton(
-                                enabled = isClickable,
-                                selected = if (answer is Answer.Mcq) option == answer.ans else false,
-                                onClick = { if (isClickable) onValueChange(Answer.Mcq(option)) })
+                                .selectable(
+                                    enabled = isClickable,
+                                    selected = if (answer is Answer.Mcq) option == answer.ans else false,
+                                    onClick = {
+                                        if (isClickable) onValueChange(
+                                            Answer.Mcq(option)
+                                        )
+                                    }
+                                )
+                                .padding(8.dp)
+                        ) {
+                            OptionIcon(
+                                isCorrectOption,
+                                isWrongSelectedOption,
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                RadioButton(
+                                    enabled = isClickable,
+                                    selected = if (answer is Answer.Mcq) option == answer.ans else false,
+                                    onClick = null, /* { if (isClickable) onValueChange(Answer.Mcq(option)) } */
+                                )
+                            }
                             Spacer(Modifier.width(12.dp))
-                            OptionText(
-                                text = option,
-                            )
+                            OptionText(text = option)
                         }
                     }
                 }
@@ -300,6 +318,46 @@ fun QuestionOption(
     }
 }
 
+@Composable
+fun OptionIcon(
+    correct: Boolean,
+    wrong: Boolean,
+    modifier: Modifier = Modifier,
+    default: @Composable () -> Unit
+) {
+    val enterTransition: EnterTransition = fadeIn() + scaleIn()
+    val exitTransition: ExitTransition = fadeOut() + scaleOut()
+    Box(modifier) {
+        AnimatedVisibility(
+            correct,
+            enter = enterTransition,
+            exit = exitTransition
+        ) {
+            Icon(
+                Icons.Filled.CheckCircle,
+                null,
+                tint = Color.Green
+            )
+        }
+        AnimatedVisibility(
+            wrong,
+            enter = enterTransition,
+            exit = exitTransition
+        ) {
+            Icon(
+                Icons.Filled.Cancel,
+                null,
+                tint = Color.Red
+            )
+        }
+        AnimatedVisibility(
+            !correct && !wrong,
+            enter = enterTransition,
+            exit = exitTransition
+        ) { default() }
+    }
+}
+
 
 @Composable
 fun OptionText(
@@ -328,7 +386,10 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        adjustedText, style = style, modifier = modifier.then(Modifier)
+        adjustedText,
+        style = style,
+        modifier = modifier
+            .then(Modifier)
     )
 }
 
