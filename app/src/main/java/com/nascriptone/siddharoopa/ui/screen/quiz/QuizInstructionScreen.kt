@@ -1,5 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.util.Log
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,11 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -44,7 +52,6 @@ fun QuizInstructionScreen(
 
     Surface(modifier) {
         Column {
-            Text("Hello World this is instruction screen!")
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -72,67 +79,104 @@ fun QuizInstructionScreen(
 @Composable
 fun DraggableBox(
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    activeColor: Color = Color.Blue,
+    idleColor: Color = Color.DarkGray,
+    animationDuration: Int = 200
 ) {
+    val xOffset = remember { Animatable(0f) }
+    val yOffset = remember { Animatable(0f) }
 
-    val xOffset = remember { Animatable(0F) }
-//    val yOffset = remember { Animatable(0F) }
     var isDragging by rememberSaveable { mutableStateOf(false) }
-    var zIndex by rememberSaveable { mutableFloatStateOf(0F) }
+    var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+    var parentBoxSize by remember { mutableStateOf<IntSize?>(IntSize.Zero) }
+    var boxOffsetInParentY by rememberSaveable { mutableStateOf<Float?>(null) }
 
+    val boxWidth = boxSize.width.toFloat()
+    val boxHeight = boxSize.height.toFloat()
+    val xExtra = boxWidth / 4
+    val yExtra = boxHeight / 3
+
+    val parentBoxHeight = parentBoxSize?.height?.toFloat()!!
+    val maxOffset = parentBoxHeight - boxHeight
+
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isDragging) activeColor else idleColor,
+        animationSpec = tween(durationMillis = 200),
+        label = "boxBackgroundColor"
+    )
+
+    Log.d("yOffset", "$parentBoxHeight")
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
+            .onGloballyPositioned {
+                boxSize = it.size
+                parentBoxSize = it.parentLayoutCoordinates?.size
+                if (boxOffsetInParentY == null) boxOffsetInParentY = it.positionInParent().y
+            }
             .offset {
                 IntOffset(
                     xOffset.value.roundToInt(),
-                    0
+                    yOffset.value.roundToInt()
                 )
             }
             .fillMaxWidth()
             .height(64.dp)
-            .background(if (isDragging) Color.Blue else Color.DarkGray)
+            .background(backgroundColor)
             .zIndex(zIndex)
-            .then(modifier)
             .pointerInput(Unit) {
                 coroutineScope {
                     detectDragGestures(
                         onDragStart = {
                             isDragging = true
-                            zIndex = 1F
+                            zIndex = 1f
                         },
                         onDragEnd = {
-                            isDragging = false
-                            zIndex = 0F
                             launch {
-                                xOffset.animateTo(
-                                    0F,
-                                    tween(200)
-                                )
+                                listOf(
+                                    async { xOffset.animateTo(0F, tween(animationDuration)) },
+                                    async {
+
+                                        // Work in Progress
+                                        val targetOffset = 0F
+                                        // Work in Progress
+
+
+                                        yOffset.animateTo(targetOffset, tween(animationDuration))
+                                    }
+                                ).awaitAll()
+
+                                isDragging = false
+                                zIndex = 0f
                             }
-//                            launch {
-//                                yOffset.animateTo(
-//                                    0F,
-//                                    tween(300)
-//                                )
-//                            }
+                        },
+                        onDrag = { change, dragAmount ->
+                            launch {
+                                change.consume()
 
-                        }
-                    ) { change, dragAmount ->
-                        launch {
-                            change.consume()
+                                val newX = (xOffset.value + dragAmount.x)
+                                    .coerceIn(-xExtra, xExtra)
+                                val newY = (yOffset.value + dragAmount.y)
+                                    .coerceIn(
+                                        -(boxOffsetInParentY!! + yExtra),
+                                        (maxOffset - boxOffsetInParentY!!) + yExtra
+                                    )
 
-                            val xAmount = xOffset.value + dragAmount.x
-                            val xFinalValue = xAmount - (xAmount / 100F)
-                            xOffset.snapTo(xFinalValue)
-//                            yOffset.snapTo(yOffset.value + dragAmount.y)
+                                xOffset.snapTo(newX)
+                                yOffset.snapTo(newY)
+                            }
                         }
-                    }
+                    )
                 }
             }
     ) {
-        Text(text, color = Color.White)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 
