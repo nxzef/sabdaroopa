@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -40,6 +39,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 
@@ -107,8 +107,6 @@ fun DraggableBox(
         label = "boxBackgroundColor"
     )
 
-    Log.d("yOffset", "$parentBoxHeight")
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -141,7 +139,17 @@ fun DraggableBox(
                                     async {
 
                                         // Work in Progress
-                                        val targetOffset = 0F
+
+
+                                        val currentOffset = yOffset.value + boxOffsetInParentY!!
+                                        val actualOffset = currentOffset + (boxHeight / 2)
+
+                                        val targetOffset =
+                                            if (actualOffset < boxHeight) 0F - boxOffsetInParentY!!
+                                            else if (actualOffset < maxOffset) boxHeight - boxOffsetInParentY!!
+                                            else maxOffset - boxOffsetInParentY!!
+
+
                                         // Work in Progress
 
 
@@ -157,13 +165,31 @@ fun DraggableBox(
                             launch {
                                 change.consume()
 
-                                val newX = (xOffset.value + dragAmount.x)
-                                    .coerceIn(-xExtra, xExtra)
-                                val newY = (yOffset.value + dragAmount.y)
-                                    .coerceIn(
-                                        -(boxOffsetInParentY!! + yExtra),
-                                        (maxOffset - boxOffsetInParentY!!) + yExtra
-                                    )
+                                // X Axis Logic
+                                val currentX = xOffset.value
+                                val xNormalized = (currentX / xExtra).coerceIn(-1F, 1F)
+                                val xResistance = 1F - xNormalized.absoluteValue
+                                val xDrag = currentX + (dragAmount.x * xResistance)
+
+
+                                // Y Axis Logic
+                                val currentY = yOffset.value
+                                val exactValue = currentY + dragAmount.y
+                                val yFrom = 0F - boxOffsetInParentY!!
+                                val yTo = maxOffset - boxOffsetInParentY!!
+
+                                val belowMin = (yFrom - exactValue).coerceAtLeast(0f)
+                                val aboveMax = (exactValue - yTo).coerceAtLeast(0f)
+                                val overshoot = belowMin + aboveMax
+
+                                val yNormalized = (overshoot / yExtra).coerceIn(0f, 1f)
+                                val yResistance = 1F - yNormalized.absoluteValue
+                                val yDrag = currentY + dragAmount.y * yResistance
+
+                                val newX = xDrag
+//                                    .coerceIn(-xExtra, xExtra)
+                                val newY = yDrag
+//                                    .coerceIn(-yExtra, maxOffset + yExtra)
 
                                 xOffset.snapTo(newX)
                                 yOffset.snapTo(newY)
