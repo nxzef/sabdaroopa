@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -17,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,21 +59,27 @@ fun QuizInstructionScreen(
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                Column(
-                    Modifier
-                        .width(140.dp)
-                        .border(
-                            width = 0.5.dp,
-                            color = Color.LightGray
-                        )
-                        .zIndex(0F)
-                ) {
-                    list.forEachIndexed { index, item ->
-                        DraggableBox(text = item)
-                    }
-                }
-
+                DraggableBoxColumn(list)
             }
+        }
+    }
+}
+
+@Composable
+fun DraggableBoxColumn(
+    list: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier
+            .width(140.dp)
+            .border(
+                width = 0.5.dp,
+                color = Color.LightGray
+            )
+    ) {
+        list.forEachIndexed { index, text ->
+            DraggableBox(text)
         }
     }
 }
@@ -80,8 +88,8 @@ fun QuizInstructionScreen(
 fun DraggableBox(
     text: String,
     modifier: Modifier = Modifier,
-    activeColor: Color = Color.Blue,
-    idleColor: Color = Color.DarkGray,
+    activeColor: Color = Color.Magenta,
+    idleColor: Color = Color.Gray,
     animationDuration: Int = 200
 ) {
     val xOffset = remember { Animatable(0f) }
@@ -91,11 +99,11 @@ fun DraggableBox(
     var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var parentBoxSize by remember { mutableStateOf<IntSize?>(IntSize.Zero) }
-    var boxOffsetInParentY by rememberSaveable { mutableStateOf<Float?>(null) }
+    var boxOffsetInParentY by rememberSaveable { mutableFloatStateOf(0F) }
 
     val boxWidth = boxSize.width.toFloat()
     val boxHeight = boxSize.height.toFloat()
-    val xExtra = boxWidth / 4
+    val xExtra = boxWidth / 8
     val yExtra = boxHeight / 3
 
     val parentBoxHeight = parentBoxSize?.height?.toFloat()!!
@@ -107,28 +115,34 @@ fun DraggableBox(
         label = "boxBackgroundColor"
     )
 
+    LaunchedEffect(Unit) {
+        Log.d("triggerTest", "::::::::::: >> $text Triggered!!!")
+//        yOffset.animateTo(0F, tween(animationDuration))
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .onGloballyPositioned {
-                boxSize = it.size
-                parentBoxSize = it.parentLayoutCoordinates?.size
-                if (boxOffsetInParentY == null) boxOffsetInParentY = it.positionInParent().y
-            }
+            .fillMaxWidth()
+            .height(64.dp)
             .offset {
                 IntOffset(
                     xOffset.value.roundToInt(),
                     yOffset.value.roundToInt()
                 )
             }
-            .fillMaxWidth()
-            .height(64.dp)
+            .onGloballyPositioned {
+                boxSize = it.size
+                parentBoxSize = it.parentLayoutCoordinates?.size
+                boxOffsetInParentY = it.positionInParent().y
+            }
             .background(backgroundColor)
             .zIndex(zIndex)
             .pointerInput(Unit) {
                 coroutineScope {
                     detectDragGestures(
                         onDragStart = {
+                            Log.d("currentOffset", "$boxOffsetInParentY")
                             isDragging = true
                             zIndex = 1f
                         },
@@ -141,13 +155,18 @@ fun DraggableBox(
                                         // Work in Progress
 
 
-                                        val currentOffset = yOffset.value + boxOffsetInParentY!!
+                                        val currentOffset = yOffset.value + boxOffsetInParentY
                                         val actualOffset = currentOffset + (boxHeight / 2)
 
                                         val targetOffset =
-                                            if (actualOffset < boxHeight) 0F - boxOffsetInParentY!!
-                                            else if (actualOffset < maxOffset) boxHeight - boxOffsetInParentY!!
-                                            else maxOffset - boxOffsetInParentY!!
+                                            if (actualOffset < boxHeight) 0F - boxOffsetInParentY
+                                            else if (actualOffset < maxOffset) boxHeight - boxOffsetInParentY
+                                            else maxOffset - boxOffsetInParentY
+
+                                        Log.d(
+                                            "indexLogics",
+                                            "Swap I: ${(boxOffsetInParentY).roundToInt() / 128} Swap J: ${actualOffset.roundToInt() / 128}"
+                                        )
 
 
                                         // Work in Progress
@@ -174,12 +193,11 @@ fun DraggableBox(
 
                                 // Y Axis Logic
                                 val currentY = yOffset.value
-                                val exactValue = currentY + dragAmount.y
-                                val yFrom = 0F - boxOffsetInParentY!!
-                                val yTo = maxOffset - boxOffsetInParentY!!
+                                val yFrom = 0F - boxOffsetInParentY
+                                val yTo = maxOffset - boxOffsetInParentY
 
-                                val belowMin = (yFrom - exactValue).coerceAtLeast(0f)
-                                val aboveMax = (exactValue - yTo).coerceAtLeast(0f)
+                                val belowMin = (yFrom - currentY).coerceAtLeast(0f)
+                                val aboveMax = (currentY - yTo).coerceAtLeast(0f)
                                 val overshoot = belowMin + aboveMax
 
                                 val yNormalized = (overshoot / yExtra).coerceIn(0f, 1f)
@@ -187,9 +205,10 @@ fun DraggableBox(
                                 val yDrag = currentY + dragAmount.y * yResistance
 
                                 val newX = xDrag
-//                                    .coerceIn(-xExtra, xExtra)
+                                    .coerceIn(-xExtra, xExtra)
                                 val newY = yDrag
 //                                    .coerceIn(-yExtra, maxOffset + yExtra)
+
 
                                 xOffset.snapTo(newX)
                                 yOffset.snapTo(newY)
