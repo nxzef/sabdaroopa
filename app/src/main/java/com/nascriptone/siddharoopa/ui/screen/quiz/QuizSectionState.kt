@@ -45,7 +45,7 @@ data class MtfGeneratedData(
 sealed class Answer {
     data object Unspecified : Answer()
     data class Mcq(val ans: String) : Answer()
-    data class Mtf(val ans: Map<String, String>) : Answer()
+    data class Mtf(val ans: List<String>) : Answer()
 }
 
 
