@@ -276,7 +276,7 @@ class SiddharoopaViewModel @Inject constructor(
             MCQ.FIVE -> {
 
                 var selectedForm: FormName
-                var chosenFormValue: String? = null
+                var chosenFormValue: String?
                 do {
                     val randomCase = declension.keys.random()
                     selectedForm = declension.getValue(randomCase).keys.random()
