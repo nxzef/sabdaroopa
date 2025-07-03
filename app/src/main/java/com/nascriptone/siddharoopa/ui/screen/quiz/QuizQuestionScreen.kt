@@ -302,8 +302,9 @@ fun QuestionOption(
                     val keys = options.map { it.key }
                     val values = options.map { it.value }
 
-                    val currentList =
+                    val currentList: List<String> = rememberSaveable(currentAnswer) {
                         if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
+                    }
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -341,19 +342,19 @@ fun QuestionOption(
                             modifier = Modifier.weight(1F)
                         ) {
 
-                            var dropCount by rememberSaveable { mutableIntStateOf(0) }
+                            var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
                             values.forEachIndexed { index, value ->
-                                val swapIndex = currentList.indexOf(value)
+                                val currentIndex = currentList.indexOf(value)
                                 DraggableBox(
                                     index = index,
-                                    swapIndex = swapIndex,
-                                    dropCount = dropCount,
-                                    onDrop = { i, j ->
-                                        val inside = currentList.indexOf(value)
-                                        Collections.swap(currentList, inside, j)
+                                    currentIndex = currentIndex,
+                                    dragCount = dragCount,
+                                    onDrop = { j ->
+                                        val i = currentList.indexOf(value)
+                                        Collections.swap(currentList, i, j)
                                         onValueChange(Answer.Mtf(currentList))
-                                        dropCount++
+                                        dragCount++
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -361,7 +362,6 @@ fun QuestionOption(
                                 ) {
                                     OptionText(
                                         value,
-                                        inx = swapIndex,
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
@@ -378,9 +378,9 @@ fun QuestionOption(
 @Composable
 fun DraggableBox(
     index: Int,
-    swapIndex: Int,
-    onDrop: (i: Int, j: Int) -> Unit,
-    dropCount: Int,
+    currentIndex: Int,
+    onDrop: (dropPosition: Int) -> Unit,
+    dragCount: Int,
     modifier: Modifier = Modifier,
     activeColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     idleColor: Color = MaterialTheme.colorScheme.surfaceContainer,
@@ -411,10 +411,10 @@ fun DraggableBox(
         label = "boxBackgroundColor"
     )
 
-    val diff = swapIndex - index
+    val diff = currentIndex - index
     val animateTo = boxHeight * diff
 
-    LaunchedEffect(dropCount) {
+    LaunchedEffect(dragCount) {
         yOffset.animateTo(animateTo, tween(animationDuration))
     }
 
@@ -446,14 +446,11 @@ fun DraggableBox(
                                 listOf(
                                     async { xOffset.animateTo(0F, tween(animationDuration)) },
                                     async {
-
                                         val currentOffset = yOffset.value + componentOffset
                                         val actualOffset = currentOffset + (boxHeight / 2)
-
-                                        val i = swapIndex
-                                        val j = actualOffset.roundToInt() / boxHeight.roundToInt()
-                                        onDrop(i, j)
-//                                        Log.d("swap", "I: $i, J: $j")
+                                        val dropIndex =
+                                            actualOffset.roundToInt() / boxHeight.roundToInt()
+                                        onDrop(dropIndex)
                                     }
                                 ).awaitAll()
 
@@ -549,7 +546,6 @@ fun OptionIcon(
 fun OptionText(
     text: String,
     modifier: Modifier = Modifier,
-    inx: Int = 0,
     style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     val keyText = text.uppercase()
@@ -573,7 +569,7 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        "$adjustedText, $inx",
+        adjustedText,
         style = style,
         modifier = modifier
             .then(Modifier)
