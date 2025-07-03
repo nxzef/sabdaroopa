@@ -40,7 +40,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -334,7 +333,7 @@ fun QuestionOption(
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-                                if (index != keys.lastIndex) HorizontalDivider()
+//                                if (index != keys.lastIndex) HorizontalDivider()
                             }
                         }
                         VerticalDivider()
@@ -344,12 +343,15 @@ fun QuestionOption(
 
                             var dropCount by rememberSaveable { mutableIntStateOf(0) }
 
-                            currentList.forEachIndexed { index, value ->
+                            values.forEachIndexed { index, value ->
+                                val swapIndex = currentList.indexOf(value)
                                 DraggableBox(
                                     index = index,
+                                    swapIndex = swapIndex,
                                     dropCount = dropCount,
                                     onDrop = { i, j ->
-                                        Collections.swap(currentList, i, j)
+                                        val inside = currentList.indexOf(value)
+                                        Collections.swap(currentList, inside, j)
                                         onValueChange(Answer.Mtf(currentList))
                                         dropCount++
                                     },
@@ -359,10 +361,11 @@ fun QuestionOption(
                                 ) {
                                     OptionText(
                                         value,
+                                        inx = swapIndex,
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-                                if (index != values.lastIndex) HorizontalDivider()
+//                                if (index != values.lastIndex) HorizontalDivider()
                             }
                         }
                     }
@@ -375,6 +378,7 @@ fun QuestionOption(
 @Composable
 fun DraggableBox(
     index: Int,
+    swapIndex: Int,
     onDrop: (i: Int, j: Int) -> Unit,
     dropCount: Int,
     modifier: Modifier = Modifier,
@@ -407,8 +411,11 @@ fun DraggableBox(
         label = "boxBackgroundColor"
     )
 
+    val diff = swapIndex - index
+    val animateTo = boxHeight * diff
+
     LaunchedEffect(dropCount) {
-        yOffset.animateTo(0F, tween(animationDuration))
+        yOffset.animateTo(animateTo, tween(animationDuration))
     }
 
     Box(
@@ -443,10 +450,10 @@ fun DraggableBox(
                                         val currentOffset = yOffset.value + componentOffset
                                         val actualOffset = currentOffset + (boxHeight / 2)
 
-                                        val i = index
+                                        val i = swapIndex
                                         val j = actualOffset.roundToInt() / boxHeight.roundToInt()
-
                                         onDrop(i, j)
+//                                        Log.d("swap", "I: $i, J: $j")
                                     }
                                 ).awaitAll()
 
@@ -542,6 +549,7 @@ fun OptionIcon(
 fun OptionText(
     text: String,
     modifier: Modifier = Modifier,
+    inx: Int = 0,
     style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     val keyText = text.uppercase()
@@ -565,7 +573,7 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        adjustedText,
+        "$adjustedText, $inx",
         style = style,
         modifier = modifier
             .then(Modifier)
