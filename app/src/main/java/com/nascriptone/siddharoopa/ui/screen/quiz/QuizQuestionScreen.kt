@@ -40,6 +40,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.DefaultStrokeLineCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.IntOffset
@@ -334,7 +336,7 @@ fun QuestionOption(
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-//                                if (index != keys.lastIndex) HorizontalDivider()
+                                if (index != keys.lastIndex) HorizontalDivider()
                             }
                         }
                         VerticalDivider()
@@ -365,7 +367,7 @@ fun QuestionOption(
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-//                                if (index != values.lastIndex) HorizontalDivider()
+                                if (index != values.lastIndex) HorizontalDivider(thickness = 6.dp)
                             }
                         }
                     }
@@ -388,6 +390,8 @@ fun DraggableBox(
     content: @Composable (BoxScope.() -> Unit)
 ) {
 
+    val density = LocalDensity.current
+
     val xOffset = remember { Animatable(0f) }
     val yOffset = remember { Animatable(0f) }
 
@@ -396,13 +400,15 @@ fun DraggableBox(
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var parentBoxSize by remember { mutableStateOf(IntSize.Zero) }
 
+    val dividerThickness = with(density) { 6.dp.toPx() }
     val boxWidth = boxSize.width.toFloat()
     val boxHeight = boxSize.height.toFloat()
     val xExtra = boxWidth / 8
     val yExtra = boxHeight / 3
 
     val parentBoxHeight = parentBoxSize.height.toFloat()
-    val componentOffset = boxHeight * index
+    val dividerGap = dividerThickness * index
+    val componentOffset = boxHeight * index + dividerGap
     val maxOffset = parentBoxHeight - boxHeight
 
     val backgroundColor by animateColorAsState(
@@ -412,7 +418,9 @@ fun DraggableBox(
     )
 
     val diff = currentIndex - index
-    val animateTo = boxHeight * diff
+    val currentDividerGap = dividerThickness * diff
+    val animateTo = boxHeight * diff + currentDividerGap
+
 
     LaunchedEffect(dragCount) {
         yOffset.animateTo(animateTo, tween(animationDuration))
