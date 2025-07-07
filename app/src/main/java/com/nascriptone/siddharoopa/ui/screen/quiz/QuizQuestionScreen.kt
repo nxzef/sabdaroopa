@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -69,6 +70,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -244,7 +246,6 @@ fun QuestionOption(
     ) {
 
         val exactAnswer = each.answer
-        val answer = currentAnswer
         LaunchedEffect(Unit) { onValueChange(exactAnswer) }
 
         Column(
@@ -273,7 +274,7 @@ fun QuestionOption(
                                 .background(backgroundColor)
                                 .selectable(
                                     enabled = isClickable,
-                                    selected = if (answer is Answer.Mcq) option == answer.ans else false,
+                                    selected = if (currentAnswer is Answer.Mcq) option == currentAnswer.ans else false,
                                     onClick = {
                                         if (isClickable) onValueChange(
                                             Answer.Mcq(option)
@@ -289,7 +290,7 @@ fun QuestionOption(
                             ) {
                                 RadioButton(
                                     enabled = isClickable,
-                                    selected = if (answer is Answer.Mcq) option == answer.ans else false,
+                                    selected = if (currentAnswer is Answer.Mcq) option == currentAnswer.ans else false,
                                     onClick = null, /* { if (isClickable) onValueChange(Answer.Mcq(option)) } */
                                 )
                             }
@@ -300,13 +301,14 @@ fun QuestionOption(
                 }
 
                 is Option.MtfOption -> {
+
+
                     val options = state.data.options
                     val keys = options.map { it.key }
                     val values = options.map { it.value }
 
-                    val currentList: List<String> = rememberSaveable(currentAnswer) {
-                        if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
-                    }
+                    val thickness: Dp = DividerDefaults.Thickness
+                    val currentList: List<String> = if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -336,7 +338,7 @@ fun QuestionOption(
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-                                if (index != keys.lastIndex) HorizontalDivider()
+                                if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
                             }
                         }
                         VerticalDivider()
@@ -347,7 +349,7 @@ fun QuestionOption(
                             var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
                             values.forEachIndexed { index, value ->
-                                val currentIndex = currentList.indexOf(value)
+                                val currentIndex = currentList.indexOf(value).takeIf { it != -1 } ?: return@forEachIndexed
                                 DraggableBox(
                                     index = index,
                                     currentIndex = currentIndex,
@@ -358,6 +360,7 @@ fun QuestionOption(
                                         onValueChange(Answer.Mtf(currentList))
                                         dragCount++
                                     },
+                                    thickness = thickness,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(64.dp)
@@ -367,7 +370,7 @@ fun QuestionOption(
                                         modifier = Modifier.padding(horizontal = 16.dp)
                                     )
                                 }
-                                if (index != values.lastIndex) HorizontalDivider(thickness = 6.dp)
+                                if (index != values.lastIndex) HorizontalDivider(thickness = thickness)
                             }
                         }
                     }
@@ -383,6 +386,7 @@ fun DraggableBox(
     currentIndex: Int,
     onDrop: (dropPosition: Int) -> Unit,
     dragCount: Int,
+    thickness: Dp,
     modifier: Modifier = Modifier,
     activeColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     idleColor: Color = MaterialTheme.colorScheme.surfaceContainer,
@@ -400,7 +404,8 @@ fun DraggableBox(
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var parentBoxSize by remember { mutableStateOf(IntSize.Zero) }
 
-    val dividerThickness = with(density) { 6.dp.toPx() }
+    val dividerThickness = with(density) { thickness.toPx() }
+    val halfDivider = dividerThickness / 2
     val boxWidth = boxSize.width.toFloat()
     val boxHeight = boxSize.height.toFloat()
     val xExtra = boxWidth / 8
@@ -410,6 +415,7 @@ fun DraggableBox(
     val dividerGap = dividerThickness * index
     val componentOffset = boxHeight * index + dividerGap
     val maxOffset = parentBoxHeight - boxHeight
+    val singleSpace = boxHeight + dividerThickness
 
     val backgroundColor by animateColorAsState(
         targetValue = if (isDragging) activeColor else idleColor,
@@ -418,9 +424,9 @@ fun DraggableBox(
     )
 
     val diff = currentIndex - index
+    Log.d("currentIndex", "$currentIndex")
     val currentDividerGap = dividerThickness * diff
     val animateTo = boxHeight * diff + currentDividerGap
-
 
     LaunchedEffect(dragCount) {
         yOffset.animateTo(animateTo, tween(animationDuration))
@@ -454,10 +460,11 @@ fun DraggableBox(
                                 listOf(
                                     async { xOffset.animateTo(0F, tween(animationDuration)) },
                                     async {
-                                        val currentOffset = yOffset.value + componentOffset
-                                        val actualOffset = currentOffset + (boxHeight / 2)
+                                        val currentOffset =
+                                            yOffset.value + componentOffset + halfDivider
+                                        val middlePointer = currentOffset + (singleSpace / 2)
                                         val dropIndex =
-                                            actualOffset.roundToInt() / boxHeight.roundToInt()
+                                            middlePointer.roundToInt() / singleSpace.roundToInt()
                                         onDrop(dropIndex)
                                     }
                                 ).awaitAll()
