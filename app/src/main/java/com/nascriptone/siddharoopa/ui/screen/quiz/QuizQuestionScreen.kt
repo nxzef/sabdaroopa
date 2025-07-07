@@ -302,13 +302,13 @@ fun QuestionOption(
 
                 is Option.MtfOption -> {
 
-
                     val options = state.data.options
                     val keys = options.map { it.key }
                     val values = options.map { it.value }
 
                     val thickness: Dp = DividerDefaults.Thickness
-                    val currentList: List<String> = if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
+                    val currentList: List<String> =
+                        if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -349,7 +349,8 @@ fun QuestionOption(
                             var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
                             values.forEachIndexed { index, value ->
-                                val currentIndex = currentList.indexOf(value).takeIf { it != -1 } ?: return@forEachIndexed
+                                val currentIndex = currentList.indexOf(value).takeIf { it != -1 }
+                                    ?: return@forEachIndexed
                                 DraggableBox(
                                     index = index,
                                     currentIndex = currentIndex,
