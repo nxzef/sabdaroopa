@@ -417,16 +417,11 @@ class SiddharoopaViewModel @Inject constructor(
                         break
                     }
                 }
-
                 questionKey = mapOf(
                     "sabda" to sabda.word
                 )
-
             }
-
-
         }
-
         return MtfGeneratedData(options, correctOptionMap, questionKey)
     }
 
