@@ -292,6 +292,7 @@ fun QuestionOption(
                 is Option.MtfOption -> {
 
                     val options = state.data.options
+                    val trueOptions = state.data.trueOption
                     val keys = options.map { it.key }
                     val values = options.map { it.value }
 
