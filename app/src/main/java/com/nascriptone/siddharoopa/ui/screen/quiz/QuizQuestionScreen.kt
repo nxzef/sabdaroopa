@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -425,7 +424,6 @@ fun DraggableBox(
     )
 
     val diff = currentIndex - index
-    Log.d("currentIndex", "$currentIndex")
     val currentDividerGap = dividerThickness * diff
     val animateTo = boxHeight * diff + currentDividerGap
 
