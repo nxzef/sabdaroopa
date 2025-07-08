@@ -17,6 +17,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -30,7 +31,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -42,7 +42,6 @@ import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -63,7 +62,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.DefaultStrokeLineCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -139,30 +137,21 @@ fun QuizQuestionScreenContent(
 
     Surface {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(Modifier.height(24.dp))
-            Text(
-                "Question ${questionIndex + 1} of $questionCount",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(Modifier.height(20.dp))
-            LinearProgressIndicator(
-                progress = { ((questionIndex + 1).toDouble() / questionCount).toFloat() },
-                gapSize = 0.dp,
-                strokeCap = DefaultStrokeLineCap,
-                drawStopIndicator = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(16.dp)
-                    .clip(CircleShape),
-            )
+            Column {
+                Spacer(Modifier.height(24.dp))
+                Text(
+                    "Question ${questionIndex + 1} of $questionCount",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
             Box(
-                modifier = Modifier.weight(1F), contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center
             ) {
                 data.forEachIndexed { index, each ->
                     QuestionOption(
@@ -178,46 +167,48 @@ fun QuizQuestionScreenContent(
                 }
 
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            if (questionIndex < lastQuestionIndex) {
-                                questionIndex++
-                            } else {
-                                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
-                            }
-                        }
-                    }, modifier = Modifier.weight(1F)
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
-                    Text("SKIP")
-                }
-                Spacer(Modifier.width(12.dp))
-                Button(
-                    enabled = quizSectionState.currentAnswer != Answer.Unspecified && enabled,
-                    onClick = {
-                        scope.launch {
-                            enabled = false
-                            viewModel.submitAnswer(questionIndex)
-                            delay(1000)
-                            if (questionIndex == lastQuestionIndex) {
-                                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
-                            } else {
-                                questionIndex++
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                if (questionIndex < lastQuestionIndex) {
+                                    questionIndex++
+                                } else {
+                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                                }
                             }
-                        }
-                    }, modifier = Modifier.weight(1F)
-                ) {
-                    Text(
-                        if (questionIndex == lastQuestionIndex) "SUBMIT"
-                        else "NEXT"
-                    )
+                        }, modifier = Modifier.weight(1F)
+                    ) {
+                        Text("SKIP")
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Button(
+                        enabled = quizSectionState.currentAnswer != Answer.Unspecified && enabled,
+                        onClick = {
+                            scope.launch {
+                                enabled = false
+                                viewModel.submitAnswer(questionIndex)
+                                delay(1000)
+                                if (questionIndex == lastQuestionIndex) {
+                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                                } else {
+                                    questionIndex++
+                                }
+                            }
+                        }, modifier = Modifier.weight(1F)
+                    ) {
+                        Text(
+                            if (questionIndex == lastQuestionIndex) "SUBMIT"
+                            else "NEXT"
+                        )
+                    }
                 }
+                Spacer(Modifier.height(24.dp))
             }
-            Spacer(Modifier.height(24.dp))
         }
     }
 }
