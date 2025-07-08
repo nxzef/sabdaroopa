@@ -90,11 +90,6 @@ import java.util.Collections
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
-private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
-private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
-
-
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuizQuestionScreen(
@@ -140,7 +135,7 @@ fun QuizQuestionScreenContent(
     val questionCount = quizSectionState.questionRange.toInt()
     val lastQuestionIndex = questionCount - 1
     val scope = rememberCoroutineScope()
-    var isClickable by rememberSaveable { mutableStateOf(false) }
+    var enabled by rememberSaveable { mutableStateOf(false) }
 
     Surface {
         Column(
@@ -175,10 +170,10 @@ fun QuizQuestionScreenContent(
                         each = each,
                         onValueChange = { answer ->
                             viewModel.updateCurrentAnswer(answer)
-                            isClickable = true
+                            enabled = true
                         },
                         currentAnswer = quizSectionState.currentAnswer,
-                        isClickable = isClickable
+                        enabled = enabled
                     )
                 }
 
@@ -202,10 +197,10 @@ fun QuizQuestionScreenContent(
                 }
                 Spacer(Modifier.width(12.dp))
                 Button(
-                    enabled = quizSectionState.currentAnswer != Answer.Unspecified && isClickable,
+                    enabled = quizSectionState.currentAnswer != Answer.Unspecified && enabled,
                     onClick = {
                         scope.launch {
-                            isClickable = false
+                            enabled = false
                             viewModel.submitAnswer(questionIndex)
                             delay(1000)
                             if (questionIndex == lastQuestionIndex) {
@@ -232,9 +227,9 @@ fun QuizQuestionScreenContent(
 fun QuestionOption(
     isVisible: Boolean,
     each: QuestionOption,
-    onValueChange: (Answer) -> Unit,
     currentAnswer: Answer,
-    isClickable: Boolean,
+    enabled: Boolean,
+    onValueChange: (Answer) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -245,7 +240,9 @@ fun QuestionOption(
     ) {
 
         val exactAnswer = each.answer
-        LaunchedEffect(Unit) { onValueChange(exactAnswer) }
+        LaunchedEffect(Unit) {
+            onValueChange(exactAnswer)
+        }
 
         Column(
             modifier = Modifier.padding(horizontal = 4.dp)
@@ -265,6 +262,8 @@ fun QuestionOption(
                             isWrongSelectedOption -> Color(0x16FF0000)
                             else -> Color.Transparent
                         }
+                        val selected =
+                            if (currentAnswer is Answer.Mcq) option == currentAnswer.ans else false
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -272,10 +271,10 @@ fun QuestionOption(
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(backgroundColor)
                                 .selectable(
-                                    enabled = isClickable,
-                                    selected = if (currentAnswer is Answer.Mcq) option == currentAnswer.ans else false,
+                                    enabled = enabled,
+                                    selected = selected,
                                     onClick = {
-                                        if (isClickable) onValueChange(
+                                        if (enabled) onValueChange(
                                             Answer.Mcq(option)
                                         )
                                     }
@@ -288,9 +287,9 @@ fun QuestionOption(
                                 modifier = Modifier.padding(12.dp)
                             ) {
                                 RadioButton(
-                                    enabled = isClickable,
-                                    selected = if (currentAnswer is Answer.Mcq) option == currentAnswer.ans else false,
-                                    onClick = null, /* { if (isClickable) onValueChange(Answer.Mcq(option)) } */
+                                    enabled = enabled,
+                                    selected = selected,
+                                    onClick = null,
                                 )
                             }
                             Spacer(Modifier.width(12.dp))
@@ -621,3 +620,6 @@ private fun replacePlaceholders(template: String, values: Map<String, String>): 
     }
 }
 
+private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
+private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
+private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
