@@ -314,11 +314,18 @@ fun QuestionOption(
                             )
                     ) {
                         Column(
-                            modifier = Modifier.weight(1F)
+                            modifier = Modifier.weight(1f)
                         ) {
                             keys.forEachIndexed { index, key ->
+
+                                val backgroundColor: Color = if (index < 3 && exactAnswer is Answer.Mtf) {
+                                    val match = trueOptions[key] == exactAnswer.ans[index]
+                                    if (match) Color(0x1600FF00) else Color(0x16FF0000)
+                                } else Color.Transparent
+
                                 Box(
                                     modifier = Modifier
+                                        .background(backgroundColor)
                                         .fillMaxWidth()
                                         .height(64.dp),
                                     contentAlignment = Alignment.CenterStart
