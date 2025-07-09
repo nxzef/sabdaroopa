@@ -295,6 +295,7 @@ fun QuestionOption(
                     val trueOptions = state.data.trueOption
                     val keys = options.map { it.key }
                     val values = options.map { it.value }
+                    val trueValues = trueOptions.map { it.value }
 
                     val thickness: Dp = DividerDefaults.Thickness
                     val currentList: List<String> =
@@ -318,10 +319,11 @@ fun QuestionOption(
                         ) {
                             keys.forEachIndexed { index, key ->
 
-                                val backgroundColor: Color = if (index < 3 && exactAnswer is Answer.Mtf) {
-                                    val match = trueOptions[key] == exactAnswer.ans[index]
-                                    if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                } else Color.Transparent
+                                val backgroundColor: Color =
+                                    if (index < 3 && exactAnswer is Answer.Mtf) {
+                                        val match = trueOptions[key] == exactAnswer.ans[index]
+                                        if (match) Color(0x1600FF00) else Color(0x16FF0000)
+                                    } else Color.Transparent
 
                                 Box(
                                     modifier = Modifier
@@ -348,6 +350,14 @@ fun QuestionOption(
                             values.forEachIndexed { index, value ->
                                 val currentIndex = currentList.indexOf(value).takeIf { it != -1 }
                                     ?: return@forEachIndexed
+
+                                val idleColor: Color = if (currentIndex < 3 && exactAnswer is Answer.Mtf) {
+                                    val exactAnswer = exactAnswer.ans[currentIndex]
+                                    val trueAnswer = trueValues[currentIndex]
+                                    if (exactAnswer == trueAnswer) Color(0x1600FF00)
+                                    else Color(0x16FF0000)
+                                } else MaterialTheme.colorScheme.surfaceContainer
+
                                 DraggableBox(
                                     index = index,
                                     currentIndex = currentIndex,
@@ -359,6 +369,7 @@ fun QuestionOption(
                                         dragCount++
                                     },
                                     thickness = thickness,
+                                    idleColor = idleColor,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(64.dp)
