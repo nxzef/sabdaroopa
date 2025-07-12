@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.nascriptone.siddharoopa"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.nascriptone.siddharoopa"
