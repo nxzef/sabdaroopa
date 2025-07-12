@@ -297,89 +297,94 @@ fun QuestionOption(
                     val values = options.map { it.value }
                     val trueValues = trueOptions.map { it.value }
 
-                    val thickness: Dp = DividerDefaults.Thickness
+                    val thickness = DividerDefaults.Thickness
                     val currentList: List<String> =
                         if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .height(IntrinsicSize.Min)
-                            .border(
-                                border = BorderStroke(
-                                    width = DividerDefaults.Thickness,
-                                    color = DividerDefaults.color
-                                ),
-                                shape = CardDefaults.outlinedShape
-                            )
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min),
+                        propagateMinConstraints = true
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            keys.forEachIndexed { index, key ->
+                        Box(
+                            Modifier
+                                .border(
+                                    border = BorderStroke(
+                                        width = DividerDefaults.Thickness,
+                                        color = DividerDefaults.color
+                                    ),
+                                    shape = CardDefaults.outlinedShape
+                                )
+                        )
+                        Row {
+                            Column(modifier = Modifier.weight(1f)) {
+                                keys.forEachIndexed { index, key ->
 
-                                val backgroundColor: Color =
-                                    if (index < 3 && exactAnswer is Answer.Mtf) {
-                                        val match = trueOptions[key] == exactAnswer.ans[index]
-                                        if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                    } else Color.Transparent
+                                    val backgroundColor: Color =
+                                        if (index < 3 && exactAnswer is Answer.Mtf) {
+                                            val match = trueOptions[key] == exactAnswer.ans[index]
+                                            if (match) Color(0x1600FF00) else Color(0x16FF0000)
+                                        } else Color.Transparent
 
-                                Box(
-                                    modifier = Modifier
-                                        .background(backgroundColor)
-                                        .fillMaxWidth()
-                                        .height(64.dp),
-                                    contentAlignment = Alignment.CenterStart
-                                ) {
-                                    OptionText(
-                                        key,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .background(backgroundColor)
+                                            .fillMaxWidth()
+                                            .height(64.dp),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        OptionText(
+                                            key,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                    }
+                                    if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
                                 }
-                                if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
                             }
-                        }
-                        VerticalDivider()
-                        Column(
-                            modifier = Modifier.weight(1F)
-                        ) {
+                            VerticalDivider()
+                            Column(modifier = Modifier.weight(1F)) {
 
-                            var dragCount by rememberSaveable { mutableIntStateOf(0) }
+                                var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
-                            values.forEachIndexed { index, value ->
-                                val currentIndex = currentList.indexOf(value).takeIf { it != -1 }
-                                    ?: return@forEachIndexed
+                                values.forEachIndexed { index, value ->
+                                    val currentIndex =
+                                        currentList.indexOf(value).takeIf { it != -1 }
+                                            ?: return@forEachIndexed
 
-                                val idleColor: Color = if (currentIndex < 3 && exactAnswer is Answer.Mtf) {
-                                    val exactAnswer = exactAnswer.ans[currentIndex]
-                                    val trueAnswer = trueValues[currentIndex]
-                                    if (exactAnswer == trueAnswer) Color(0x1600FF00)
-                                    else Color(0x16FF0000)
-                                } else MaterialTheme.colorScheme.surfaceContainer
+                                    val idleColor: Color =
+                                        if (currentIndex < 3 && exactAnswer is Answer.Mtf) {
+                                            val exactAnswer = exactAnswer.ans[currentIndex]
+                                            val trueAnswer = trueValues[currentIndex]
+                                            if (exactAnswer == trueAnswer) Color(0x1600FF00)
+                                            else Color(0x16FF0000)
+                                        } else Color.Transparent
 
-                                DraggableBox(
-                                    index = index,
-                                    currentIndex = currentIndex,
-                                    dragCount = dragCount,
-                                    onDrop = { j ->
-                                        val i = currentList.indexOf(value)
-                                        Collections.swap(currentList, i, j)
-                                        onValueChange(Answer.Mtf(currentList))
-                                        dragCount++
-                                    },
-                                    thickness = thickness,
-                                    idleColor = idleColor,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(64.dp)
-                                ) {
-                                    OptionText(
-                                        value,
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    )
+                                    DraggableBox(
+                                        index = index,
+                                        currentIndex = currentIndex,
+                                        dragCount = dragCount,
+                                        onDrop = { j ->
+                                            val i = currentList.indexOf(value)
+                                            Collections.swap(currentList, i, j)
+                                            onValueChange(Answer.Mtf(currentList))
+                                            dragCount++
+                                        },
+                                        thickness = thickness,
+                                        idleColor = idleColor,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(64.dp)
+                                    ) {
+                                        OptionText(
+                                            value,
+                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                        )
+                                    }
+                                    if (index != values.lastIndex) HorizontalDivider(thickness = thickness)
                                 }
-                                if (index != values.lastIndex) HorizontalDivider(thickness = thickness)
                             }
                         }
                     }
@@ -398,7 +403,7 @@ fun DraggableBox(
     thickness: Dp,
     modifier: Modifier = Modifier,
     activeColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    idleColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    idleColor: Color = Color.Transparent,
     animationDuration: Int = 200,
     content: @Composable (BoxScope.() -> Unit)
 ) {
