@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -176,23 +177,27 @@ fun DeclensionTable(
     modifier: Modifier = Modifier
 ) {
 
-    val columnFirstItems = listOf(
-        R.string.vibakti,
-        R.string.single,
-        R.string.dual,
-        R.string.plural
-    )
+    val columnFirstItems = remember {
+        listOf(
+            R.string.vibakti,
+            R.string.single,
+            R.string.dual,
+            R.string.plural
+        )
+    }
 
-    val rowFirstItems = listOf(
-        R.string.nominative,
-        R.string.vocative,
-        R.string.accusative,
-        R.string.instrumental,
-        R.string.dative,
-        R.string.ablative,
-        R.string.genitive,
-        R.string.locative
-    )
+    val rowFirstItems = remember {
+        listOf(
+            R.string.nominative,
+            R.string.vocative,
+            R.string.accusative,
+            R.string.instrumental,
+            R.string.dative,
+            R.string.ablative,
+            R.string.genitive,
+            R.string.locative
+        )
+    }
 
     OutlinedCard(
         modifier = modifier
