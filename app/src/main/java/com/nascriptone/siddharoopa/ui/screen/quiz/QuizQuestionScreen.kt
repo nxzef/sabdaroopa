@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
@@ -71,6 +73,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
@@ -297,7 +300,8 @@ fun QuestionOption(
                     val values = options.map { it.value }
                     val trueValues = trueOptions.map { it.value }
 
-                    val thickness = DividerDefaults.Thickness
+                    val thickness = 4.dp
+                    val animationDuration = 120
                     val currentList: List<String> =
                         if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
 
@@ -311,15 +315,19 @@ fun QuestionOption(
                     ) {
                         Box(
                             Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceContainerLow,
+                                    shape = CardDefaults.outlinedShape
+                                )
                                 .border(
                                     border = BorderStroke(
-                                        width = DividerDefaults.Thickness,
+                                        width = thickness, /* DividerDefaults.Thickness */
                                         color = DividerDefaults.color
                                     ),
                                     shape = CardDefaults.outlinedShape
                                 )
                         )
-                        Row {
+                        Row(Modifier.padding(thickness)) {
                             Column(modifier = Modifier.weight(1f)) {
                                 keys.forEachIndexed { index, key ->
 
@@ -344,8 +352,8 @@ fun QuestionOption(
                                     if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
                                 }
                             }
-                            VerticalDivider()
-                            Column(modifier = Modifier.weight(1F)) {
+                            VerticalDivider(thickness = thickness)
+                            Column(modifier = Modifier.weight(1f)) {
 
                                 var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
@@ -360,20 +368,23 @@ fun QuestionOption(
                                             val trueAnswer = trueValues[currentIndex]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        } else Color.Transparent
+                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
+
 
                                     DraggableBox(
                                         index = index,
                                         currentIndex = currentIndex,
                                         dragCount = dragCount,
+                                        thickness = thickness,
+                                        idleColor = idleColor,
+                                        lastIndex = values.lastIndex,
+                                        animationDuration = animationDuration,
                                         onDrop = { j ->
                                             val i = currentList.indexOf(value)
                                             Collections.swap(currentList, i, j)
                                             onValueChange(Answer.Mtf(currentList))
                                             dragCount++
                                         },
-                                        thickness = thickness,
-                                        idleColor = idleColor,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(64.dp)
@@ -401,10 +412,11 @@ fun DraggableBox(
     onDrop: (dropPosition: Int) -> Unit,
     dragCount: Int,
     thickness: Dp,
+    lastIndex: Int,
     modifier: Modifier = Modifier,
+    idleColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     activeColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
-    idleColor: Color = Color.Transparent,
-    animationDuration: Int = 200,
+    animationDuration: Int = 120,
     content: @Composable (BoxScope.() -> Unit)
 ) {
 
@@ -419,6 +431,10 @@ fun DraggableBox(
     var parentBoxSize by remember { mutableStateOf(IntSize.Zero) }
 
     val dividerThickness = with(density) { thickness.toPx() }
+    val shape = CardDefaults.outlinedShape
+    val topStartShape = (shape as RoundedCornerShape).topStart
+    val topStartShapeFloat = topStartShape.toPx(boxSize.toSize(), density)
+    val singleCornerShape = topStartShapeFloat - dividerThickness
     val halfDivider = dividerThickness / 2
     val boxWidth = boxSize.width.toFloat()
     val boxHeight = boxSize.height.toFloat()
@@ -435,6 +451,18 @@ fun DraggableBox(
         targetValue = if (isDragging) activeColor else idleColor,
         animationSpec = tween(animationDuration),
         label = "boxBackgroundColor"
+    )
+
+    val topEnd by animateFloatAsState(
+        targetValue = if (currentIndex == 0) singleCornerShape else 0f,
+        animationSpec = tween(animationDuration),
+        label = "boxTopEndShape"
+    )
+
+    val bottomEnd by animateFloatAsState(
+        targetValue = if (currentIndex == lastIndex) singleCornerShape else 0f,
+        animationSpec = tween(animationDuration),
+        label = "boxBottomEndShape"
     )
 
     val diff = currentIndex - index
@@ -459,7 +487,13 @@ fun DraggableBox(
                 boxSize = it.size
                 it.parentLayoutCoordinates?.let { c -> parentBoxSize = c.size }
             }
-            .background(backgroundColor)
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(
+                    topEnd = topEnd,
+                    bottomEnd = bottomEnd
+                )
+            )
             .zIndex(zIndex)
             .pointerInput(Unit) {
                 coroutineScope {
