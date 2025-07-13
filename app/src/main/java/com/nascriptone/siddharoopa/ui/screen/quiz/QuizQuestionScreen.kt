@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -63,13 +64,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -294,6 +297,8 @@ fun QuestionOption(
 
                 is Option.MtfOption -> {
 
+                    val density = LocalDensity.current
+
                     val options = state.data.options
                     val trueOptions = state.data.trueOption
                     val keys = options.map { it.key }
@@ -301,7 +306,11 @@ fun QuestionOption(
                     val trueValues = trueOptions.map { it.value }
 
                     val thickness = 4.dp
-                    val animationDuration = 120
+                    val shape = CardDefaults.outlinedShape
+                    val cornerSize = (shape as RoundedCornerShape).topStart
+                    val dividerThickness = with(density) { thickness.toPx() }
+                    val animationDuration = 600
+
                     val currentList: List<String> =
                         if (currentAnswer is Answer.Mtf) currentAnswer.ans else values
 
@@ -331,17 +340,41 @@ fun QuestionOption(
                             Column(modifier = Modifier.weight(1f)) {
                                 keys.forEachIndexed { index, key ->
 
-                                    val backgroundColor: Color =
+                                    val boxSize = remember { mutableStateOf(Size.Unspecified) }
+
+                                    val cornerSizePx = cornerSize.toPx(boxSize.value, density)
+                                    val singleCornerSize = cornerSizePx - dividerThickness
+
+                                    val color =
                                         if (index < 3 && exactAnswer is Answer.Mtf) {
                                             val match = trueOptions[key] == exactAnswer.ans[index]
                                             if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                        } else Color.Transparent
+                                        } else MaterialTheme.colorScheme.surfaceContainerLow
+
+                                    val backgroundColor by animateColorAsState(
+                                        targetValue = color,
+                                        animationSpec = tween(animationDuration),
+                                        label = "keyBoxBackgroundColor"
+                                    )
+
+                                    val topStart = if (index == 0) singleCornerSize else 0f
+                                    val bottomStart =
+                                        if (index == keys.lastIndex) singleCornerSize else 0f
 
                                     Box(
                                         modifier = Modifier
-                                            .background(backgroundColor)
+                                            .background(
+                                                color = backgroundColor,
+                                                shape = RoundedCornerShape(
+                                                    topStart = topStart,
+                                                    bottomStart = bottomStart
+                                                )
+                                            )
                                             .fillMaxWidth()
-                                            .height(64.dp),
+                                            .height(64.dp)
+                                            .onSizeChanged {
+                                                boxSize.value = it.toSize()
+                                            },
                                         contentAlignment = Alignment.CenterStart
                                     ) {
                                         OptionText(
@@ -372,10 +405,12 @@ fun QuestionOption(
 
 
                                     DraggableBox(
+                                        density = density,
                                         index = index,
                                         currentIndex = currentIndex,
                                         dragCount = dragCount,
-                                        thickness = thickness,
+                                        dividerThickness = dividerThickness,
+                                        cornerSize = cornerSize,
                                         idleColor = idleColor,
                                         lastIndex = values.lastIndex,
                                         animationDuration = animationDuration,
@@ -407,20 +442,20 @@ fun QuestionOption(
 
 @Composable
 fun DraggableBox(
+    density: Density,
     index: Int,
     currentIndex: Int,
-    onDrop: (dropPosition: Int) -> Unit,
     dragCount: Int,
-    thickness: Dp,
     lastIndex: Int,
+    dividerThickness: Float,
+    cornerSize: CornerSize,
+    onDrop: (dropPosition: Int) -> Unit,
     modifier: Modifier = Modifier,
     idleColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     activeColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     animationDuration: Int = 120,
     content: @Composable (BoxScope.() -> Unit)
 ) {
-
-    val density = LocalDensity.current
 
     val xOffset = remember { Animatable(0f) }
     val yOffset = remember { Animatable(0f) }
@@ -430,11 +465,8 @@ fun DraggableBox(
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
     var parentBoxSize by remember { mutableStateOf(IntSize.Zero) }
 
-    val dividerThickness = with(density) { thickness.toPx() }
-    val shape = CardDefaults.outlinedShape
-    val topStartShape = (shape as RoundedCornerShape).topStart
-    val topStartShapeFloat = topStartShape.toPx(boxSize.toSize(), density)
-    val singleCornerShape = topStartShapeFloat - dividerThickness
+    val cornerSizePx = cornerSize.toPx(boxSize.toSize(), density)
+    val singleCornerSize = cornerSizePx - dividerThickness
     val halfDivider = dividerThickness / 2
     val boxWidth = boxSize.width.toFloat()
     val boxHeight = boxSize.height.toFloat()
@@ -454,13 +486,13 @@ fun DraggableBox(
     )
 
     val topEnd by animateFloatAsState(
-        targetValue = if (currentIndex == 0) singleCornerShape else 0f,
+        targetValue = if (currentIndex == 0) singleCornerSize else 0f,
         animationSpec = tween(animationDuration),
         label = "boxTopEndShape"
     )
 
     val bottomEnd by animateFloatAsState(
-        targetValue = if (currentIndex == lastIndex) singleCornerShape else 0f,
+        targetValue = if (currentIndex == lastIndex) singleCornerSize else 0f,
         animationSpec = tween(animationDuration),
         label = "boxBottomEndShape"
     )
