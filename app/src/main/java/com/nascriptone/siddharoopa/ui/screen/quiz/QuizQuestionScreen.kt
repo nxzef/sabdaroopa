@@ -114,11 +114,7 @@ fun QuizQuestionScreen(
         }
 
         is CreationState.Success -> QuizQuestionScreenContent(
-            viewModel,
-            result.data,
-            quizSectionState,
-            navHostController,
-            modifier
+            viewModel, result.data, quizSectionState, navHostController, modifier
         )
     }
 }
@@ -158,14 +154,10 @@ fun QuizQuestionScreenContent(
             ) {
                 data.forEachIndexed { index, each ->
                     QuestionOption(
-                        isVisible = index == questionIndex,
-                        each = each,
-                        onValueChange = { answer ->
+                        isVisible = index == questionIndex, each = each, onValueChange = { answer ->
                             viewModel.updateCurrentAnswer(answer)
                             enabled = true
-                        },
-                        currentAnswer = quizSectionState.currentAnswer,
-                        enabled = enabled
+                        }, currentAnswer = quizSectionState.currentAnswer, enabled = enabled
                     )
                 }
 
@@ -202,7 +194,8 @@ fun QuizQuestionScreenContent(
                                     questionIndex++
                                 }
                             }
-                        }, modifier = Modifier.weight(1F)
+                        },
+                        modifier = Modifier.weight(1F)
                     ) {
                         Text(
                             if (questionIndex == lastQuestionIndex) "SUBMIT"
@@ -265,14 +258,11 @@ fun QuestionOption(
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(backgroundColor)
                                 .selectable(
-                                    enabled = enabled,
-                                    selected = selected,
-                                    onClick = {
+                                    enabled = enabled, selected = selected, onClick = {
                                         if (enabled) onValueChange(
                                             Answer.Mcq(option)
                                         )
-                                    }
-                                )
+                                    })
                                 .padding(8.dp)
                         ) {
                             OptionIcon(
@@ -326,13 +316,11 @@ fun QuestionOption(
                                     border = BorderStroke(
                                         width = thickness, /* DividerDefaults.Thickness */
                                         color = DividerDefaults.color
-                                    ),
-                                    shape = CardDefaults.outlinedShape
+                                    ), shape = CardDefaults.outlinedShape
                                 )
                         )
                         Row(Modifier.padding(thickness)) {
-                            val draggableContainerSize =
-                                remember { mutableStateOf(Size.Zero) }
+                            val draggableContainerSize = remember { mutableStateOf(Size.Zero) }
                             Column(modifier = Modifier.weight(1f)) {
                                 keys.forEachIndexed { index, key ->
 
@@ -340,11 +328,10 @@ fun QuestionOption(
                                     val cornerSizePx = cornerSize.toPx(boxSize.value, density)
                                     val singleCornerSize = cornerSizePx - dividerThickness
 
-                                    val color =
-                                        if (index < 3 && exactAnswer is Answer.Mtf) {
-                                            val match = trueOptions[key] == exactAnswer.ans[index]
-                                            if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                        } else MaterialTheme.colorScheme.surfaceContainerLow
+                                    val color = if (index < 3 && exactAnswer is Answer.Mtf) {
+                                        val match = trueOptions[key] == exactAnswer.ans[index]
+                                        if (match) Color(0x1600FF00) else Color(0x16FF0000)
+                                    } else MaterialTheme.colorScheme.surfaceContainerLow
                                     val backgroundColor by animateColorAsState(
                                         targetValue = color,
                                         animationSpec = tween(animationDuration),
@@ -357,10 +344,8 @@ fun QuestionOption(
                                     Box(
                                         modifier = Modifier
                                             .background(
-                                                color = backgroundColor,
-                                                shape = RoundedCornerShape(
-                                                    topStart = topStart,
-                                                    bottomStart = bottomStart
+                                                color = backgroundColor, shape = RoundedCornerShape(
+                                                    topStart = topStart, bottomStart = bottomStart
                                                 )
                                             )
                                             .fillMaxWidth()
@@ -369,8 +354,7 @@ fun QuestionOption(
                                         contentAlignment = Alignment.CenterStart
                                     ) {
                                         OptionText(
-                                            key,
-                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                            key, modifier = Modifier.padding(horizontal = 16.dp)
                                         )
                                     }
                                     if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
@@ -380,15 +364,13 @@ fun QuestionOption(
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .onSizeChanged { draggableContainerSize.value = it.toSize() }
-                            ) {
+                                    .onSizeChanged { draggableContainerSize.value = it.toSize() }) {
 
                                 val nList = List(values.size) { it }
                                 val currentPosition = rememberSaveable(
                                     saver = listSaver(
                                         save = { it.toList() },
-                                        restore = { it.toMutableStateList() }
-                                    )
+                                        restore = { it.toMutableStateList() })
                                 ) { nList.toMutableStateList() }
                                 var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
@@ -404,8 +386,7 @@ fun QuestionOption(
                                     var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
 
                                     val boxSize = remember { mutableStateOf(Size.Zero) }
-                                    val cornerSizePx =
-                                        cornerSize.toPx(boxSize.value, density)
+                                    val cornerSizePx = cornerSize.toPx(boxSize.value, density)
                                     val singleCornerSize = cornerSizePx - dividerThickness
                                     val halfDivider = dividerThickness / 2
                                     val boxWidth = boxSize.value.width
@@ -413,8 +394,7 @@ fun QuestionOption(
                                     val xExtra = boxWidth / 8
                                     val yExtra = boxHeight / 3
 
-                                    val parentBoxHeight =
-                                        draggableContainerSize.value.height
+                                    val parentBoxHeight = draggableContainerSize.value.height
                                     val dividerGap = dividerThickness * index
                                     val componentOffset = boxHeight * index + dividerGap
                                     val maxOffset = parentBoxHeight - boxHeight
@@ -471,117 +451,96 @@ fun QuestionOption(
                                             }
                                             .onSizeChanged { boxSize.value = it.toSize() }
                                             .background(
-                                                color = backgroundColor,
-                                                shape = RoundedCornerShape(
-                                                    topEnd = topEnd,
-                                                    bottomEnd = bottomEnd
+                                                color = backgroundColor, shape = RoundedCornerShape(
+                                                    topEnd = topEnd, bottomEnd = bottomEnd
                                                 )
                                             )
                                             .zIndex(zIndex)
                                             .pointerInput(Unit) {
                                                 coroutineScope {
-                                                    detectDragGestures(
-                                                        onDragStart = {
-                                                            isDragging = true
-                                                            zIndex = 1f
-                                                        },
-                                                        onDragEnd = {
-                                                            launch {
-                                                                listOf(
-                                                                    async {
-                                                                        xOffset.animateTo(
-                                                                            0f,
-                                                                            tween(animationDuration)
-                                                                        )
-                                                                    },
-                                                                    async {
-                                                                        val currentOffset =
-                                                                            yOffset.value + componentOffset + halfDivider
-                                                                        val middlePointer =
-                                                                            currentOffset + (singleSpace / 2)
+                                                    detectDragGestures(onDragStart = {
+                                                        isDragging = true
+                                                        zIndex = 1f
+                                                    }, onDragEnd = {
+                                                        launch {
+                                                            listOf(async {
+                                                                xOffset.animateTo(
+                                                                    0f, tween(animationDuration)
+                                                                )
+                                                            }, async {
+                                                                val currentOffset =
+                                                                    yOffset.value + componentOffset + halfDivider
+                                                                val middlePointer =
+                                                                    currentOffset + (singleSpace / 2)
 
+                                                                val i = currentPosition[index]
+                                                                val j =
+                                                                    if (singleSpace != 0f) middlePointer.roundToInt() / singleSpace.roundToInt()
+                                                                    else i
+                                                                Collections.swap(
+                                                                    currentPosition, i, j
+                                                                )
+                                                                dragCount++
+                                                            }).awaitAll()
 
-                                                                        val i =
-                                                                            currentPosition[index]
-                                                                        val j =
-                                                                            if (singleSpace != 0f) middlePointer.roundToInt() / singleSpace.roundToInt()
-                                                                            else i
-
-                                                                        Collections.swap(
-                                                                            currentPosition,
-                                                                            i,
-                                                                            j
-                                                                        )
-                                                                        dragCount++
-                                                                    }
-                                                                ).awaitAll()
-
-                                                                isDragging = false
-                                                                zIndex = 0f
-                                                            }
-                                                        },
-                                                        onDrag = { change, dragAmount ->
-                                                            launch {
-                                                                change.consume()
-
-                                                                // X Axis Logic
-                                                                val currentX = xOffset.value
-                                                                val xNormalized =
-                                                                    (currentX / xExtra).coerceIn(
-                                                                        -1f,
-                                                                        1f
-                                                                    )
-                                                                val xResistance =
-                                                                    1f - xNormalized.absoluteValue
-                                                                val xDrag =
-                                                                    currentX + dragAmount.x * xResistance
-
-
-                                                                // Y Axis Logic
-                                                                val currentY = yOffset.value
-                                                                val yFrom = 0f - componentOffset
-                                                                val yTo =
-                                                                    maxOffset - componentOffset
-
-                                                                val belowMin =
-                                                                    (yFrom - currentY).coerceAtLeast(
-                                                                        0f
-                                                                    )
-                                                                val aboveMax =
-                                                                    (currentY - yTo).coerceAtLeast(
-                                                                        0f
-                                                                    )
-                                                                val overshoot = belowMin + aboveMax
-
-                                                                val yNormalized =
-                                                                    (overshoot / yExtra).coerceIn(
-                                                                        0f,
-                                                                        1f
-                                                                    )
-                                                                val yResistance = 1f - yNormalized
-                                                                val yDrag =
-                                                                    currentY + dragAmount.y * yResistance
-
-                                                                val newX = xDrag
-                                                                    .coerceIn(-xExtra, xExtra)
-                                                                val newY = yDrag
-                                                                    .coerceIn(
-                                                                        -(yExtra + componentOffset),
-                                                                        (maxOffset - componentOffset) + yExtra
-                                                                    )
-
-
-                                                                xOffset.snapTo(newX)
-                                                                yOffset.snapTo(newY)
-                                                            }
+                                                            isDragging = false
+                                                            zIndex = 0f
                                                         }
-                                                    )
+                                                    }, onDrag = { change, dragAmount ->
+                                                        launch {
+                                                            change.consume()
+
+                                                            // X Axis Logic
+                                                            val currentX = xOffset.value
+                                                            val xNormalized =
+                                                                (currentX / xExtra).coerceIn(
+                                                                    -1f, 1f
+                                                                )
+                                                            val xResistance =
+                                                                1f - xNormalized.absoluteValue
+                                                            val xDrag =
+                                                                currentX + dragAmount.x * xResistance
+
+
+                                                            // Y Axis Logic
+                                                            val currentY = yOffset.value
+                                                            val yFrom = 0f - componentOffset
+                                                            val yTo = maxOffset - componentOffset
+
+                                                            val belowMin =
+                                                                (yFrom - currentY).coerceAtLeast(
+                                                                    0f
+                                                                )
+                                                            val aboveMax =
+                                                                (currentY - yTo).coerceAtLeast(
+                                                                    0f
+                                                                )
+                                                            val overshoot = belowMin + aboveMax
+
+                                                            val yNormalized =
+                                                                (overshoot / yExtra).coerceIn(
+                                                                    0f, 1f
+                                                                )
+                                                            val yResistance = 1f - yNormalized
+                                                            val yDrag =
+                                                                currentY + dragAmount.y * yResistance
+
+                                                            val newX =
+                                                                xDrag.coerceIn(-xExtra, xExtra)
+                                                            val newY = yDrag.coerceIn(
+                                                                -(yExtra + componentOffset),
+                                                                (maxOffset - componentOffset) + yExtra
+                                                            )
+
+
+                                                            xOffset.snapTo(newX)
+                                                            yOffset.snapTo(newY)
+                                                        }
+                                                    })
                                                 }
-                                            }
-                                    ) {
+                                            }) {
                                         OptionText(
-                                            value,
-                                            modifier = Modifier.padding(horizontal = 16.dp)
+                                            value, modifier = Modifier.padding(horizontal = 16.dp)
                                         )
                                     }
                                     if (index != values.lastIndex) HorizontalDivider(thickness = thickness)
@@ -597,40 +556,27 @@ fun QuestionOption(
 
 @Composable
 fun OptionIcon(
-    correct: Boolean,
-    wrong: Boolean,
-    modifier: Modifier = Modifier,
-    default: @Composable () -> Unit
+    correct: Boolean, wrong: Boolean, modifier: Modifier = Modifier, default: @Composable () -> Unit
 ) {
     val enterTransition: EnterTransition = fadeIn() + scaleIn()
     val exitTransition: ExitTransition = fadeOut() + scaleOut()
     Box(modifier) {
         AnimatedVisibility(
-            correct,
-            enter = enterTransition,
-            exit = exitTransition
+            correct, enter = enterTransition, exit = exitTransition
         ) {
             Icon(
-                Icons.Filled.CheckCircle,
-                null,
-                tint = Color.Green
+                Icons.Filled.CheckCircle, null, tint = Color.Green
             )
         }
         AnimatedVisibility(
-            wrong,
-            enter = enterTransition,
-            exit = exitTransition
+            wrong, enter = enterTransition, exit = exitTransition
         ) {
             Icon(
-                Icons.Filled.Cancel,
-                null,
-                tint = Color.Red
+                Icons.Filled.Cancel, null, tint = Color.Red
             )
         }
         AnimatedVisibility(
-            !correct && !wrong,
-            enter = enterTransition,
-            exit = exitTransition
+            !correct && !wrong, enter = enterTransition, exit = exitTransition
         ) { default() }
     }
 }
@@ -663,10 +609,7 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        adjustedText,
-        style = style,
-        modifier = modifier
-            .then(Modifier)
+        adjustedText, style = style, modifier = modifier.then(Modifier)
     )
 }
 
