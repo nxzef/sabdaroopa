@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -366,18 +367,20 @@ fun QuestionOption(
                                     .weight(1f)
                                     .onSizeChanged { draggableContainerSize.value = it.toSize() }) {
 
-                                val nList = List(values.size) { it }
-                                val currentPosition = rememberSaveable(
+                                val initialPositions = List(values.size) { it }
+                                val order = rememberSaveable(
                                     saver = listSaver(
                                         save = { it.toList() },
                                         restore = { it.toMutableStateList() })
-                                ) { nList.toMutableStateList() }
+                                ) { initialPositions.toMutableStateList() }
+                                val visualOrder by remember(order) {
+                                    derivedStateOf { order.asFastIndexOfList() }
+                                }
                                 var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
                                 values.forEachIndexed { index, value ->
-
-                                    val currentIndex = currentPosition[index].takeIf { it != -1 }
-                                        ?: return@forEachIndexed
+                                    val logicalPosition =
+                                        visualOrder.getOrElse(index) { return@forEachIndexed }
 
                                     val xOffset = remember { Animatable(0f) }
                                     val yOffset = remember { Animatable(0f) }
@@ -403,30 +406,31 @@ fun QuestionOption(
                                     val activeColor =
                                         MaterialTheme.colorScheme.surfaceContainerHighest
                                     val idleColor: Color =
-                                        if (currentIndex < 3 && exactAnswer is Answer.Mtf) {
-                                            val exactAnswer = exactAnswer.ans[currentIndex]
-                                            val trueAnswer = trueValues[currentIndex]
+                                        if (logicalPosition < 3 && exactAnswer is Answer.Mtf) {
+                                            val exactAnswer = exactAnswer.ans[logicalPosition]
+                                            val trueAnswer = trueValues[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        }
+                                        else MaterialTheme.colorScheme.surfaceContainerHigh
                                     val backgroundColor by animateColorAsState(
                                         targetValue = if (isDragging) activeColor else idleColor,
                                         animationSpec = tween(animationDuration),
                                         label = "boxBackgroundColor"
                                     )
                                     val topEnd by animateFloatAsState(
-                                        targetValue = if (currentIndex == 0) singleCornerSize else 0f,
+                                        targetValue = if (logicalPosition == 0) singleCornerSize else 0f,
                                         animationSpec = tween(animationDuration),
                                         label = "boxTopEndShape"
                                     )
                                     val bottomEnd by animateFloatAsState(
-                                        targetValue = if (currentIndex == values.lastIndex) singleCornerSize else 0f,
+                                        targetValue = if (logicalPosition == values.lastIndex) singleCornerSize else 0f,
                                         animationSpec = tween(animationDuration),
                                         label = "boxBottomEndShape"
                                     )
 
 
-                                    val diff = currentIndex - index
+                                    val diff = logicalPosition - index
                                     val currentDividerGap = dividerThickness * diff
                                     val animateTo = boxHeight * diff + currentDividerGap
 
@@ -473,12 +477,13 @@ fun QuestionOption(
                                                                 val middlePointer =
                                                                     currentOffset + (singleSpace / 2)
 
-                                                                val i = currentPosition[index]
+                                                                val i =
+                                                                    visualOrder.getOrElse(index) { return@async }
                                                                 val j =
                                                                     if (singleSpace != 0f) middlePointer.roundToInt() / singleSpace.roundToInt()
                                                                     else i
                                                                 Collections.swap(
-                                                                    currentPosition, i, j
+                                                                    order, i, j
                                                                 )
                                                                 dragCount++
                                                             }).awaitAll()
@@ -637,6 +642,10 @@ fun RegexText(
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
 }
 
+private fun List<Int>.asFastIndexOfList(): List<Int> =
+    this.mapIndexed { i, n -> n to i }
+        .sortedBy { it.first }
+        .map { it.second }
 
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
     return template.replace(Regex("\\{(\\w+)\\}")) { match ->
