@@ -371,20 +371,18 @@ fun QuestionOption(
                                     .onSizeChanged { draggableContainerSize.value = it.toSize() }) {
 
                                 suspend fun translate(
-                                    offset: Animatable<Float, AnimationVector1D>,
-                                    target: Float
+                                    offset: Animatable<Float, AnimationVector1D>, target: Float
                                 ) {
                                     offset.animateTo(target, tween(animationDuration))
                                 }
 
-                                val initialPositions = remember { List(values.size) { it } }
                                 val order = rememberSaveable(
                                     saver = listSaver(
                                         save = { it.toList() },
                                         restore = { it.toMutableStateList() })
-                                ) { initialPositions.toMutableStateList() }
-                                val visualOrder by remember(order) {
-                                    derivedStateOf { order.asFastIndexOfList() }
+                                ) { values.toMutableStateList() }
+                                val visualOrder by remember(order, values) {
+                                    derivedStateOf { order.toFastIndexOfList(values) }
                                 }
 
                                 values.forEachIndexed { index, value ->
@@ -414,8 +412,7 @@ fun QuestionOption(
                                     val parentBoxHeight =
                                         remember(draggableContainerSize.value) { draggableContainerSize.value.height }
                                     val dividerGap = remember(
-                                        index,
-                                        dividerThickness
+                                        index, dividerThickness
                                     ) { dividerThickness * index }
                                     val componentOffset = remember(boxHeight, index, dividerGap) {
                                         boxHeight * index + dividerGap
@@ -435,8 +432,7 @@ fun QuestionOption(
                                             val trueAnswer = trueValues[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        }
-                                        else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
                                     val backgroundColor by animateColorAsState(
                                         targetValue = if (isDragging) activeColor else idleColor,
                                         animationSpec = tween(animationDuration),
@@ -510,6 +506,7 @@ fun QuestionOption(
 
                                                                 if (i != j) {
                                                                     Collections.swap(order, i, j)
+                                                                    onValueChange(Answer.Mtf(order))
                                                                 } else {
                                                                     val target =
                                                                         computeAnimateTo(index, i)
@@ -672,10 +669,10 @@ fun RegexText(
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
 }
 
-private fun List<Int>.asFastIndexOfList(): List<Int> =
-    this.mapIndexed { i, n -> n to i }
-        .sortedBy { it.first }
-        .map { it.second }
+private fun <T> List<T>.toFastIndexOfList(original: List<T>): List<Int> {
+    val org = original.withIndex().associate { it.value to it.index }
+    return this.mapIndexed { i, v -> v to i }.sortedBy { org[it.first] }.map { it.second }
+}
 
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
     return template.replace(Regex("\\{(\\w+)\\}")) { match ->
