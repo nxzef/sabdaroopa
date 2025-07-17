@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -299,8 +300,7 @@ fun QuestionOption(
                         with(density) { thickness.toPx() }
                     }
 
-                    val animationDuration = 120
-
+                    val animationDuration = 1200
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -329,21 +329,28 @@ fun QuestionOption(
                                 keys.forEachIndexed { index, key ->
 
                                     val boxSize = remember { mutableStateOf(Size.Zero) }
-                                    val cornerSizePx = cornerSize.toPx(boxSize.value, density)
-                                    val singleCornerSize = cornerSizePx - dividerThickness
+                                    val cornerSizePx = remember(boxSize.value) {
+                                        cornerSize.toPx(boxSize.value, density)
+                                    }
+                                    val singleCornerSize = remember(cornerSizePx) {
+                                        cornerSizePx - dividerThickness
+                                    }
 
                                     val color = if (index < 3 && exactAnswer is Answer.Mtf) {
                                         val match = trueValues[index] == exactAnswer.ans[index]
                                         if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                    } else MaterialTheme.colorScheme.surfaceContainerLow
+                                    }
+                                    else MaterialTheme.colorScheme.surfaceContainerLow
                                     val backgroundColor by animateColorAsState(
                                         targetValue = color,
                                         animationSpec = tween(animationDuration),
                                         label = "keyBoxBackgroundColor"
                                     )
-                                    val topStart = if (index == 0) singleCornerSize else 0f
-                                    val bottomStart =
+                                    val topStart =
+                                        remember { if (index == 0) singleCornerSize else 0f }
+                                    val bottomStart = remember {
                                         if (index == keys.lastIndex) singleCornerSize else 0f
+                                    }
 
                                     Box(
                                         modifier = Modifier
@@ -460,9 +467,8 @@ fun QuestionOption(
                                     LaunchedEffect(target) {
                                         runCatching {
                                             translate(yOffset, target)
-                                        }.onFailure { error ->
-                                            error.printStackTrace()
-                                        }
+                                            Log.d("indexes", "$index")
+                                        }.onFailure { error -> error.printStackTrace() }
                                     }
 
                                     Box(
@@ -623,17 +629,25 @@ fun OptionText(
     val keyText = text.uppercase()
     val adjustedText = when (keyText) {
         in caseNameStrings -> {
-            runCatching { stringResource(enumValueOf<CaseName>(keyText).sktName) }.getOrDefault(
+            runCatching {
+                stringResource(enumValueOf<CaseName>(keyText).sktName)
+            }.getOrDefault(
                 keyText
             )
         }
 
         in genderNameStrings -> {
-            runCatching { stringResource(enumValueOf<Gender>(keyText).skt) }.getOrDefault(keyText)
+            runCatching {
+                stringResource(enumValueOf<Gender>(keyText).skt)
+            }.getOrDefault(
+                keyText
+            )
         }
 
         in formNameStrings -> {
-            runCatching { stringResource(enumValueOf<FormName>(keyText).sktName) }.getOrDefault(
+            runCatching {
+                stringResource(enumValueOf<FormName>(keyText).sktName)
+            }.getOrDefault(
                 keyText
             )
         }
