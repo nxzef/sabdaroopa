@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -287,17 +288,19 @@ fun QuestionOption(
 
                     val density = LocalDensity.current
 
-                    val options = state.data.options
-                    val trueOptions = state.data.trueOption
-                    val keys = options.map { it.key }
-                    val values = options.map { it.value }
-                    val trueValues = trueOptions.map { it.value }
+                    val keys = remember(state) { state.data.options.map { it.key } }
+                    val values = remember(state) { state.data.options.map { it.value } }
+                    val trueValues = remember(state) { state.data.trueOption.map { it.value } }
 
                     val thickness = 4.dp
-                    val shape = CardDefaults.outlinedShape
-                    val cornerSize = (shape as RoundedCornerShape).topStart
-                    val dividerThickness = with(density) { thickness.toPx() }
+                    val shape = CardDefaults.outlinedShape as RoundedCornerShape
+                    val cornerSize = shape.topStart
+                    val dividerThickness = remember(thickness, density) {
+                        with(density) { thickness.toPx() }
+                    }
+
                     val animationDuration = 120
+
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -330,7 +333,7 @@ fun QuestionOption(
                                     val singleCornerSize = cornerSizePx - dividerThickness
 
                                     val color = if (index < 3 && exactAnswer is Answer.Mtf) {
-                                        val match = trueOptions[key] == exactAnswer.ans[index]
+                                        val match = trueValues[index] == exactAnswer.ans[index]
                                         if (match) Color(0x1600FF00) else Color(0x16FF0000)
                                     } else MaterialTheme.colorScheme.surfaceContainerLow
                                     val backgroundColor by animateColorAsState(
@@ -367,7 +370,14 @@ fun QuestionOption(
                                     .weight(1f)
                                     .onSizeChanged { draggableContainerSize.value = it.toSize() }) {
 
-                                val initialPositions = List(values.size) { it }
+                                suspend fun translate(
+                                    offset: Animatable<Float, AnimationVector1D>,
+                                    target: Float
+                                ) {
+                                    offset.animateTo(target, tween(animationDuration))
+                                }
+
+                                val initialPositions = remember { List(values.size) { it } }
                                 val order = rememberSaveable(
                                     saver = listSaver(
                                         save = { it.toList() },
@@ -376,7 +386,6 @@ fun QuestionOption(
                                 val visualOrder by remember(order) {
                                     derivedStateOf { order.asFastIndexOfList() }
                                 }
-                                var dragCount by rememberSaveable { mutableIntStateOf(0) }
 
                                 values.forEachIndexed { index, value ->
                                     val logicalPosition =
@@ -389,19 +398,34 @@ fun QuestionOption(
                                     var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
 
                                     val boxSize = remember { mutableStateOf(Size.Zero) }
-                                    val cornerSizePx = cornerSize.toPx(boxSize.value, density)
-                                    val singleCornerSize = cornerSizePx - dividerThickness
-                                    val halfDivider = dividerThickness / 2
-                                    val boxWidth = boxSize.value.width
-                                    val boxHeight = boxSize.value.height
-                                    val xExtra = boxWidth / 8
-                                    val yExtra = boxHeight / 3
+                                    val cornerSizePx = remember(boxSize.value) {
+                                        cornerSize.toPx(boxSize.value, density)
+                                    }
+                                    val singleCornerSize = remember(cornerSizePx) {
+                                        cornerSizePx - dividerThickness
+                                    }
+                                    val halfDivider =
+                                        remember(dividerThickness) { dividerThickness / 2 }
+                                    val boxWidth = remember(boxSize.value) { boxSize.value.width }
+                                    val boxHeight = remember(boxSize.value) { boxSize.value.height }
+                                    val xExtra = remember(boxWidth) { boxWidth / 8 }
+                                    val yExtra = remember(boxHeight) { boxHeight / 3 }
 
-                                    val parentBoxHeight = draggableContainerSize.value.height
-                                    val dividerGap = dividerThickness * index
-                                    val componentOffset = boxHeight * index + dividerGap
-                                    val maxOffset = parentBoxHeight - boxHeight
-                                    val singleSpace = boxHeight + dividerThickness
+                                    val parentBoxHeight =
+                                        remember(draggableContainerSize.value) { draggableContainerSize.value.height }
+                                    val dividerGap = remember(
+                                        index,
+                                        dividerThickness
+                                    ) { dividerThickness * index }
+                                    val componentOffset = remember(boxHeight, index, dividerGap) {
+                                        boxHeight * index + dividerGap
+                                    }
+                                    val maxOffset = remember(parentBoxHeight, boxHeight) {
+                                        parentBoxHeight - boxHeight
+                                    }
+                                    val singleSpace = remember(boxHeight, dividerThickness) {
+                                        boxHeight + dividerThickness
+                                    }
 
                                     val activeColor =
                                         MaterialTheme.colorScheme.surfaceContainerHighest
@@ -429,14 +453,17 @@ fun QuestionOption(
                                         label = "boxBottomEndShape"
                                     )
 
+                                    fun computeAnimateTo(index: Int, logicalPosition: Int): Float {
+                                        val diff = logicalPosition - index
+                                        val currentDividerGap = dividerThickness * diff
+                                        return boxHeight * diff + currentDividerGap
+                                    }
 
-                                    val diff = logicalPosition - index
-                                    val currentDividerGap = dividerThickness * diff
-                                    val animateTo = boxHeight * diff + currentDividerGap
+                                    val target = computeAnimateTo(index, logicalPosition)
 
-                                    LaunchedEffect(dragCount) {
+                                    LaunchedEffect(target) {
                                         runCatching {
-                                            yOffset.animateTo(animateTo, tween(animationDuration))
+                                            translate(yOffset, target)
                                         }.onFailure { error ->
                                             error.printStackTrace()
                                         }
@@ -468,10 +495,9 @@ fun QuestionOption(
                                                     }, onDragEnd = {
                                                         launch {
                                                             listOf(async {
-                                                                xOffset.animateTo(
-                                                                    0f, tween(animationDuration)
-                                                                )
+                                                                translate(xOffset, 0f)
                                                             }, async {
+
                                                                 val currentOffset =
                                                                     yOffset.value + componentOffset + halfDivider
                                                                 val middlePointer =
@@ -480,12 +506,16 @@ fun QuestionOption(
                                                                 val i =
                                                                     visualOrder.getOrElse(index) { return@async }
                                                                 val j =
-                                                                    if (singleSpace != 0f) middlePointer.roundToInt() / singleSpace.roundToInt()
-                                                                    else i
-                                                                Collections.swap(
-                                                                    order, i, j
-                                                                )
-                                                                dragCount++
+                                                                    middlePointer.roundToInt() / singleSpace.roundToInt()
+
+                                                                if (i != j) {
+                                                                    Collections.swap(order, i, j)
+                                                                } else {
+                                                                    val target =
+                                                                        computeAnimateTo(index, i)
+                                                                    translate(yOffset, target)
+                                                                }
+
                                                             }).awaitAll()
 
                                                             isDragging = false
