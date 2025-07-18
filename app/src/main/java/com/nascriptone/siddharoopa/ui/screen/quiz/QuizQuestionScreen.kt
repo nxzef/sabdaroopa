@@ -339,8 +339,7 @@ fun QuestionOption(
                                     val color = if (index < 3 && exactAnswer is Answer.Mtf) {
                                         val match = trueValues[index] == exactAnswer.ans[index]
                                         if (match) Color(0x1600FF00) else Color(0x16FF0000)
-                                    }
-                                    else MaterialTheme.colorScheme.surfaceContainerLow
+                                    } else MaterialTheme.colorScheme.surfaceContainerLow
                                     val backgroundColor by animateColorAsState(
                                         targetValue = color,
                                         animationSpec = tween(animationDuration),
@@ -388,6 +387,7 @@ fun QuestionOption(
                                         save = { it.toList() },
                                         restore = { it.toMutableStateList() })
                                 ) { values.toMutableStateList() }
+                                Log.d("ORDER", "$order")
                                 val visualOrder by remember(order, values) {
                                     derivedStateOf { order.toFastIndexOfList(values) }
                                 }
@@ -467,7 +467,6 @@ fun QuestionOption(
                                     LaunchedEffect(target) {
                                         runCatching {
                                             translate(yOffset, target)
-                                            Log.d("indexes", "$index")
                                         }.onFailure { error -> error.printStackTrace() }
                                     }
 
