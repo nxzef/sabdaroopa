@@ -237,6 +237,7 @@ fun QuestionOption(
             modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             when (val state = each.option) {
+
                 is Option.McqOption -> {
                     val options = state.data.options
                     RegexText(each.question, state.data.questionKey)
@@ -317,8 +318,7 @@ fun QuestionOption(
                             .height(IntrinsicSize.Min),
                         propagateMinConstraints = true
                     ) {
-                        Box(
-                            Modifier
+                        Box(Modifier
                                 .background(
                                     MaterialTheme.colorScheme.surfaceContainerLow,
                                     shape = CardDefaults.outlinedShape
@@ -328,15 +328,13 @@ fun QuestionOption(
                                         width = thickness,
                                         color = DividerDefaults.color
                                     ), shape = CardDefaults.outlinedShape
-                                )
-                        )
+                                ))
                         Row(
                             Modifier
                                 .padding(thickness)
                                 .onSizeChanged {
                                     containerSize.value = it.toSize()
                                 }) {
-
                             Column(modifier = Modifier.weight(1f)) {
 
                                 keys.forEachIndexed { index, key ->
@@ -433,7 +431,8 @@ fun QuestionOption(
                                             val trueAnswer = trueValues[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        }
+                                        else MaterialTheme.colorScheme.surfaceContainerHigh
                                     val backgroundColor by animateColorAsState(
                                         targetValue = if (isDragging) activeColor else idleColor,
                                         animationSpec = tween(animationDuration),
@@ -456,11 +455,24 @@ fun QuestionOption(
                                         return boxHeight * diff + cdg
                                     }
 
+                                    suspend fun translate(
+                                        offset: Animatable<Float, AnimationVector1D>,
+                                        delta: Float,
+                                    ) {
+                                        if (!isDragging) zIndex = 0.5f
+                                        offset.animateTo(
+                                            delta,
+                                            tween(animationDuration)
+                                        )
+                                        isDragging = false
+                                        zIndex = 0f
+                                    }
+
                                     val target = computeAnimateTo(index, logicalPosition)
 
                                     LaunchedEffect(target) {
                                         runCatching {
-                                            translate(yOffset, target, animationDuration)
+                                            translate(yOffset, target)
                                         }.onFailure { error -> error.printStackTrace() }
                                     }
 
@@ -493,8 +505,7 @@ fun QuestionOption(
                                                                 async {
                                                                     translate(
                                                                         xOffset,
-                                                                        0f,
-                                                                        animationDuration
+                                                                        0f
                                                                     )
                                                                 },
                                                                 async {
@@ -528,16 +539,11 @@ fun QuestionOption(
                                                                             )
                                                                         translate(
                                                                             yOffset,
-                                                                            target,
-                                                                            animationDuration
+                                                                            target
                                                                         )
                                                                     }
-
                                                                 }
                                                             ).awaitAll()
-
-                                                            isDragging = false
-                                                            zIndex = 0f
                                                         }
                                                     }, onDrag = { change, dragAmount ->
                                                         launch {
@@ -696,14 +702,6 @@ fun RegexText(
     val finalKey = mutableKey.toMap()
     val text = replacePlaceholders(stringRes, finalKey)
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
-}
-
-private suspend fun translate(
-    offset: Animatable<Float, AnimationVector1D>,
-    delta: Float,
-    animationDuration: Int = 120
-) {
-    offset.animateTo(delta, tween(animationDuration))
 }
 
 private fun <T> List<T>.toFastIndexOfList(original: List<T>): List<Int> {
