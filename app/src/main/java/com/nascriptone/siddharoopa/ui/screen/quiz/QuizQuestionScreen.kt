@@ -288,19 +288,27 @@ fun QuestionOption(
                 is Option.MtfOption -> {
 
                     val density = LocalDensity.current
-
                     val keys = remember(state) { state.data.options.map { it.key } }
                     val values = remember(state) { state.data.options.map { it.value } }
                     val trueValues = remember(state) { state.data.trueOption.map { it.value } }
 
-                    val thickness = 4.dp
+                    val thickness = DividerDefaults.Thickness
+                    val animationDuration = 120
                     val shape = CardDefaults.outlinedShape as RoundedCornerShape
                     val cornerSize = shape.topStart
                     val dividerThickness = remember(thickness, density) {
                         with(density) { thickness.toPx() }
                     }
+                    val containerSize = remember { mutableStateOf(Size.Zero) }
 
-                    val animationDuration = 1200
+                    val order = rememberSaveable(
+                        saver = listSaver(
+                            save = { it.toList() },
+                            restore = { it.toMutableStateList() })
+                    ) { values.toMutableStateList() }
+                    val visualOrder by remember(order, values) {
+                        derivedStateOf { order.toFastIndexOfList(values) }
+                    }
 
                     RegexText(each.question, state.data.questionKey)
                     Spacer(Modifier.height(40.dp))
@@ -310,22 +318,25 @@ fun QuestionOption(
                             .height(IntrinsicSize.Min),
                         propagateMinConstraints = true
                     ) {
-                        Box(
-                            Modifier
+                        Box(Modifier
                                 .background(
                                     MaterialTheme.colorScheme.surfaceContainerLow,
                                     shape = CardDefaults.outlinedShape
                                 )
                                 .border(
                                     border = BorderStroke(
-                                        width = thickness, /* DividerDefaults.Thickness */
+                                        width = thickness,
                                         color = DividerDefaults.color
                                     ), shape = CardDefaults.outlinedShape
-                                )
-                        )
-                        Row(Modifier.padding(thickness)) {
-                            val draggableContainerSize = remember { mutableStateOf(Size.Zero) }
+                                ))
+                        Row(Modifier
+                                .padding(thickness)
+                                .onSizeChanged {
+                                    containerSize.value = it.toSize()
+                                }) {
+
                             Column(modifier = Modifier.weight(1f)) {
+
                                 keys.forEachIndexed { index, key ->
 
                                     val boxSize = remember { mutableStateOf(Size.Zero) }
@@ -371,26 +382,7 @@ fun QuestionOption(
                                 }
                             }
                             VerticalDivider(thickness = thickness)
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .onSizeChanged { draggableContainerSize.value = it.toSize() }) {
-
-                                suspend fun translate(
-                                    offset: Animatable<Float, AnimationVector1D>, target: Float
-                                ) {
-                                    offset.animateTo(target, tween(animationDuration))
-                                }
-
-                                val order = rememberSaveable(
-                                    saver = listSaver(
-                                        save = { it.toList() },
-                                        restore = { it.toMutableStateList() })
-                                ) { values.toMutableStateList() }
-                                Log.d("ORDER", "$order")
-                                val visualOrder by remember(order, values) {
-                                    derivedStateOf { order.toFastIndexOfList(values) }
-                                }
+                            Column(modifier = Modifier.weight(1f)) {
 
                                 values.forEachIndexed { index, value ->
                                     val logicalPosition =
@@ -417,7 +409,7 @@ fun QuestionOption(
                                     val yExtra = remember(boxHeight) { boxHeight / 3 }
 
                                     val parentBoxHeight =
-                                        remember(draggableContainerSize.value) { draggableContainerSize.value.height }
+                                        remember(containerSize.value) { containerSize.value.height }
                                     val dividerGap = remember(
                                         index, dividerThickness
                                     ) { dividerThickness * index }
@@ -439,7 +431,8 @@ fun QuestionOption(
                                             val trueAnswer = trueValues[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        }
+                                        else MaterialTheme.colorScheme.surfaceContainerHigh
                                     val backgroundColor by animateColorAsState(
                                         targetValue = if (isDragging) activeColor else idleColor,
                                         animationSpec = tween(animationDuration),
@@ -466,7 +459,8 @@ fun QuestionOption(
 
                                     LaunchedEffect(target) {
                                         runCatching {
-                                            translate(yOffset, target)
+                                            Log.d("ANIMATE", "$target")
+                                            translate(yOffset, target, animationDuration)
                                         }.onFailure { error -> error.printStackTrace() }
                                     }
 
@@ -496,7 +490,11 @@ fun QuestionOption(
                                                     }, onDragEnd = {
                                                         launch {
                                                             listOf(async {
-                                                                translate(xOffset, 0f)
+                                                                translate(
+                                                                    xOffset,
+                                                                    0f,
+                                                                    animationDuration
+                                                                )
                                                             }, async {
 
                                                                 val currentOffset =
@@ -515,7 +513,11 @@ fun QuestionOption(
                                                                 } else {
                                                                     val target =
                                                                         computeAnimateTo(index, i)
-                                                                    translate(yOffset, target)
+                                                                    translate(
+                                                                        yOffset,
+                                                                        target,
+                                                                        animationDuration
+                                                                    )
                                                                 }
 
                                                             }).awaitAll()
@@ -680,6 +682,14 @@ fun RegexText(
     val finalKey = mutableKey.toMap()
     val text = replacePlaceholders(stringRes, finalKey)
     Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
+}
+
+private suspend fun translate(
+    offset: Animatable<Float, AnimationVector1D>,
+    target: Float,
+    animationDuration: Int = 120
+) {
+    offset.animateTo(target, tween(animationDuration))
 }
 
 private fun <T> List<T>.toFastIndexOfList(original: List<T>): List<Int> {
