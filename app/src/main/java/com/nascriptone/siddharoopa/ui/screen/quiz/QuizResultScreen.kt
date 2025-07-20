@@ -1,16 +1,26 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 
 @Composable
@@ -20,16 +30,60 @@ fun QuizResultScreen(
 ) {
     Surface {
         Column(
-            modifier = modifier
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Hello World This is Result Screen")
-            Text("Your result is 100%")
-            TextButton(
-                onClick = {
-                    navHostController.navigate(SiddharoopaRoutes.QuizReview.name)
-                }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Congratulation!!",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.padding(vertical = 24.dp)
+            )
+            Spacer(Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = MaterialTheme.shapes.extraLarge
+                    )
+                    .fillMaxWidth()
+                    .heightIn(200.dp, 280.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Text("See Review")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "70%",
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                    Text(
+                        text = "Score",
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Column {
+                Text("Statistics", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(12.dp))
+                Column(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            shape = MaterialTheme.shapes.extraLarge
+                        )
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    repeat(4) {
+                        Text("Action $it")
+                    }
+                }
             }
         }
     }
@@ -38,9 +92,8 @@ fun QuizResultScreen(
 @Preview
 @Composable
 fun QuizResultScreenPreview() {
-    SiddharoopaTheme(false) {
+    SiddharoopaTheme(true) {
         QuizResultScreen(
-            modifier = Modifier.fillMaxSize(),
             navHostController = rememberNavController()
         )
     }
