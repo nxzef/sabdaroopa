@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -88,6 +90,22 @@ fun QuizInstructionScreen(
                         Text("Hello")
                     }
                 }
+            }
+
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    progress = {0.93f},
+                    strokeWidth = 6.dp,
+                    modifier = Modifier.size(90.dp)
+                )
+                Text(
+                    "46",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

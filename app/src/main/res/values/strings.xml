@@ -119,6 +119,13 @@
     <string name="mtf_template_4">Match the following Sanskrit words with their gender.</string>
     <string name="mtf_template_5">Match each form of {sabda} with its number (वचन).</string>
 
+
+    <!-- Quiz Result -->
+
+    <!-- Quiz Result Screen Title -->
+
+    <string name="quiz_result_title">Quiz Completed</string>
+
     <!-- Quiz Result Accuracy Message -->
 
     <!-- Quarter -->
