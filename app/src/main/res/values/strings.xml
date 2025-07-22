@@ -119,4 +119,30 @@
     <string name="mtf_template_4">Match the following Sanskrit words with their gender.</string>
     <string name="mtf_template_5">Match each form of {sabda} with its number (वचन).</string>
 
+    <!-- Quiz Result Accuracy Message -->
+
+    <!-- Quarter -->
+    <string name="quarter_1">Every expert was once a beginner. Keep going!</string>
+    <string name="quarter_2">Great start! Learning begins with trying.</string>
+    <string name="quarter_3">Don’t worry — this is just the beginning!</string>
+    <string name="quarter_4">Mistakes mean you’re trying. Stay at it!</string>
+
+    <!-- Half -->
+    <string name="half_1">Nice try! You’re on the path — just a bit more focus!</string>
+    <string name="half_2">Good effort! You’re getting the hang of it.</string>
+    <string name="half_3">You\'re learning! Let’s aim higher next time.</string>
+    <string name="half_4">Solid attempt! Practice will make it perfect.</string>
+
+    <!-- Three Quarter -->
+    <string name="three_quarter_1">Good job! You’re improving fast, stay consistent!</string>
+    <string name="three_quarter_2">You’re halfway there — keep up the momentum!</string>
+    <string name="three_quarter_3">Nice work! You\'re developing strong skills.</string>
+    <string name="three_quarter_4">You’re doing well! Let’s push for excellence.</string>
+
+    <!-- Full -->
+    <string name="full_1">Excellent! You\'re mastering it — keep up the great work!</string>
+    <string name="full_2">Outstanding performance! You’ve got this!</string>
+    <string name="full_3">You nailed it! Keep the streak alive!</string>
+    <string name="full_4">Brilliant work! You\'re close to mastery.</string>
+
 </resources>
