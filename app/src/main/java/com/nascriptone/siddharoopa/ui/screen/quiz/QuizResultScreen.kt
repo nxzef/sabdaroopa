@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -39,7 +40,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 
@@ -58,7 +58,7 @@ fun QuizResultScreen(
     )
 
     LaunchedEffect(Unit) {
-        currentProgress = 0.82f
+        currentProgress = 0.67f
     }
 
     Surface {
@@ -88,10 +88,10 @@ fun QuizResultScreen(
                     CircularProgressIndicator(
                         progress = { progress },
                         strokeWidth = 8.dp,
-                        modifier = Modifier.size(110.dp)
+                        modifier = Modifier.size(116.dp)
                     )
                     Text(
-                        text = "74%",
+                        text = "67%",
                         style = MaterialTheme.typography.displaySmall,
                         fontWeight = FontWeight.Bold,
                     )
@@ -140,7 +140,7 @@ fun QuizResultScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = "18 / 30",
+                        text = "36 / 43",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -212,6 +212,7 @@ fun MatchTheFollowing(
 fun ModeView(
     title: String,
     modifier: Modifier = Modifier,
+    disableBackgroundColor: Boolean = false,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
@@ -224,7 +225,8 @@ fun ModeView(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = if (!disableBackgroundColor) MaterialTheme.colorScheme.surfaceContainer
+                    else Color.Unspecified,
                     shape = MaterialTheme.shapes.large
                 )
                 .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -288,12 +290,37 @@ fun MessageText(
     )
 }
 
-@Preview
 @Composable
-fun QuizResultScreenPreview() {
-    SiddharoopaTheme(true) {
-        QuizResultScreen(
-            navHostController = rememberNavController()
+fun ReviewView(
+    modifier: Modifier = Modifier
+) {
+    ModeView(
+        title = "Quiz Review",
+        disableBackgroundColor = true,
+        modifier = modifier
+    ) {
+        TextWithDivider(
+            text = "Hello World!"
         )
     }
 }
+
+@Preview
+@Composable
+fun ReviewViewPreview() {
+    SiddharoopaTheme(true) {
+        Surface {
+            ReviewView()
+        }
+    }
+}
+
+//@Preview
+//@Composable
+//fun QuizResultScreenPreview() {
+//    SiddharoopaTheme(true) {
+//        QuizResultScreen(
+//            navHostController = rememberNavController()
+//        )
+//    }
+//}
