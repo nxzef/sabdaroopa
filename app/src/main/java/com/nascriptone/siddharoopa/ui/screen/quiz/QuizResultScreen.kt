@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -157,14 +158,19 @@ fun QuizResultScreen(
 fun FinalSummary(
     modifier: Modifier = Modifier,
 ) {
+
+    val style = MaterialTheme.typography.bodyMedium.copy(
+        fontWeight = FontWeight.Medium
+    )
+
     ModeView(
         title = "Final Summary",
         modifier = modifier
     ) {
-        TextWithDivider("Total Questions")
-        TextWithDivider("Total Possible Marks")
-        TextWithDivider("Total Score")
-        TextWithDivider("Accuracy", disableDivider = true)
+        TextWithDivider("Total Questions", style = style)
+        TextWithDivider("Total Possible Marks", style = style)
+        TextWithDivider("Total Score", style = style)
+        TextWithDivider("Accuracy", style = style, disableDivider = true)
     }
 }
 
@@ -208,7 +214,7 @@ fun ModeView(
     modifier: Modifier = Modifier,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
+    Column(modifier = modifier.padding(vertical = 12.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
@@ -231,6 +237,7 @@ fun TextWithDivider(
     text: String,
     result: String? = "12",
     modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
     disableDivider: Boolean = false
 ) {
     Row(
@@ -240,9 +247,6 @@ fun TextWithDivider(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-
-        val style = MaterialTheme.typography.bodyMedium
-
         Text(
             text = "$text:",
             style = style,
