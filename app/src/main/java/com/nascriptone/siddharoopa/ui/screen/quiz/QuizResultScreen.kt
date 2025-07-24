@@ -1,6 +1,8 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +24,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -42,6 +49,16 @@ fun QuizResultScreen(
 ) {
 
     val screenTitle = stringResource(R.string.quiz_result_title)
+    var currentProgress by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val progress by animateFloatAsState(
+        targetValue = currentProgress,
+        animationSpec = tween(2000),
+    )
+
+    LaunchedEffect(Unit) {
+        currentProgress = 0.82f
+    }
 
     Surface {
         Column(
@@ -64,11 +81,11 @@ fun QuizResultScreen(
                 modifier = Modifier
 //                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(4.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(
-                        progress = { 0.64f },
+                        progress = { progress },
                         strokeWidth = 8.dp,
                         modifier = Modifier.size(110.dp)
                     )
@@ -86,7 +103,7 @@ fun QuizResultScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 MessageText(
-                    message = stringResource(R.string.full_1)
+                    message = stringResource(R.string.full_2)
                 )
                 Spacer(Modifier.height(16.dp))
                 Column(
@@ -187,9 +204,7 @@ fun ModeView(
     content: @Composable (ColumnScope.() -> Unit)
 ) {
     Column(
-        modifier = Modifier
-            .then(modifier)
-            .padding(8.dp)
+        modifier = modifier.padding(4.dp)
     ) {
         Text(
             text = title,
