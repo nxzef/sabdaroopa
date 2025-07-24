@@ -74,14 +74,14 @@ fun QuizResultScreen(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 26.dp)
+                    .padding(vertical = 20.dp)
             )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
+                    .padding(vertical = 8.dp)
 //                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .fillMaxWidth()
-                    .padding(4.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(
@@ -103,9 +103,9 @@ fun QuizResultScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 MessageText(
-                    message = stringResource(R.string.full_2)
+                    message = stringResource(R.string.quarter_1)
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(24.dp))
                 Column(
                     modifier = Modifier
                         .background(
@@ -122,22 +122,22 @@ fun QuizResultScreen(
                     ) {
                         Text(
                             text = "Total Score",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "All Categories",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .background(
-                                    color = MaterialTheme.colorScheme.surfaceBright,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
                                     shape = MaterialTheme.shapes.large
                                 )
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(16.dp))
                     Text(
                         text = "18 / 30",
                         style = MaterialTheme.typography.headlineMedium,
@@ -145,11 +145,26 @@ fun QuizResultScreen(
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             MultipleChoiceQuestion()
-            Spacer(Modifier.height(16.dp))
             MatchTheFollowing()
+            FinalSummary()
         }
+    }
+}
+
+@Composable
+fun FinalSummary(
+    modifier: Modifier = Modifier,
+) {
+    ModeView(
+        title = "Final Summary",
+        modifier = modifier
+    ) {
+        TextWithDivider("Total Questions")
+        TextWithDivider("Total Possible Marks")
+        TextWithDivider("Total Score")
+        TextWithDivider("Accuracy", disableDivider = true)
     }
 }
 
@@ -161,17 +176,12 @@ fun MultipleChoiceQuestion(
         title = "Multiple Choice (MCQ)",
         modifier = modifier
     ) {
-        Text("Questions")
-        HorizontalDivider()
-        Text("Attended")
-        HorizontalDivider()
-        Text("Skipped")
-        HorizontalDivider()
-        Text("Correct")
-        HorizontalDivider()
-        Text("Wrong")
-        HorizontalDivider()
-        Text("Earned")
+        TextWithDivider("Number of Questions")
+        TextWithDivider("Attended")
+        TextWithDivider("Skipped")
+        TextWithDivider("Correct Answers")
+        TextWithDivider("Wrong Answers")
+        TextWithDivider("MCQ Score", disableDivider = true)
     }
 }
 
@@ -180,20 +190,15 @@ fun MatchTheFollowing(
     modifier: Modifier = Modifier
 ) {
     ModeView(
-        title = "Match the Following (MTF)",
+        title = "Match the Following",
         modifier = modifier
     ) {
-        Text("Sets")
-        HorizontalDivider()
-        Text("Pairs to Match")
-        HorizontalDivider()
-        Text("Attended Sets")
-        HorizontalDivider()
-        Text("Skipped Sets")
-        HorizontalDivider()
-        Text("Correct Matches")
-        HorizontalDivider()
-        Text("Earned")
+        TextWithDivider("Number of Sets")
+        TextWithDivider("Pairs to Match")
+        TextWithDivider("Attended Sets")
+        TextWithDivider("Skipped Sets")
+        TextWithDivider("Correct Matches")
+        TextWithDivider("MTF Score", disableDivider = true)
     }
 }
 
@@ -203,14 +208,12 @@ fun ModeView(
     modifier: Modifier = Modifier,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Column(
-        modifier = modifier.padding(4.dp)
-    ) {
+    Column(modifier = modifier.padding(vertical = 8.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 8.dp)
         )
+        Spacer(Modifier.height(8.dp))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -218,9 +221,40 @@ fun ModeView(
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     shape = MaterialTheme.shapes.large
                 )
-                .padding(12.dp)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) { content() }
     }
+}
+
+@Composable
+fun TextWithDivider(
+    text: String,
+    result: String? = "12",
+    modifier: Modifier = Modifier,
+    disableDivider: Boolean = false
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+
+        val style = MaterialTheme.typography.bodyMedium
+
+        Text(
+            text = "$text:",
+            style = style,
+        )
+        result?.let {
+            Text(
+                text = it,
+                style = style
+            )
+        }
+    }
+    if (!disableDivider) HorizontalDivider()
 }
 
 @SuppressLint("ConfigurationScreenWidthHeight")
@@ -235,7 +269,9 @@ fun MessageText(
 
     Text(
         text = message,
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            fontWeight = FontWeight.Medium
+        ),
         color = MaterialTheme.colorScheme.onTertiaryContainer,
         textAlign = TextAlign.Center,
         modifier = modifier
@@ -247,48 +283,6 @@ fun MessageText(
             .padding(8.dp)
     )
 }
-
-@Composable
-fun StatHighlightBox(
-    label: String,
-    result: Int,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .height(100.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(8.dp))
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.large
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = result.toString(),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-//@Preview
-//@Composable
-//fun MultipleChoiceQuestionPreview() {
-//    SiddharoopaTheme {
-//        MultipleChoiceQuestion()
-//    }
-//}
 
 @Preview
 @Composable

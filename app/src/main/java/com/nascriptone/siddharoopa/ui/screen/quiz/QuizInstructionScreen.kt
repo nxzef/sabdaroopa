@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +36,7 @@ fun QuizInstructionScreen(
 ) {
     Surface(modifier) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -96,7 +97,7 @@ fun QuizInstructionScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
-                    progress = {0.93f},
+                    progress = { 0.93f },
                     strokeWidth = 6.dp,
                     modifier = Modifier.size(90.dp)
                 )
@@ -107,6 +108,13 @@ fun QuizInstructionScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
+
+            Box(Modifier
+                .size(200.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant)) {
+                Box(Modifier.size(100.dp).background(MaterialTheme.colorScheme.onSurfaceVariant))
+            }
         }
     }
 }
@@ -115,7 +123,7 @@ fun QuizInstructionScreen(
 @Preview(showBackground = true)
 @Composable
 fun CustomRowPreview() {
-    SiddharoopaTheme {
+    SiddharoopaTheme(true) {
         QuizInstructionScreen()
     }
 }
