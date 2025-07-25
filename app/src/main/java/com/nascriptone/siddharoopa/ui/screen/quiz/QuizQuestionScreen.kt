@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -318,7 +317,8 @@ fun QuestionOption(
                             .height(IntrinsicSize.Min),
                         propagateMinConstraints = true
                     ) {
-                        Box(Modifier
+                        Box(
+                            Modifier
                                 .background(
                                     MaterialTheme.colorScheme.surfaceContainerLow,
                                     shape = CardDefaults.outlinedShape
@@ -328,7 +328,8 @@ fun QuestionOption(
                                         width = thickness,
                                         color = DividerDefaults.color
                                     ), shape = CardDefaults.outlinedShape
-                                ))
+                                )
+                        )
                         Row(
                             Modifier
                                 .padding(thickness)
@@ -431,8 +432,7 @@ fun QuestionOption(
                                             val trueAnswer = trueValues[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
-                                        }
-                                        else MaterialTheme.colorScheme.surfaceContainerHigh
+                                        } else MaterialTheme.colorScheme.surfaceContainerHigh
                                     val backgroundColor by animateColorAsState(
                                         targetValue = if (isDragging) activeColor else idleColor,
                                         animationSpec = tween(animationDuration),
@@ -680,39 +680,9 @@ fun OptionText(
     )
 }
 
-
-@Composable
-fun RegexText(
-    @StringRes template: Int, key: Map<String, String>, modifier: Modifier = Modifier
-) {
-    val mutableKey = key.toMutableMap()
-    val stringRes = stringResource(template)
-    val vibaktiKey = "vibhakti"
-    val vachanaKey = "vachana"
-    if (mutableKey.containsKey(vibaktiKey) || mutableKey.containsKey(vachanaKey)) {
-        val vibaktiValue = key.getValue(vibaktiKey)
-        val vachanaValue = key.getValue(vachanaKey)
-        val vibaktiEnum = CaseName.valueOf(vibaktiValue)
-        val vachanaEnum = FormName.valueOf(vachanaValue)
-        val vibaktiSktName = stringResource(vibaktiEnum.sktName)
-        val vachanaSktName = stringResource(vachanaEnum.sktName)
-        mutableKey[vibaktiKey] = vibaktiSktName
-        mutableKey[vachanaKey] = vachanaSktName
-    }
-    val finalKey = mutableKey.toMap()
-    val text = replacePlaceholders(stringRes, finalKey)
-    Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
-}
-
 private fun <T> List<T>.toFastIndexOfList(original: List<T>): List<Int> {
     val org = original.withIndex().associate { it.value to it.index }
     return this.mapIndexed { i, v -> v to i }.sortedBy { org[it.first] }.map { it.second }
-}
-
-private fun replacePlaceholders(template: String, values: Map<String, String>): String {
-    return template.replace(Regex("\\{(\\w+)\\}")) { match ->
-        values[match.groupValues[1]] ?: match.value
-    }
 }
 
 private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
