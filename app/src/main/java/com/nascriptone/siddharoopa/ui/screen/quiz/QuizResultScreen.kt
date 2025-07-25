@@ -150,6 +150,7 @@ fun QuizResultScreen(
             MultipleChoiceQuestion()
             MatchTheFollowing()
             FinalSummary()
+            ReviewView()
         }
     }
 }
@@ -296,11 +297,60 @@ fun ReviewView(
 ) {
     ModeView(
         title = "Quiz Review",
-        disableBackgroundColor = true,
+        disableBackgroundColor = false,
         modifier = modifier
     ) {
+        Text(
+            "What is the dual nominative form of some kind of sabda?",
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
         TextWithDivider(
-            text = "Hello World!"
+            text = "Correct Answer",
+            result = "Hello World!"
+        )
+        TextWithDivider(
+            text = "Your Answer",
+            result = "Hello World!",
+            modifier = Modifier.background(Color(0x1600FF00))
+        )
+        Text(
+            "What is the dual nominative form of some kind of sabda?",
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        TextWithDivider(
+            text = "Correct Answer",
+            result = "Hello World!"
+        )
+        TextWithDivider(
+            text = "Your Answer",
+            result = "Hello",
+            modifier = Modifier.background(Color(0x16FF0000))
+        )
+        Text(
+            "What is the dual nominative form of some kind of sabda?",
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        TextWithDivider(
+            text = "Correct Answer",
+            result = "Hello World!"
+        )
+        TextWithDivider(
+            text = "Your Answer",
+            result = "Hello World!",
+            modifier = Modifier.background(Color(0x1600FF00))
+        )
+        Text(
+            "What is the dual nominative form of some kind of sabda?",
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        TextWithDivider(
+            text = "Correct Answer",
+            result = "Hello World!"
+        )
+        TextWithDivider(
+            text = "Your Answer",
+            result = "Skipped",
+            modifier = Modifier.background(Color(0x16FFFF00))
         )
     }
 }
@@ -308,7 +358,7 @@ fun ReviewView(
 @Preview
 @Composable
 fun ReviewViewPreview() {
-    SiddharoopaTheme(true) {
+    SiddharoopaTheme(false) {
         Surface {
             ReviewView()
         }
