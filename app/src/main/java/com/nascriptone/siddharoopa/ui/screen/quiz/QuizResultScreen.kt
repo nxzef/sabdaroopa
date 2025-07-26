@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -209,61 +206,6 @@ fun MatchTheFollowing(
     }
 }
 
-@Composable
-fun ModeView(
-    title: String,
-    modifier: Modifier = Modifier,
-    disableBackgroundColor: Boolean = false,
-    content: @Composable (ColumnScope.() -> Unit)
-) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(8.dp))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = if (!disableBackgroundColor) MaterialTheme.colorScheme.surfaceContainer
-                    else Color.Unspecified,
-                    shape = MaterialTheme.shapes.large
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) { content() }
-    }
-}
-
-@Composable
-fun TextWithDivider(
-    text: String,
-    result: String? = "12",
-    modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.bodyMedium,
-    disableDivider: Boolean = false
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Text(
-            text = "$text:",
-            style = style,
-        )
-        result?.let {
-            Text(
-                text = it,
-                style = style
-            )
-        }
-    }
-    if (!disableDivider) HorizontalDivider()
-}
-
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MessageText(
@@ -300,65 +242,39 @@ fun ReviewView(
         disableBackgroundColor = false,
         modifier = modifier
     ) {
-        Text(
-            "What is the dual nominative form of some kind of sabda?",
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        TextWithDivider(
-            text = "Correct Answer",
-            result = "Hello World!"
-        )
-        TextWithDivider(
-            text = "Your Answer",
-            result = "Hello World!",
-            modifier = Modifier.background(Color(0x1600FF00))
-        )
-        Text(
-            "What is the dual nominative form of some kind of sabda?",
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        TextWithDivider(
-            text = "Correct Answer",
-            result = "Hello World!"
-        )
-        TextWithDivider(
-            text = "Your Answer",
-            result = "Hello",
-            modifier = Modifier.background(Color(0x16FF0000))
-        )
-        Text(
-            "What is the dual nominative form of some kind of sabda?",
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        TextWithDivider(
-            text = "Correct Answer",
-            result = "Hello World!"
-        )
-        TextWithDivider(
-            text = "Your Answer",
-            result = "Hello World!",
-            modifier = Modifier.background(Color(0x1600FF00))
-        )
-        Text(
-            "What is the dual nominative form of some kind of sabda?",
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-        TextWithDivider(
-            text = "Correct Answer",
-            result = "Hello World!"
-        )
-        TextWithDivider(
-            text = "Your Answer",
-            result = "Skipped",
-            modifier = Modifier.background(Color(0x16FFFF00))
-        )
+        MultipleChoiceReview()
+    }
+}
+
+@Composable
+fun MultipleChoiceReview(
+    modifier: Modifier = Modifier
+) {
+    repeat(3) {
+        QuestionWithNumber(
+            it + 1,
+            modifier = modifier
+        ) {
+            TextWithDivider(
+                text = "Correct Answer",
+                result = "Hello World!",
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            TextWithDivider(
+                text = "Your Answer",
+                result = "Hello World!",
+                backgroundColor = Color(0x1600FF00),
+                disableDivider = true,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun ReviewViewPreview() {
-    SiddharoopaTheme(false) {
+    SiddharoopaTheme(true) {
         Surface {
             ReviewView()
         }
