@@ -36,7 +36,9 @@ fun QuizInstructionScreen(
 ) {
     Surface(modifier) {
         Column(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceContainer),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -110,10 +112,14 @@ fun QuizInstructionScreen(
             }
 
 
-            Box(Modifier
-                .size(200.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant)) {
-                Box(Modifier.size(100.dp).background(MaterialTheme.colorScheme.onSurfaceVariant))
+            Box(
+                Modifier
+                    .size(200.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Box(Modifier
+                    .size(100.dp)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant))
             }
         }
     }
