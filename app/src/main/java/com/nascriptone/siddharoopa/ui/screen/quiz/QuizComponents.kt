@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +32,9 @@ import com.nascriptone.siddharoopa.data.model.uiobj.FormName
 // Regex Text
 @Composable
 fun RegexText(
-    @StringRes template: Int, key: Map<String, String>, modifier: Modifier = Modifier
+    @StringRes template: Int,
+    key: Map<String, String>,
+    modifier: Modifier = Modifier,
 ) {
     val mutableKey = key.toMutableMap()
     val stringRes = stringResource(template)
@@ -48,7 +52,7 @@ fun RegexText(
     }
     val finalKey = mutableKey.toMap()
     val text = replacePlaceholders(stringRes, finalKey)
-    Text(text, modifier = modifier, style = MaterialTheme.typography.titleLarge)
+    Text(text, style = MaterialTheme.typography.titleLarge, modifier = modifier)
 }
 
 // Common View Layout
@@ -88,7 +92,7 @@ fun TextWithDivider(
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
-    disableDivider: Boolean = false
+    disableDivider: Boolean = false,
 ) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,6 +100,7 @@ fun TextWithDivider(
         modifier = Modifier
             .background(backgroundColor)
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .padding(vertical = 4.dp)
             .then(modifier)
     ) {
@@ -119,31 +124,27 @@ fun QuestionWithNumber(
     modifier: Modifier = Modifier,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Spacer(Modifier.height(20.dp))
     Row(modifier) {
         Box(
             modifier = Modifier
-                .width(32.dp),
+                .width(28.dp),
             contentAlignment = Alignment.TopEnd
         ) {
-            Text("$questionNumber.", fontWeight = FontWeight.Medium)
-        }
-        Column(
-            Modifier
-                .padding(start = 12.dp)
-//                .clip(MaterialTheme.shapes.small)
-
-        ) {
             Text(
-                "What is the dual nominative form of some kind of sabda?",
+                text = "$questionNumber.",
                 fontWeight = FontWeight.Medium
             )
-            Spacer(Modifier.height(16.dp))
+        }
+        Column {
+            Text(
+                text = "What is the dual nominative form of some kind of sabda?",
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Spacer(Modifier.height(8.dp))
             content()
         }
     }
-    Spacer(Modifier.height(20.dp))
-    HorizontalDivider()
 }
 
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
