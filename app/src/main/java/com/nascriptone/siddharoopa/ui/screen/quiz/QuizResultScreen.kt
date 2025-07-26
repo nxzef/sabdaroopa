@@ -3,10 +3,13 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,9 +21,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -242,7 +249,22 @@ fun ReviewView(
         disableBackgroundColor = false,
         modifier = modifier
     ) {
-        MultipleChoiceReview()
+        repeat(5) {
+            val questionNumber = it + 1
+            Spacer(Modifier.height(if (it != 0) 12.dp else 4.dp))
+            QuestionWithNumber(
+                questionNumber,
+                modifier = modifier
+            ) {
+                if (questionNumber <= 3) {
+                    MultipleChoiceReview()
+                } else {
+                    MatchTheFollowingReview()
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+        }
     }
 }
 
@@ -250,23 +272,71 @@ fun ReviewView(
 fun MultipleChoiceReview(
     modifier: Modifier = Modifier
 ) {
-    repeat(3) {
-        QuestionWithNumber(
-            it + 1,
-            modifier = modifier
-        ) {
-            TextWithDivider(
-                text = "Correct Answer",
-                result = "Hello World!",
-                modifier = Modifier.padding(horizontal = 8.dp)
+    Column(
+        modifier = Modifier
+            .then(modifier)
+            .border(
+                border = BorderStroke(
+                    width = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
+                ), shape = MaterialTheme.shapes.small
             )
-            TextWithDivider(
-                text = "Your Answer",
-                result = "Hello World!",
-                backgroundColor = Color(0x1600FF00),
-                disableDivider = true,
-                modifier = Modifier.padding(horizontal = 8.dp)
+            .clip(MaterialTheme.shapes.small)
+    ) {
+        TextWithDivider(
+            text = "Correct Answer",
+            result = "Hello World!",
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        TextWithDivider(
+            text = "Your Answer",
+            result = "Hello World!",
+            backgroundColor = Color(0x1600FF00),
+            disableDivider = true,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+    }
+}
+
+@Composable
+fun MatchTheFollowingReview(
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .border(
+                border = BorderStroke(
+                    width = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
+                ), shape = MaterialTheme.shapes.small
             )
+            .clip(MaterialTheme.shapes.small)
+    ) {
+        repeat(3) {
+            Column(Modifier.weight(1f)) {
+                repeat(4) { inner ->
+                    val backgroundColor = when {
+                        it != 0 && inner != 0 -> Color(0x1600FF00)
+                        else -> Color.Unspecified
+                    }
+                    Box(
+                        Modifier
+                            .background(backgroundColor)
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "Column ${it + inner}",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    if (inner != 3) HorizontalDivider()
+                }
+            }
+            if (it != 2) VerticalDivider()
         }
     }
 }
