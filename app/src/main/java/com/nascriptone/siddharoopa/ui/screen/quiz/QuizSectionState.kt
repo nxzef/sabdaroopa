@@ -13,23 +13,34 @@ data class QuizSectionState(
     val result: ValuationState = ValuationState.Calculate
 )
 
+sealed class CreationState<out T> {
+    object Loading : CreationState<Nothing>()
+    data class Success<out T>(val data: T) : CreationState<T>()
+    data class Error(val message: String) : CreationState<Nothing>()
+}
+
 enum class QuizMode(@StringRes val uiName: Int) {
     All(R.string.all_question_type),
     MCQ(R.string.multiple_choice_question),
     MTF(R.string.match_the_following)
 }
 
+data class QuestionOption(
+    @StringRes val question: Int,
+    val option: Option,
+    val answer: Answer = Answer.Unspecified
+)
+
+sealed class Answer {
+    data object Unspecified : Answer()
+    data class Mcq(val ans: String) : Answer()
+    data class Mtf(val ans: List<String>) : Answer()
+}
 
 sealed class Option {
     data class McqOption(val data: McqGeneratedData) : Option()
     data class MtfOption(val data: MtfGeneratedData) : Option()
 }
-
-data class QuestionOption(
-    val question: Int,
-    val option: Option,
-    val answer: Answer = Answer.Unspecified
-)
 
 data class McqGeneratedData(
     val options: Set<String>,
@@ -42,19 +53,6 @@ data class MtfGeneratedData(
     val trueOption: Map<String, String>,
     val questionKey: Map<String, String>,
 )
-
-sealed class Answer {
-    data object Unspecified : Answer()
-    data class Mcq(val ans: String) : Answer()
-    data class Mtf(val ans: List<String>) : Answer()
-}
-
-sealed class CreationState<out T> {
-    object Loading : CreationState<Nothing>()
-    data class Success<out T>(val data: T) : CreationState<T>()
-    data class Error(val message: String) : CreationState<Nothing>()
-}
-
 
 sealed class ValuationState {
     data object Calculate : ValuationState()
