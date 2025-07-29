@@ -33,13 +33,13 @@ data class QuestionOption(
 
 sealed class Answer {
     data object Unspecified : Answer()
-    data class Mcq(val ans: String) : Answer()
-    data class Mtf(val ans: List<String>) : Answer()
+    data class Mcq(val mcqAns: String) : Answer()
+    data class Mtf(val mtfAns: List<String>) : Answer()
 }
 
 sealed class Option {
-    data class McqOption(val data: McqGeneratedData) : Option()
-    data class MtfOption(val data: MtfGeneratedData) : Option()
+    data class McqOption(val mcqData: McqGeneratedData) : Option()
+    data class MtfOption(val mtfData: MtfGeneratedData) : Option()
 }
 
 data class McqGeneratedData(
