@@ -10,7 +10,7 @@ data class QuizSectionState(
     val questionRange: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
     val questionList: CreationState<List<QuestionOption>> = CreationState.Loading,
-    val result: ValuationState = ValuationState.Calculate
+//    val result: ValuationState = ValuationState.Calculate
 )
 
 sealed class CreationState<out T> {
@@ -25,48 +25,48 @@ enum class QuizMode(@StringRes val uiName: Int) {
     MTF(R.string.match_the_following)
 }
 
-data class QuestionOption(
-    @StringRes val question: Int,
-    val option: Option,
-    val answer: Answer = Answer.Unspecified
-)
+data class QuestionOption(val state: State)
 
-sealed class Answer {
-    data object Unspecified : Answer()
-    data class Mcq(val mcqAns: String) : Answer()
-    data class Mtf(val mtfAns: List<String>) : Answer()
-}
-
-sealed class Option {
-    data class McqOption(val mcqData: McqGeneratedData) : Option()
-    data class MtfOption(val mtfData: MtfGeneratedData) : Option()
+sealed class State {
+    data class McqState(val data: McqGeneratedData) : State()
+    data class MtfState(val data: MtfGeneratedData) : State()
 }
 
 data class McqGeneratedData(
+    @StringRes val template: Int,
+    val templateKey: Map<String, String>,
     val options: Set<String>,
     val trueOption: String,
-    val questionKey: Map<String, String>,
+    val answer: String? = null
 )
 
 data class MtfGeneratedData(
-    val options: Map<String, String>,
-    val trueOption: Map<String, String>,
-    val questionKey: Map<String, String>,
+    @StringRes val template: Int,
+    val templateKey: Map<String, String>,
+    val options: Map<String?, String>,
+    val trueOption: List<String>,
+    val answer: List<String>? = null
 )
 
-sealed class ValuationState {
-    data object Calculate : ValuationState()
-    data class Success(val result: Result) : ValuationState()
-    data class Error(val message: String) : ValuationState()
+sealed interface Answer {
+    data object Unspecified : Answer
+    data class Mcq(val answer: String) : Answer
+    data class Mtf(val answer: List<String>) : Answer
 }
 
-data class Result(
-    val dashboard: Dashboard
-)
-
-data class Dashboard(
-    val mode: QuizMode,
-    val accuracy: Float,
-    val score: Int,
-    val totalScore: Int
-)
+//sealed class ValuationState {
+//    data object Calculate : ValuationState()
+//    data class Success(val result: Result) : ValuationState()
+//    data class Error(val message: String) : ValuationState()
+//}
+//
+//data class Result(
+//    val dashboard: Dashboard
+//)
+//
+//data class Dashboard(
+//    val mode: QuizMode,
+//    val accuracy: Float,
+//    val score: Int,
+//    val totalScore: Int
+//)
