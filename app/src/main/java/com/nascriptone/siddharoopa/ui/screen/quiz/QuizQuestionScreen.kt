@@ -134,7 +134,7 @@ fun QuizQuestionScreenContent(
 ) {
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
-    var enabled by rememberSaveable { mutableStateOf(false) }
+    var enabled by rememberSaveable { mutableStateOf(true) }
     val questionCount = quizSectionState.questionRange
     val lastQuestionIndex = questionCount - 1
     val scope = rememberCoroutineScope()
@@ -162,10 +162,8 @@ fun QuizQuestionScreenContent(
                         isVisible = index == questionIndex,
                         enabled = enabled,
                         questionOption = questionOption,
-                        currentAnswer = quizSectionState.currentAnswer,
                         onValueChange = { answer ->
                             viewModel.updateCurrentAnswer(answer)
-                            enabled = true
                         },
                     )
                 }
@@ -192,10 +190,9 @@ fun QuizQuestionScreenContent(
                     }
                     Spacer(Modifier.width(12.dp))
                     Button(
-                        enabled = quizSectionState.currentAnswer != Answer.Unspecified && enabled,
+                        enabled = enabled,
                         onClick = {
                             scope.launch {
-                                enabled = false
                                 viewModel.submitAnswer(questionIndex)
                                 delay(1000)
                                 if (questionIndex == lastQuestionIndex) {
@@ -224,7 +221,6 @@ fun QuizQuestionScreenContent(
 fun QuestionOption(
     isVisible: Boolean,
     questionOption: QuestionOption,
-    currentAnswer: Answer,
     enabled: Boolean,
     onValueChange: (Answer) -> Unit,
     modifier: Modifier = Modifier
@@ -235,33 +231,33 @@ fun QuestionOption(
             initialOffsetX = { (it * 70) / 100 }) + fadeIn(), exit = slideOutHorizontally(
             targetOffsetX = { -it / 4 }) + fadeOut(), modifier = modifier
     ) {
-
-        val exactAnswer = questionOption.answer
-        LaunchedEffect(Unit) {
-            onValueChange(exactAnswer)
-        }
-
         Column(
             modifier = Modifier.padding(horizontal = 4.dp)
         ) {
-            when (val state = questionOption.option) {
+            when (val state = questionOption.state) {
+                is State.McqState -> {
 
-                is Option.McqOption -> {
-                    val options = state.mcqData.options
-                    RegexText(questionOption.question, state.mcqData.questionKey)
+                    val template = state.data.template
+                    val templateKey = state.data.templateKey
+                    val options = state.data.options
+                    val trueOption = state.data.trueOption
+                    val answer = state.data.answer
+
+                    var currentAnswer by rememberSaveable { mutableStateOf(answer) }
+
+                    RegexText(template, templateKey)
                     Spacer(Modifier.height(40.dp))
                     options.forEachIndexed { i, option ->
                         val isCorrectOption =
-                            option == state.mcqData.trueOption && exactAnswer is Answer.Mcq
+                            option == trueOption && answer != null
                         val isWrongSelectedOption =
-                            exactAnswer is Answer.Mcq && exactAnswer.mcqAns == option && !isCorrectOption
+                            answer != null && answer == option && !isCorrectOption
                         val backgroundColor = when {
                             isCorrectOption -> Color(0x1600FF00)
                             isWrongSelectedOption -> Color(0x16FF0000)
-                            else -> Color.Transparent
+                            else -> Color.Unspecified
                         }
-                        val selected =
-                            if (currentAnswer is Answer.Mcq) option == currentAnswer.mcqAns else false
+                        val selected = currentAnswer == option
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -269,11 +265,15 @@ fun QuestionOption(
                                 .clip(MaterialTheme.shapes.medium)
                                 .background(backgroundColor)
                                 .selectable(
-                                    enabled = enabled, selected = selected, onClick = {
-                                        if (enabled) onValueChange(
-                                            Answer.Mcq(option)
+                                    enabled = enabled,
+                                    selected = selected,
+                                    onClick = {
+                                        currentAnswer = option
+                                        onValueChange(
+                                            Answer.Mcq(currentAnswer!!)
                                         )
-                                    })
+                                    }
+                                )
                                 .padding(8.dp)
                         ) {
                             OptionIcon(
@@ -293,12 +293,15 @@ fun QuestionOption(
                     }
                 }
 
-                is Option.MtfOption -> {
+                is State.MtfState -> {
 
                     val density = LocalDensity.current
-                    val keys = remember(state) { state.mtfData.options.map { it.key } }
-                    val values = remember(state) { state.mtfData.options.map { it.value } }
-                    val trueValues = remember(state) { state.mtfData.trueOption.map { it.value } }
+                    val template = state.data.template
+                    val templateKey = state.data.templateKey
+                    val keys = remember(state) { state.data.options.keys.toList() }
+                    val values = remember(state) { state.data.options.values.toList() }
+                    val trueOption = remember(state) { state.data.trueOption }
+                    val answer = state.data.answer
 
                     val thickness = 4.dp
                     val animationDuration = 120
@@ -309,16 +312,16 @@ fun QuestionOption(
                     }
                     val containerSize = remember { mutableStateOf(Size.Zero) }
 
-                    val order = rememberSaveable(
+                    val list = rememberSaveable(
                         saver = listSaver(
                             save = { it.toList() },
                             restore = { it.toMutableStateList() })
                     ) { values.toMutableStateList() }
-                    val visualOrder by remember(order, values) {
-                        derivedStateOf { order.toFastIndexOfList(values) }
+                    val visualOrder by remember(list, values) {
+                        derivedStateOf { list.toFastIndexOfList(values) }
                     }
 
-                    RegexText(questionOption.question, state.mtfData.questionKey)
+                    RegexText(template, templateKey)
                     Spacer(Modifier.height(40.dp))
                     Box(
                         modifier = Modifier
@@ -357,8 +360,8 @@ fun QuestionOption(
                                         cornerSizePx - dividerThickness
                                     }
 
-                                    val color = if (index < 3 && exactAnswer is Answer.Mtf) {
-                                        val match = trueValues[index] == exactAnswer.mtfAns[index]
+                                    val color = if (index < 3 && answer != null) {
+                                        val match = trueOption[index] == answer[index]
                                         if (match) Color(0x1600FF00) else Color(0x16FF0000)
                                     } else MaterialTheme.colorScheme.surfaceContainerLow
                                     val backgroundColor by animateColorAsState(
@@ -384,9 +387,11 @@ fun QuestionOption(
                                             .onSizeChanged { boxSize.value = it.toSize() },
                                         contentAlignment = Alignment.CenterStart
                                     ) {
-                                        OptionText(
-                                            key, modifier = Modifier.padding(horizontal = 16.dp)
-                                        )
+                                        if (key != null) {
+                                            OptionText(
+                                                key, modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
                                     }
                                     if (index != keys.lastIndex) HorizontalDivider(thickness = thickness)
                                 }
@@ -436,9 +441,9 @@ fun QuestionOption(
                                     val activeColor =
                                         MaterialTheme.colorScheme.surfaceContainerHighest
                                     val idleColor: Color =
-                                        if (logicalPosition < 3 && exactAnswer is Answer.Mtf) {
-                                            val exactAnswer = exactAnswer.mtfAns[logicalPosition]
-                                            val trueAnswer = trueValues[logicalPosition]
+                                        if (logicalPosition < 3 && answer != null) {
+                                            val exactAnswer = answer[logicalPosition]
+                                            val trueAnswer = trueOption[logicalPosition]
                                             if (exactAnswer == trueAnswer) Color(0x1600FF00)
                                             else Color(0x16FF0000)
                                         } else MaterialTheme.colorScheme.surfaceContainerHigh
@@ -589,14 +594,12 @@ fun QuestionOption(
 
                                                                         if (i != j) {
                                                                             Collections.swap(
-                                                                                order,
+                                                                                list,
                                                                                 i,
                                                                                 j
                                                                             )
                                                                             onValueChange(
-                                                                                Answer.Mtf(
-                                                                                    order
-                                                                                )
+                                                                                Answer.Mtf(list)
                                                                             )
                                                                         } else {
                                                                             val target =
