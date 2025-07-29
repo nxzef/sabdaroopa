@@ -7,7 +7,7 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Phrase
 import com.nascriptone.siddharoopa.data.model.uiobj.QTemplate
 
 object QuizQuestion {
-    val mcqQuestions = listOf<QTemplate>(
+    val mcqQuestions = listOf(
         QTemplate(R.string.mcq_template_1, Phrase.McqKey(MCQ.ONE)),
         QTemplate(R.string.mcq_template_2, Phrase.McqKey(MCQ.TWO)),
         QTemplate(R.string.mcq_template_3, Phrase.McqKey(MCQ.THREE)),
