@@ -26,13 +26,14 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
-import com.nascriptone.siddharoopa.ui.screen.quiz.Mode
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
+import com.nascriptone.siddharoopa.ui.screen.quiz.State
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -96,13 +97,11 @@ class SiddharoopaViewModel @Inject constructor(
         observeSabda()
     }
 
-
     fun changeTheme(theme: Theme) {
         viewModelScope.launch {
             preferencesRepository.changeTheme(theme)
         }
     }
-
 
     private fun observeSabda() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -185,30 +184,42 @@ class SiddharoopaViewModel @Inject constructor(
 //    }
 
 
-//    fun submitAnswer(qID: Int) {
-//        val questionOptions =
-//            quizUIState.value.questionList.requireSuccess { it.isNotEmpty() } ?: return
-//        val questionOptionsToMutable = questionOptions.toMutableList()
-//        val answer = quizUIState.value.currentAnswer
-//        val targetObject = questionOptionsToMutable[qID]
-//        val updatedObject = targetObject.copy(answer = answer)
-//        questionOptionsToMutable[qID] = updatedObject
-//        val updatedList = questionOptionsToMutable.toList()
-//
-//        _quizUIState.update {
-//            it.copy(
-//                questionList = CreationState.Success(data = updatedList)
-//            )
-//        }
-//    }
+    fun submitAnswer(id: Int) {
+        val currentState = quizUIState.value
+        val questionOptions = currentState.questionList
+            .requireSuccess { it.isNotEmpty() } ?: return
 
-//    fun updateCurrentAnswer(answer: Answer) {
-//        _quizUIState.update {
-//            it.copy(
-//                currentAnswer = answer
-//            )
-//        }
-//    }
+        val currentAnswer = currentState.currentAnswer
+        val updatedList = questionOptions.mapIndexed { index, questionOption ->
+            if (index != id) return@mapIndexed questionOption
+
+            val newState = when (val state = questionOption.state) {
+                is State.McqState -> {
+                    val answer = (currentAnswer as? Answer.Mcq)?.answer
+                    state.copy(data = state.data.copy(answer = answer))
+                }
+                is State.MtfState -> {
+                    val answer = (currentAnswer as? Answer.Mtf)?.answer
+                    state.copy(data = state.data.copy(answer = answer))
+                }
+            }
+
+            questionOption.copy(state = newState)
+        }
+
+        _quizUIState.update {
+            it.copy(questionList = CreationState.Success(updatedList))
+        }
+    }
+
+
+    fun updateCurrentAnswer(answer: Answer) {
+        _quizUIState.update {
+            it.copy(
+                currentAnswer = answer
+            )
+        }
+    }
 
     fun createQuizQuestions() {
         viewModelScope.launch(Dispatchers.Default) {
@@ -237,7 +248,7 @@ class SiddharoopaViewModel @Inject constructor(
                     val sabda = entireSabda.sabda
                     val qTemplate = questionCollection.random()
                     val mode = getQuestionOption(qTemplate, sabda, entireSabdaList)
-                    QuestionOption(mode = mode)
+                    QuestionOption(state = mode)
                 }
 
                 CreationState.Success(data = data)
@@ -253,7 +264,7 @@ class SiddharoopaViewModel @Inject constructor(
         qTemplate: QTemplate,
         sabda: Sabda,
         entireSabdaList: List<EntireSabda>
-    ): Mode {
+    ): State {
         val template = qTemplate.questionResId
         val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
         val allSabda = entireSabdaList.map { it.sabda }.toSet()
@@ -270,7 +281,7 @@ class SiddharoopaViewModel @Inject constructor(
                     anta = allAntas,
                     template = template
                 )
-                Mode.McqMode(mcqData)
+                State.McqState(mcqData)
             }
 
             is Phrase.MtfKey -> {
@@ -282,7 +293,7 @@ class SiddharoopaViewModel @Inject constructor(
                     allSabda = allSabda,
                     template = template
                 )
-                Mode.MtfMode(mtfData)
+                State.MtfState(mtfData)
             }
         }
     }
@@ -391,7 +402,7 @@ class SiddharoopaViewModel @Inject constructor(
 
         var templateKey = emptyMap<String, String>()
         lateinit var options: Map<String?, String>
-        lateinit var trueOption: Set<String>
+        lateinit var trueOption: List<String>
 
 
         val shuffledDeclension = declension.toList().shuffled().toMap()
@@ -428,7 +439,7 @@ class SiddharoopaViewModel @Inject constructor(
                 }
 
 
-                trueOption = temp.values.toSet()
+                trueOption = temp.values.toList()
                 val shuffled = (if (extraOption != null) (trueOption + extraOption)
                 else trueOption).shuffled()
                 val keys = if (extraOption != null) temp.keys + null else temp.keys
@@ -441,7 +452,7 @@ class SiddharoopaViewModel @Inject constructor(
 
             MTF.THREE -> {
 
-                trueOption = emptySet()
+                trueOption = emptyList()
                 options = emptyMap()
             } // Third Question business logic will set after the additional data insertion
 
@@ -455,7 +466,7 @@ class SiddharoopaViewModel @Inject constructor(
                 }.associate { sabda -> sabda.gender to sabda.word }
 
 
-                trueOption = temp.values.toSet()
+                trueOption = temp.values.toList()
                 val shuffledValues = trueOption.shuffled()
                 options = temp.keys.zip(shuffledValues).toMap()
 
@@ -486,7 +497,8 @@ class SiddharoopaViewModel @Inject constructor(
                     } else {
                         val previousValues = mutableSetOf<String>()
                         temp = keySet.shuffled().associate { key ->
-                            val currentSet = currentDeclension.values.mapNotNull { it[key] }.toSet()
+                            val currentSet =
+                                currentDeclension.values.mapNotNull { it[key] }.toSet()
                             val available = currentSet.minus(previousValues)
                             require(available.isNotEmpty()) {
                                 "No unique value available for key: ${key.name}"
@@ -499,7 +511,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                 }
 
-                trueOption = temp.values.toSet()
+                trueOption = temp.values.toList()
                 val shufflesValues = trueOption.shuffled()
                 options = temp.keys.zip(shufflesValues).toMap()
                 templateKey = mapOf(
@@ -625,7 +637,9 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateTable(selectedTable: Table, selectedSound: Sound) {
         _categoryUIState.update {
             it.copy(
-                selectedTable = selectedTable, selectedSound = selectedSound, selectedGender = null
+                selectedTable = selectedTable,
+                selectedSound = selectedSound,
+                selectedGender = null
             )
         }
     }
