@@ -149,15 +149,15 @@ fun SiddharoopaApp(
                         ) {
                             composable(SiddharoopaRoutes.QuizHome.name) {
                                 QuizHomeScreen(
-                                    navHostController = navHostController,
+                                    viewModel = viewModel,
                                     quizSectionState = quizUIState,
-                                    viewModel = viewModel
+                                    navHostController = navHostController
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizQuestion.name) {
                                 QuizQuestionScreen(
-                                    quizSectionState = quizUIState,
                                     viewModel = viewModel,
+                                    quizSectionState = quizUIState,
                                     navHostController = navHostController
                                 )
                             }
@@ -166,6 +166,8 @@ fun SiddharoopaApp(
                             }
                             composable(SiddharoopaRoutes.QuizResult.name) {
                                 QuizResultScreen(
+                                    viewModel = viewModel,
+                                    quizSectionState = quizUIState,
                                     navHostController = navHostController
                                 )
                             }

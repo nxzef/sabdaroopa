@@ -32,7 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +45,7 @@ import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import kotlin.math.roundToInt
 
 @Composable
 fun QuizHomeScreen(
@@ -55,7 +56,7 @@ fun QuizHomeScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    val questionTypes = QuestionType.entries
+    val quizModes = QuizMode.entries
     val categoryOptions: List<Table?> = listOf(
         null, *Table.entries.toTypedArray()
     )
@@ -64,8 +65,8 @@ fun QuizHomeScreen(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
-                .padding(horizontal = 8.dp)
                 .verticalScroll(scrollState)
+                .padding(horizontal = 8.dp)
         ) {
 
             IconButton(
@@ -99,14 +100,14 @@ fun QuizHomeScreen(
                 title = "Question Type"
             ) {
 
-                questionTypes.forEachIndexed { index, type ->
+                quizModes.forEachIndexed { index, type ->
                     val name = stringResource(type.uiName)
                     QuizChooseOption(
                         optionName = name,
-                        selected = quizSectionState.questionType == type,
+                        selected = quizSectionState.quizMode == type,
                         onClick = { viewModel.updateQuizQuestionType(type) }
                     )
-                    if (index < questionTypes.lastIndex) {
+                    if (index < quizModes.lastIndex) {
                         HorizontalDivider()
                     }
                 }
@@ -143,22 +144,21 @@ fun StepSlider(
     modifier: Modifier = Modifier
 ) {
 
-    var sliderPosition by rememberSaveable { mutableFloatStateOf(quizSectionState.questionRange) }
+    var sliderPosition by rememberSaveable { mutableIntStateOf(quizSectionState.questionRange) }
 
     val sliderState = rememberSliderState(
-        value = sliderPosition,
+        value = sliderPosition.toFloat(),
         steps = 2,
         onValueChangeFinished = {
             viewModel.updateQuizQuestionRange(sliderPosition)
         },
         valueRange = 5F..20F
     )
-    sliderPosition = sliderState.value
-    val sliderPosToUi = sliderPosition.toInt()
+    sliderPosition = sliderState.value.roundToInt()
 
     Column(modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
         Text(
-            "Questions: $sliderPosToUi",
+            "Questions: $sliderPosition",
             modifier = Modifier.padding(start = 14.dp),
             style = MaterialTheme.typography.titleMedium
         )

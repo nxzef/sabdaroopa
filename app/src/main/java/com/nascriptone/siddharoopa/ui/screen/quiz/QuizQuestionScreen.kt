@@ -105,17 +105,21 @@ fun QuizQuestionScreen(
         viewModel.createQuizQuestions()
     }
 
-    when (val result = quizSectionState.result) {
+    when (val result = quizSectionState.questionList) {
         is CreationState.Loading -> CurrentState {
             CircularProgressIndicator()
         }
 
         is CreationState.Error -> CurrentState {
-            Text(result.msg)
+            Text(text = result.message)
         }
 
         is CreationState.Success -> QuizQuestionScreenContent(
-            viewModel, result.data, quizSectionState, navHostController, modifier
+            viewModel = viewModel,
+            data = result.data,
+            quizSectionState = quizSectionState,
+            navHostController = navHostController,
+            modifier = modifier
         )
     }
 }
@@ -130,16 +134,16 @@ fun QuizQuestionScreenContent(
 ) {
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
-    val questionCount = quizSectionState.questionRange.toInt()
+    var enabled by rememberSaveable { mutableStateOf(false) }
+    val questionCount = quizSectionState.questionRange
     val lastQuestionIndex = questionCount - 1
     val scope = rememberCoroutineScope()
-    var enabled by rememberSaveable { mutableStateOf(false) }
 
     Surface {
         Column(
             modifier = modifier
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -171,6 +175,7 @@ fun QuizQuestionScreenContent(
                     OutlinedButton(
                         onClick = {
                             scope.launch {
+                                delay(1000)
                                 if (questionIndex < lastQuestionIndex) {
                                     questionIndex++
                                 } else {

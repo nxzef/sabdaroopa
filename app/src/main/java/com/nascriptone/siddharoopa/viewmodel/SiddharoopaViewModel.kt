@@ -27,12 +27,15 @@ import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
+import com.nascriptone.siddharoopa.ui.screen.quiz.Dashboard
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionType
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
+import com.nascriptone.siddharoopa.ui.screen.quiz.Result
+import com.nascriptone.siddharoopa.ui.screen.quiz.ValuationState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -41,6 +44,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -145,11 +149,48 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun submitAnswer(qID: Int) {
-        val result = quizUIState.value.result
-        if (result !is CreationState.Success) return
 
-        val questionOptions = result.data
+    fun quizValuation() {
+        val data = quizUIState.value.questionList.requireSuccess {
+            it.isNotEmpty()
+        } ?: run {
+            Log.d("quizValuation", "Skipped: question list empty or not in success state")
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            _quizUIState.update { it.copy(result = ValuationState.Calculate) }
+            val result = runCatching {
+                delay(1000)
+                val currentMode = quizUIState.value.quizMode
+                val totalScore = (12..56).random()
+                val score = (0..totalScore).random()
+                val accuracy = (score.toFloat() / totalScore.toFloat())
+
+                val x = data.map { it.answer }.mapIndexed { i, v ->
+                    v is Answer.Unspecified
+                }
+
+                val dashboard = Dashboard(
+                    mode = currentMode, accuracy = accuracy, score = score, totalScore = totalScore
+                )
+
+                Result(
+                    dashboard = dashboard
+                )
+            }.map {
+                ValuationState.Success(result = it)
+            }.getOrElse { e ->
+                Log.d("quizValuation", "Valuation failed", e)
+                ValuationState.Error(message = e.message.orEmpty())
+            }
+            _quizUIState.update { it.copy(result = result) }
+        }
+    }
+
+
+    fun submitAnswer(qID: Int) {
+        val questionOptions =
+            quizUIState.value.questionList.requireSuccess { it.isNotEmpty() } ?: return
         val questionOptionsToMutable = questionOptions.toMutableList()
         val answer = quizUIState.value.currentAnswer
         val targetObject = questionOptionsToMutable[qID]
@@ -159,11 +200,10 @@ class SiddharoopaViewModel @Inject constructor(
 
         _quizUIState.update {
             it.copy(
-                result = CreationState.Success(data = updatedList)
+                questionList = CreationState.Success(data = updatedList)
             )
         }
     }
-
 
     fun updateCurrentAnswer(answer: Answer) {
         _quizUIState.update {
@@ -174,13 +214,14 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun createQuizQuestions() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _quizUIState.update { it.copy(result = CreationState.Loading) }
+        viewModelScope.launch(Dispatchers.Default) {
+            _quizUIState.update { it.copy(questionList = CreationState.Loading) }
+            delay(1000)
             val result = runCatching {
                 val entireSabdaList = entireSabdaList.value
                 val userSelectedTable = quizUIState.value.questionFrom
-                val userSelectedQuestionType = quizUIState.value.questionType
-                val userSelectedQuestionRange = quizUIState.value.questionRange.toInt()
+                val userSelectedQuestionType = quizUIState.value.quizMode
+                val userSelectedQuestionRange = quizUIState.value.questionRange
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
                 val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
                 val allSabda = entireSabdaList.map { it.sabda }.toSet()
@@ -193,9 +234,9 @@ class SiddharoopaViewModel @Inject constructor(
 
                 val data = randomPickedSabda.mapIndexed { index, entireSabda ->
                     val questionCollection = when (userSelectedQuestionType) {
-                        QuestionType.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions else QuizQuestion.mtfQuestions
-                        QuestionType.MCQ -> QuizQuestion.mcqQuestions
-                        QuestionType.MTF -> QuizQuestion.mtfQuestions
+                        QuizMode.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions else QuizQuestion.mtfQuestions
+                        QuizMode.MCQ -> QuizQuestion.mcqQuestions
+                        QuizMode.MTF -> QuizQuestion.mtfQuestions
                     }
                     val sabda = entireSabda.sabda
                     val declension = Json.decodeFromString<Declension>(sabda.declension)
@@ -227,16 +268,12 @@ class SiddharoopaViewModel @Inject constructor(
                 Log.d("error", "Question Creation error", e)
                 CreationState.Error(e.message.orEmpty())
             }
-            _quizUIState.update { it.copy(result = result) }
+            _quizUIState.update { it.copy(questionList = result) }
         }
     }
 
     private fun generateMcqOption(
-        type: MCQ,
-        sabda: Sabda,
-        declension: Declension,
-        genders: Set<String>,
-        anta: Set<String>
+        type: MCQ, sabda: Sabda, declension: Declension, genders: Set<String>, anta: Set<String>
     ): McqGeneratedData {
         var options: Set<String> = emptySet()
         var trueOption: String? = null
@@ -307,11 +344,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun generateMtfOption(
-        type: MTF,
-        sabda: Sabda,
-        declension: Declension,
-        genders: Set<String>,
-        allSabda: Set<Sabda>
+        type: MTF, sabda: Sabda, declension: Declension, genders: Set<String>, allSabda: Set<Sabda>
     ): MtfGeneratedData {
 
         var options = mapOf<String, String>()
@@ -450,15 +483,15 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun updateQuizQuestionType(type: QuestionType) {
+    fun updateQuizQuestionType(type: QuizMode) {
         _quizUIState.update {
             it.copy(
-                questionType = type,
+                quizMode = type,
             )
         }
     }
 
-    fun updateQuizQuestionRange(range: Float) {
+    fun updateQuizQuestionRange(range: Int) {
         _quizUIState.update {
             it.copy(
                 questionRange = range,
@@ -474,7 +507,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun removeFavoriteFromRestProp(currentSabda: EntireSabda) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 val favorite = Favorite(
                     id = currentSabda.sabda.id,
@@ -489,7 +522,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun addFavoriteToRestProp(currentSabda: EntireSabda) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             runCatching {
                 val restProp = RestProp(
                     favorite = Favorite(
@@ -541,7 +574,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun parseStringToDeclension(currentSabda: EntireSabda) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             _tableUIState.update { it.copy(result = StringParse.Loading) }
             val result = runCatching {
                 val declensionString = currentSabda.sabda.declension
@@ -564,7 +597,7 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun applyFilter(data: List<EntireSabda>) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             _categoryUIState.update { it.copy(result = FilterState.Loading) }
             val result = runCatching {
                 val filteredData = data.filter { entireSabda ->
@@ -584,5 +617,9 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun filterSabda(entireSabdaList: List<EntireSabda>) = applyFilter(entireSabdaList)
+}
 
+private inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
+    val success = this as? CreationState.Success<T> ?: return null
+    return if (predicate(success.data)) success.data else null
 }

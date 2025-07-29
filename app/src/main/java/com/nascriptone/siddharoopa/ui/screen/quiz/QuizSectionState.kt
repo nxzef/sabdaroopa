@@ -6,13 +6,14 @@ import com.nascriptone.siddharoopa.data.model.uiobj.Table
 
 data class QuizSectionState(
     val questionFrom: Table? = null,
-    val questionType: QuestionType = QuestionType.All,
-    val questionRange: Float = 10F,
+    val quizMode: QuizMode = QuizMode.All,
+    val questionRange: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
-    val result: CreationState = CreationState.Loading,
+    val questionList: CreationState<List<QuestionOption>> = CreationState.Loading,
+    val result: ValuationState = ValuationState.Calculate
 )
 
-enum class QuestionType(@StringRes val uiName: Int) {
+enum class QuizMode(@StringRes val uiName: Int) {
     All(R.string.all_question_type),
     MCQ(R.string.multiple_choice_question),
     MTF(R.string.match_the_following)
@@ -48,9 +49,26 @@ sealed class Answer {
     data class Mtf(val ans: List<String>) : Answer()
 }
 
-
-sealed class CreationState {
-    data object Loading : CreationState()
-    data class Error(val msg: String) : CreationState()
-    data class Success(val data: List<QuestionOption>) : CreationState()
+sealed class CreationState<out T> {
+    object Loading : CreationState<Nothing>()
+    data class Success<out T>(val data: T) : CreationState<T>()
+    data class Error(val message: String) : CreationState<Nothing>()
 }
+
+
+sealed class ValuationState {
+    data object Calculate : ValuationState()
+    data class Success(val result: Result) : ValuationState()
+    data class Error(val message: String) : ValuationState()
+}
+
+data class Result(
+    val dashboard: Dashboard
+)
+
+data class Dashboard(
+    val mode: QuizMode,
+    val accuracy: Float,
+    val score: Int,
+    val totalScore: Int
+)

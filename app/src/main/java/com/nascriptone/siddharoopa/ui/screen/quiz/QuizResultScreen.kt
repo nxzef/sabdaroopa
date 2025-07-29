@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,28 +42,31 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
+import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun QuizResultScreen(
+    viewModel: SiddharoopaViewModel,
+    quizSectionState: QuizSectionState,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
     val screenTitle = stringResource(R.string.quiz_result_title)
-    var currentProgress by rememberSaveable { mutableFloatStateOf(0f) }
 
-    val progress by animateFloatAsState(
-        targetValue = currentProgress,
-        animationSpec = tween(2000),
-    )
+    var calculated by rememberSaveable { mutableStateOf(false) }
+
+
 
     LaunchedEffect(Unit) {
-        currentProgress = 0.67f
+        if (!calculated) {
+            viewModel.quizValuation()
+            calculated = true
+        }
     }
 
     Surface {
@@ -81,80 +85,114 @@ fun QuizResultScreen(
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 20.dp)
             )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-//                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .fillMaxWidth()
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(
-                        progress = { progress },
-                        strokeWidth = 8.dp,
-                        modifier = Modifier.size(116.dp)
-                    )
-                    Text(
-                        text = "67%",
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Bold,
-                    )
+
+            when (val data = quizSectionState.result) {
+                is ValuationState.Calculate -> CurrentState {
+                    CircularProgressIndicator()
                 }
-                Text(
-                    text = "Accuracy",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(4.dp)
-                )
-                Spacer(Modifier.height(12.dp))
-                MessageText(
-                    message = stringResource(R.string.quarter_1)
-                )
-                Spacer(Modifier.height(24.dp))
-                Column(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainer,
-                            shape = MaterialTheme.shapes.large
-                        )
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Total Score",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "All Categories",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = MaterialTheme.shapes.large
-                                )
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = "36 / 43",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.SemiBold,
+
+                is ValuationState.Error -> CurrentState {
+                    Text(data.message)
+                }
+
+                is ValuationState.Success -> {
+                    MainDashboard(
+                        dashboard = data.result.dashboard
                     )
+                    Spacer(Modifier.height(12.dp))
+                    MultipleChoiceQuestion()
+                    MatchTheFollowing()
+                    FinalSummary()
+                    ReviewView()
                 }
             }
-            Spacer(Modifier.height(12.dp))
-            MultipleChoiceQuestion()
-            MatchTheFollowing()
-            FinalSummary()
-            ReviewView()
+        }
+    }
+}
+
+@Composable
+fun MainDashboard(
+    dashboard: Dashboard,
+    modifier: Modifier = Modifier
+) {
+
+    var progress by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val currentProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(2000),
+    )
+
+    LaunchedEffect(Unit) {
+        progress = 0.46f
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(
+                progress = { currentProgress },
+                strokeWidth = 8.dp,
+                modifier = Modifier.size(116.dp)
+            )
+            Text(
+                text = "",
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Text(
+            text = "Accuracy",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(4.dp)
+        )
+        Spacer(Modifier.height(12.dp))
+        MessageText(
+            message = stringResource(R.string.quarter_1)
+        )
+        Spacer(Modifier.height(24.dp))
+        Column(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = MaterialTheme.shapes.large
+                )
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Total Score",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "All Categories",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.large
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "${dashboard.score} / ${dashboard.totalScore}",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
@@ -341,22 +379,20 @@ fun MatchTheFollowingReview(
     }
 }
 
-@Preview
-@Composable
-fun ReviewViewPreview() {
-    SiddharoopaTheme(true) {
-        Surface {
-            ReviewView()
-        }
+private fun customFormatNumber(value: Double): String {
+    return if (value % 1.0 == 0.0) {
+        value.toInt().toString()
+    } else {
+        value.toString()
     }
 }
 
 //@Preview
 //@Composable
-//fun QuizResultScreenPreview() {
+//fun ReviewViewPreview() {
 //    SiddharoopaTheme(true) {
-//        QuizResultScreen(
-//            navHostController = rememberNavController()
-//        )
+//        Surface {
+//            ReviewView()
+//        }
 //    }
 //}
