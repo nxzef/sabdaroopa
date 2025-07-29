@@ -16,6 +16,7 @@ import com.nascriptone.siddharoopa.data.model.uiobj.IsFavorite
 import com.nascriptone.siddharoopa.data.model.uiobj.MCQ
 import com.nascriptone.siddharoopa.data.model.uiobj.MTF
 import com.nascriptone.siddharoopa.data.model.uiobj.Phrase
+import com.nascriptone.siddharoopa.data.model.uiobj.QTemplate
 import com.nascriptone.siddharoopa.data.model.uiobj.Sound
 import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.data.repository.AppRepository
@@ -25,17 +26,13 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
-import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
-import com.nascriptone.siddharoopa.ui.screen.quiz.Dashboard
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
+import com.nascriptone.siddharoopa.ui.screen.quiz.Mode
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
-import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
-import com.nascriptone.siddharoopa.ui.screen.quiz.Result
-import com.nascriptone.siddharoopa.ui.screen.quiz.ValuationState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -150,82 +147,79 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
 
-    fun quizValuation() {
-        val data = quizUIState.value.questionList.requireSuccess {
-            it.isNotEmpty()
-        } ?: run {
-            Log.d("quizValuation", "Skipped: question list empty or not in success state")
-            return
-        }
-        viewModelScope.launch(Dispatchers.Default) {
-            _quizUIState.update { it.copy(result = ValuationState.Calculate) }
-            val result = runCatching {
-                delay(1000)
-                val currentMode = quizUIState.value.quizMode
-                val totalScore = (12..56).random()
-                val score = (0..totalScore).random()
-                val accuracy = (score.toFloat() / totalScore.toFloat())
+//    fun quizValuation() {
+//        val data = quizUIState.value.questionList.requireSuccess {
+//            it.isNotEmpty()
+//        } ?: run {
+//            Log.d("quizValuation", "Skipped: question list empty or not in success state")
+//            return
+//        }
+//        viewModelScope.launch(Dispatchers.Default) {
+//            _quizUIState.update { it.copy(result = ValuationState.Calculate) }
+//            val result = runCatching {
+//                delay(1000)
+//                val currentMode = quizUIState.value.quizMode
+//                val totalScore = (12..56).random()
+//                val score = (0..totalScore).random()
+//                val accuracy = (score.toFloat() / totalScore.toFloat())
+//
+//                val x = data.map { it.answer }.mapIndexed { i, v ->
+//                    v is Answer.Unspecified
+//                }
+//
+//                val dashboard = Dashboard(
+//                    mode = currentMode, accuracy = accuracy, score = score, totalScore = totalScore
+//                )
+//
+//                Result(
+//                    dashboard = dashboard
+//                )
+//            }.map {
+//                ValuationState.Success(result = it)
+//            }.getOrElse { e ->
+//                Log.d("quizValuation", "Valuation failed", e)
+//                ValuationState.Error(message = e.message.orEmpty())
+//            }
+//            _quizUIState.update { it.copy(result = result) }
+//        }
+//    }
 
-                val x = data.map { it.answer }.mapIndexed { i, v ->
-                    v is Answer.Unspecified
-                }
 
-                val dashboard = Dashboard(
-                    mode = currentMode, accuracy = accuracy, score = score, totalScore = totalScore
-                )
+//    fun submitAnswer(qID: Int) {
+//        val questionOptions =
+//            quizUIState.value.questionList.requireSuccess { it.isNotEmpty() } ?: return
+//        val questionOptionsToMutable = questionOptions.toMutableList()
+//        val answer = quizUIState.value.currentAnswer
+//        val targetObject = questionOptionsToMutable[qID]
+//        val updatedObject = targetObject.copy(answer = answer)
+//        questionOptionsToMutable[qID] = updatedObject
+//        val updatedList = questionOptionsToMutable.toList()
+//
+//        _quizUIState.update {
+//            it.copy(
+//                questionList = CreationState.Success(data = updatedList)
+//            )
+//        }
+//    }
 
-                Result(
-                    dashboard = dashboard
-                )
-            }.map {
-                ValuationState.Success(result = it)
-            }.getOrElse { e ->
-                Log.d("quizValuation", "Valuation failed", e)
-                ValuationState.Error(message = e.message.orEmpty())
-            }
-            _quizUIState.update { it.copy(result = result) }
-        }
-    }
-
-
-    fun submitAnswer(qID: Int) {
-        val questionOptions =
-            quizUIState.value.questionList.requireSuccess { it.isNotEmpty() } ?: return
-        val questionOptionsToMutable = questionOptions.toMutableList()
-        val answer = quizUIState.value.currentAnswer
-        val targetObject = questionOptionsToMutable[qID]
-        val updatedObject = targetObject.copy(answer = answer)
-        questionOptionsToMutable[qID] = updatedObject
-        val updatedList = questionOptionsToMutable.toList()
-
-        _quizUIState.update {
-            it.copy(
-                questionList = CreationState.Success(data = updatedList)
-            )
-        }
-    }
-
-    fun updateCurrentAnswer(answer: Answer) {
-        _quizUIState.update {
-            it.copy(
-                currentAnswer = answer
-            )
-        }
-    }
+//    fun updateCurrentAnswer(answer: Answer) {
+//        _quizUIState.update {
+//            it.copy(
+//                currentAnswer = answer
+//            )
+//        }
+//    }
 
     fun createQuizQuestions() {
         viewModelScope.launch(Dispatchers.Default) {
             _quizUIState.update { it.copy(questionList = CreationState.Loading) }
-            delay(1000)
             val result = runCatching {
+                delay(1000)
                 val entireSabdaList = entireSabdaList.value
                 val userSelectedTable = quizUIState.value.questionFrom
                 val userSelectedQuestionType = quizUIState.value.quizMode
                 val userSelectedQuestionRange = quizUIState.value.questionRange
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
-                val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
-                val allSabda = entireSabdaList.map { it.sabda }.toSet()
-                val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
                 val chosenData = entireSabdaList.filter { sabda ->
                     listOfNotNull(
                         userSelectedTable?.let { it == sabda.table }).all { it }
@@ -234,33 +228,16 @@ class SiddharoopaViewModel @Inject constructor(
 
                 val data = randomPickedSabda.mapIndexed { index, entireSabda ->
                     val questionCollection = when (userSelectedQuestionType) {
-                        QuizMode.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions else QuizQuestion.mtfQuestions
+                        QuizMode.All -> if (index < maxMCQ) QuizQuestion.mcqQuestions
+                        else QuizQuestion.mtfQuestions
+
                         QuizMode.MCQ -> QuizQuestion.mcqQuestions
                         QuizMode.MTF -> QuizQuestion.mtfQuestions
                     }
                     val sabda = entireSabda.sabda
-                    val declension = Json.decodeFromString<Declension>(sabda.declension)
-                    val randomTemplate = questionCollection.random()
-                    val question = randomTemplate.questionResId
-
-                    val option = when (val result = randomTemplate.phrase) {
-                        is Phrase.McqKey -> {
-                            val mcqOption = generateMcqOption(
-                                result.mcqData, sabda, declension, allGenders, allAntas
-                            )
-                            Option.McqOption(mcqOption)
-                        }
-
-                        is Phrase.MtfKey -> {
-                            val mtfOption = generateMtfOption(
-                                result.mtfData, sabda, declension, allGenders, allSabda
-                            )
-                            Option.MtfOption(mtfOption)
-                        }
-                    }
-                    QuestionOption(
-                        question = question, option = option
-                    )
+                    val qTemplate = questionCollection.random()
+                    val mode = getQuestionOption(qTemplate, sabda, entireSabdaList)
+                    QuestionOption(mode = mode)
                 }
 
                 CreationState.Success(data = data)
@@ -272,28 +249,77 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
+    private fun getQuestionOption(
+        qTemplate: QTemplate,
+        sabda: Sabda,
+        entireSabdaList: List<EntireSabda>
+    ): Mode {
+        val template = qTemplate.questionResId
+        val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
+        val allSabda = entireSabdaList.map { it.sabda }.toSet()
+        val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
+        val declension = Json.decodeFromString<Declension>(sabda.declension)
+
+        return when (val result = qTemplate.phrase) {
+            is Phrase.McqKey -> {
+                val mcqData = generateMcqOption(
+                    type = result.type,
+                    sabda = sabda,
+                    declension = declension,
+                    genders = allGenders,
+                    anta = allAntas,
+                    template = template
+                )
+                Mode.McqMode(mcqData)
+            }
+
+            is Phrase.MtfKey -> {
+                val mtfData = generateMtfOption(
+                    type = result.type,
+                    sabda = sabda,
+                    declension = declension,
+                    genders = allGenders,
+                    allSabda = allSabda,
+                    template = template
+                )
+                Mode.MtfMode(mtfData)
+            }
+        }
+    }
+
     private fun generateMcqOption(
-        type: MCQ, sabda: Sabda, declension: Declension, genders: Set<String>, anta: Set<String>
+        type: MCQ,
+        sabda: Sabda,
+        declension: Declension,
+        genders: Set<String>,
+        anta: Set<String>,
+        template: Int,
     ): McqGeneratedData {
-        var options: Set<String> = emptySet()
-        var trueOption: String? = null
-        var questionKey: Map<String, String> = emptyMap()
+
+
+        lateinit var templateKey: Map<String, String>
+        lateinit var options: Set<String>
+        lateinit var trueOption: String
+
         val allForm = declension.values.flatMap { it.values }
         val allVachana = declension.values.flatMap { it.keys }.toSet().map { it.name }
+
         when (type) {
             MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.EIGHT -> {
 
+                var temp: String?
                 var randomCase: CaseName
                 var randomForm: FormName
                 do {
                     randomCase = declension.keys.random()
                     randomForm = declension.getValue(randomCase).keys.random()
-                    trueOption = declension.getValue(randomCase).getValue(randomForm)
-                } while (trueOption == null)
+                    temp = declension.getValue(randomCase).getValue(randomForm)
+                } while (temp == null)
 
 
+                trueOption = requireNotNull(temp)
                 options = getUniqueShuffledSet(allForm, trueOption)
-                questionKey = mapOf(
+                templateKey = mapOf(
                     "vibhakti" to randomCase.name,
                     "vachana" to randomForm.name,
                     "sabda" to sabda.word
@@ -305,7 +331,7 @@ class SiddharoopaViewModel @Inject constructor(
                 val listOfGenders = genders.toList()
                 trueOption = sabda.gender
                 options = getUniqueShuffledSet(listOfGenders, trueOption)
-                questionKey = mapOf(
+                templateKey = mapOf(
                     "sabda" to sabda.word
                 )
             }
@@ -322,43 +348,60 @@ class SiddharoopaViewModel @Inject constructor(
 
                 trueOption = selectedForm.name
                 options = allVachana.shuffled().toSet()
-                questionKey = mapOf(
+                templateKey = mapOf(
                     "form" to chosenFormValue, "sabda" to sabda.word
                 )
 
             }
 
-            MCQ.SIX -> {} // Sixth Question business logic will set after the additional sabda insertion.
+            MCQ.SIX -> {
+
+                trueOption = ""
+                options = emptySet()
+                templateKey = emptyMap()
+            } // Sixth Question business logic will set after the additional sabda insertion.
 
             MCQ.SEVEN -> {
 
                 val listOfAntas = anta.toList()
                 trueOption = sabda.anta
                 options = getUniqueShuffledSet(listOfAntas, trueOption)
-                questionKey = mapOf(
+                templateKey = mapOf(
                     "sabda" to sabda.word
                 )
             }
         }
-        return McqGeneratedData(options, trueOption.orEmpty(), questionKey)
+
+        return McqGeneratedData(
+            template = template,
+            templateKey = templateKey,
+            options = options,
+            trueOption = trueOption,
+        )
     }
 
     private fun generateMtfOption(
-        type: MTF, sabda: Sabda, declension: Declension, genders: Set<String>, allSabda: Set<Sabda>
+        type: MTF,
+        sabda: Sabda,
+        declension: Declension,
+        genders: Set<String>,
+        allSabda: Set<Sabda>,
+        template: Int
     ): MtfGeneratedData {
 
-        var options = mapOf<String, String>()
-        var correctOptionMap = mapOf<String, String>()
-        var questionKey = mapOf<String, String>()
+        var templateKey = emptyMap<String, String>()
+        lateinit var options: Map<String?, String>
+        lateinit var trueOption: Set<String>
+
+
         val shuffledDeclension = declension.toList().shuffled().toMap()
 
         when (type) {
-
-
             MTF.ONE, MTF.TWO -> {
 
-                val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
+                lateinit var temp: Map<String, String>
                 var extraOption: String? = null
+                val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
 
                 for (form in forms) {
                     val formSet = declension.mapNotNull { it.value[form] }.toMutableSet()
@@ -369,7 +412,7 @@ class SiddharoopaViewModel @Inject constructor(
                     if (validEntries.size >= 4) {
                         val correctOptions = validEntries.entries.take(3)
                         val distractorCandidates = validEntries.entries.drop(3)
-                        correctOptionMap = correctOptions.associate { (k, v) ->
+                        temp = correctOptions.associate { (k, v) ->
                             when (type) {
                                 MTF.ONE -> k.name to v[form]!!
                                 else -> v[form]!! to k.name
@@ -384,36 +427,43 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                 }
 
-                val fullOptionMap =
-                    if (extraOption != null) correctOptionMap + ("" to extraOption) else correctOptionMap
-                val shuffledValues = fullOptionMap.values.shuffled()
-                options = fullOptionMap.keys.zip(shuffledValues).toMap()
-                questionKey = mapOf(
+
+                trueOption = temp.values.toSet()
+                val shuffled = (if (extraOption != null) (trueOption + extraOption)
+                else trueOption).shuffled()
+                val keys = if (extraOption != null) temp.keys + null else temp.keys
+                options = keys.zip(shuffled).toMap()
+                templateKey = mapOf(
                     "sabda" to sabda.word
                 )
 
             }
 
-            MTF.THREE -> {} // Third Question business logic will set after the additional data insertion
+            MTF.THREE -> {
 
+                trueOption = emptySet()
+                options = emptyMap()
+            } // Third Question business logic will set after the additional data insertion
 
             MTF.FOUR -> {
 
+                lateinit var temp: Map<String, String>
                 val sabdaByGender = allSabda.groupBy { it.gender }
                 val shuffledGenders = genders.shuffled()
-                correctOptionMap = shuffledGenders.mapNotNull { gender ->
+                temp = shuffledGenders.mapNotNull { gender ->
                     sabdaByGender[gender]?.random()
                 }.associate { sabda -> sabda.gender to sabda.word }
 
 
-                val shuffledValues = correctOptionMap.values.shuffled()
-                options = correctOptionMap.keys.zip(shuffledValues).toMap()
+                trueOption = temp.values.toSet()
+                val shuffledValues = trueOption.shuffled()
+                options = temp.keys.zip(shuffledValues).toMap()
 
             }
 
-
             MTF.FIVE -> {
 
+                lateinit var temp: Map<String, String>
                 var currentDeclension = declension
                 val invalidDeclensionSet = mutableSetOf<Sabda>()
                 while (true) {
@@ -435,7 +485,7 @@ class SiddharoopaViewModel @Inject constructor(
                         currentDeclension = newDeclension
                     } else {
                         val previousValues = mutableSetOf<String>()
-                        correctOptionMap = keySet.shuffled().associate { key ->
+                        temp = keySet.shuffled().associate { key ->
                             val currentSet = currentDeclension.values.mapNotNull { it[key] }.toSet()
                             val available = currentSet.minus(previousValues)
                             require(available.isNotEmpty()) {
@@ -445,17 +495,24 @@ class SiddharoopaViewModel @Inject constructor(
                             previousValues.add(chosen)
                             key.name to chosen
                         }
-                        val shufflesValues = correctOptionMap.values.shuffled()
-                        options = correctOptionMap.keys.zip(shufflesValues).toMap()
                         break
                     }
                 }
-                questionKey = mapOf(
+
+                trueOption = temp.values.toSet()
+                val shufflesValues = trueOption.shuffled()
+                options = temp.keys.zip(shufflesValues).toMap()
+                templateKey = mapOf(
                     "sabda" to sabda.word
                 )
             }
         }
-        return MtfGeneratedData(options, correctOptionMap, questionKey)
+        return MtfGeneratedData(
+            template = template,
+            templateKey = templateKey,
+            options = options,
+            trueOption = trueOption,
+        )
     }
 
     private fun getUniqueShuffledSet(
