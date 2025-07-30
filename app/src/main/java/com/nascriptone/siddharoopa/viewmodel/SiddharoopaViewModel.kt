@@ -198,6 +198,7 @@ class SiddharoopaViewModel @Inject constructor(
                     val answer = (currentAnswer as? Answer.Mcq)?.answer
                     state.copy(data = state.data.copy(answer = answer))
                 }
+
                 is State.MtfState -> {
                     val answer = (currentAnswer as? Answer.Mtf)?.answer
                     state.copy(data = state.data.copy(answer = answer))
@@ -208,7 +209,10 @@ class SiddharoopaViewModel @Inject constructor(
         }
 
         _quizUIState.update {
-            it.copy(questionList = CreationState.Success(updatedList))
+            it.copy(
+                questionList = CreationState.Success(updatedList),
+                currentAnswer = Answer.Unspecified
+            )
         }
     }
 
