@@ -59,6 +59,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -66,8 +67,10 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -86,12 +89,9 @@ import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Collections
-import kotlin.collections.lastIndex
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
@@ -193,8 +193,7 @@ fun QuizQuestionScreenContent(
                     }
                     Spacer(Modifier.width(12.dp))
                     Button(
-                        enabled = enabled,
-                        onClick = {
+                        enabled = enabled, onClick = {
                             scope.launch {
                                 viewModel.submitAnswer(questionIndex)
                                 delay(1000)
@@ -204,8 +203,7 @@ fun QuizQuestionScreenContent(
                                     questionIndex++
                                 }
                             }
-                        },
-                        modifier = Modifier.weight(1F)
+                        }, modifier = Modifier.weight(1F)
                     ) {
                         Text(
                             if (questionIndex == lastQuestionIndex) "SUBMIT"
@@ -239,16 +237,10 @@ fun QuestionOption(
         ) {
             when (val state = questionOption.state) {
                 is State.McqState -> StateMcq(
-                    state = state,
-                    enabled = enabled,
-                    onValueChange = { onValueChange(it) }
-                )
+                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
 
                 is State.MtfState -> StateMtf(
-                    state = state,
-                    enabled = enabled,
-                    onValueChange = { onValueChange(it) }
-                )
+                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
             }
         }
     }
@@ -272,10 +264,8 @@ fun StateMcq(
     RegexText(template, templateKey)
     Spacer(Modifier.height(40.dp))
     options.forEachIndexed { i, option ->
-        val isCorrectOption =
-            option == trueOption && answer != null
-        val isWrongSelectedOption =
-            answer != null && answer == option && !isCorrectOption
+        val isCorrectOption = option == trueOption && answer != null
+        val isWrongSelectedOption = answer != null && answer == option && !isCorrectOption
         val backgroundColor = when {
             isCorrectOption -> Color(0x1600FF00)
             isWrongSelectedOption -> Color(0x16FF0000)
@@ -289,21 +279,16 @@ fun StateMcq(
                 .clip(MaterialTheme.shapes.medium)
                 .background(backgroundColor)
                 .selectable(
-                    enabled = enabled,
-                    selected = selected,
-                    onClick = {
+                    enabled = enabled, selected = selected, onClick = {
                         currentAnswer = option
                         onValueChange(
                             Answer.Mcq(currentAnswer!!)
                         )
-                    }
-                )
+                    })
                 .padding(8.dp)
         ) {
             OptionIcon(
-                isCorrectOption,
-                isWrongSelectedOption,
-                modifier = Modifier.padding(12.dp)
+                isCorrectOption, isWrongSelectedOption, modifier = Modifier.padding(12.dp)
             ) {
                 RadioButton(
                     enabled = enabled,
@@ -353,8 +338,7 @@ fun StateMtf(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        propagateMinConstraints = true
+            .height(IntrinsicSize.Min), propagateMinConstraints = true
     ) {
         Box(
             Modifier
@@ -364,8 +348,7 @@ fun StateMtf(
                 )
                 .border(
                     border = BorderStroke(
-                        width = thickness,
-                        color = DividerDefaults.color
+                        width = thickness, color = DividerDefaults.color
                     ), shape = CardDefaults.outlinedShape
                 )
         )
@@ -390,10 +373,7 @@ fun StateMtf(
 
 @Composable
 fun KeyColumn(
-    keys: List<String?>,
-    params: ColumnParams,
-    thickness: Dp,
-    modifier: Modifier = Modifier
+    keys: List<String?>, params: ColumnParams, thickness: Dp, modifier: Modifier = Modifier
 ) {
 
     val density = LocalDensity.current
@@ -420,8 +400,7 @@ fun KeyColumn(
                 animationSpec = tween(animationDuration),
                 label = "keyBoxBackgroundColor"
             )
-            val topStart =
-                remember { if (index == 0) singleCornerSize else 0f }
+            val topStart = remember { if (index == 0) singleCornerSize else 0f }
             val bottomStart = remember {
                 if (index == keys.lastIndex) singleCornerSize else 0f
             }
@@ -429,10 +408,8 @@ fun KeyColumn(
             Box(
                 modifier = Modifier
                     .background(
-                        color = backgroundColor,
-                        shape = RoundedCornerShape(
-                            topStart = topStart,
-                            bottomStart = bottomStart
+                        color = backgroundColor, shape = RoundedCornerShape(
+                            topStart = topStart, bottomStart = bottomStart
                         )
                     )
                     .fillMaxWidth()
@@ -461,9 +438,7 @@ fun ValueColumn(
 ) {
 
     val list = rememberSaveable(
-        saver = listSaver(
-            save = { it.toList() },
-            restore = { it.toMutableStateList() })
+        saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })
     ) { values.toMutableStateList() }
     val visualOrder by remember(list, values) {
         derivedStateOf { list.toFastIndexOfList(values) }
@@ -472,203 +447,11 @@ fun ValueColumn(
     val containerSize = remember { mutableStateOf(Size.Zero) }
 
     Column(
-        modifier =
-            modifier
-                .onSizeChanged {
-                    containerSize.value = it.toSize()
-                }
-    ) {
+        modifier = modifier.onSizeChanged {
+            containerSize.value = it.toSize()
+        }) {
         values.forEachIndexed { index, value ->
-            val logicalPosition =
-                visualOrder.getOrElse(index) { return@forEachIndexed }
-
-//            val xOffset = remember { Animatable(0f) }
-//            val yOffset = remember { Animatable(0f) }
-//
-//            var isDragging by rememberSaveable { mutableStateOf(false) }
-//            var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
-//
-//            val boxSize = remember { mutableStateOf(Size.Zero) }
-//            val cornerSizePx = remember(boxSize.value) {
-//                cornerSize.toPx(boxSize.value, density)
-//            }
-//            val singleCornerSize = remember(cornerSizePx) {
-//                cornerSizePx - dividerThickness
-//            }
-//            val halfDivider =
-//                remember(dividerThickness) { dividerThickness / 2 }
-//            val boxWidth = remember(boxSize.value) { boxSize.value.width }
-//            val boxHeight = remember(boxSize.value) { boxSize.value.height }
-//            val extraX = remember(boxWidth) { boxWidth / 8 }
-//            val extraY = remember(boxHeight) { boxHeight / 3 }
-//
-//            val parentBoxHeight =
-//                remember(containerSize.value) { containerSize.value.height }
-//            val dividerGap = remember(
-//                index, dividerThickness
-//            ) { dividerThickness * index }
-//            val componentOffset = remember(boxHeight, index, dividerGap) {
-//                boxHeight * index + dividerGap
-//            }
-//            val maxOffset = remember(parentBoxHeight, boxHeight) {
-//                parentBoxHeight - boxHeight
-//            }
-//            val singleSpace = remember(boxHeight, dividerThickness) {
-//                boxHeight + dividerThickness
-//            }
-//
-//            val activeColor =
-//                MaterialTheme.colorScheme.surfaceContainerHighest
-//            val idleColor: Color =
-//                if (logicalPosition < 3 && answer != null) {
-//                    val exactAnswer = answer[logicalPosition]
-//                    val trueAnswer = trueOption[logicalPosition]
-//                    if (exactAnswer == trueAnswer) Color(0x1600FF00)
-//                    else Color(0x16FF0000)
-//                } else MaterialTheme.colorScheme.surfaceContainerHigh
-//            val backgroundColor by animateColorAsState(
-//                targetValue = if (isDragging) activeColor else idleColor,
-//                animationSpec = tween(animationDuration),
-//                label = "boxBackgroundColor"
-//            )
-//            val topEnd by animateFloatAsState(
-//                targetValue = if (logicalPosition == 0) singleCornerSize else 0f,
-//                animationSpec = tween(animationDuration),
-//                label = "boxTopEndShape"
-//            )
-//            val bottomEnd by animateFloatAsState(
-//                targetValue = if (logicalPosition == values.lastIndex) singleCornerSize else 0f,
-//                animationSpec = tween(animationDuration),
-//                label = "boxBottomEndShape"
-//            )
-//
-//            fun computeAnimateTo(index: Int, logicalPosition: Int): Float {
-//                val diff = logicalPosition - index
-//                val cdg = dividerThickness * diff
-//                return boxHeight * diff + cdg
-//            }
-//
-//            suspend fun translate(
-//                offset: Animatable<Float, AnimationVector1D>,
-//                delta: Float,
-//            ) {
-//                if (!isDragging) zIndex = 0.5f
-//                offset.animateTo(
-//                    delta,
-//                    tween(animationDuration)
-//                )
-//                isDragging = false
-//                zIndex = 0f
-//            }
-//
-//            val target = computeAnimateTo(index, logicalPosition)
-//
-//            LaunchedEffect(target) {
-//                runCatching {
-//                    translate(yOffset, target)
-//                }.onFailure { error -> error.printStackTrace() }
-//            }
-//
-//            Box(
-//                contentAlignment = Alignment.CenterStart,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(64.dp)
-//                    .offset {
-//                        IntOffset(
-//                            xOffset.value.roundToInt(),
-//                            yOffset.value.roundToInt()
-//                        )
-//                    }
-//                    .onSizeChanged { boxSize.value = it.toSize() }
-//                    .background(
-//                        color = backgroundColor, shape = RoundedCornerShape(
-//                            topEnd = topEnd, bottomEnd = bottomEnd
-//                        )
-//                    )
-//                    .zIndex(zIndex)
-//                    .pointerInput(Unit) {
-//                        coroutineScope {
-//                            detectDragGestures(
-//                                onDragStart = {
-//                                    isDragging = true
-//                                    zIndex = 1f
-//                                },
-//
-//                                onDrag = { change, dragAmount ->
-//                                    launch {
-//                                        change.consume()
-//
-//                                        // X Axis Logic
-//                                        val currentX = xOffset.value
-//                                        val xNormalized = (currentX / extraX).coerceIn(-1f, 1f)
-//                                        val xResistance = 1f - xNormalized.absoluteValue
-//                                        val xDrag = currentX + dragAmount.x * xResistance
-//
-//
-//                                        // Y Axis Logic
-//                                        val currentY = yOffset.value
-//                                        val yFrom = 0f - componentOffset
-//                                        val yTo = maxOffset - componentOffset
-//
-//                                        val belowMin = (yFrom - currentY).coerceAtLeast(0f)
-//                                        val aboveMax = (currentY - yTo).coerceAtLeast(0f)
-//                                        val overshoot = belowMin + aboveMax
-//
-//                                        val yNormalized = (overshoot / extraY).coerceIn(0f, 1f)
-//                                        val yResistance = 1f - yNormalized
-//                                        val yDrag = currentY + dragAmount.y * yResistance
-//
-//                                        val newX = xDrag.coerceIn(-extraX, extraX)
-//                                        val newY = yDrag.coerceIn(
-//                                            -(extraY + componentOffset),
-//                                            (maxOffset - componentOffset) + extraY
-//                                        )
-//
-//
-//                                        xOffset.snapTo(newX)
-//                                        yOffset.snapTo(newY)
-//                                    }
-//                                },
-//
-//                                onDragEnd = {
-//                                    launch {
-//                                        listOf(
-//                                            async {
-//                                                translate(xOffset, 0f)
-//                                            },
-//                                            async {
-//
-//                                                val currentOffset =
-//                                                    yOffset.value + componentOffset + halfDivider
-//                                                val middlePointer =
-//                                                    currentOffset + (singleSpace / 2)
-//
-//                                                val i =
-//                                                    visualOrder.getOrElse(index) { return@async }
-//                                                val j =
-//                                                    middlePointer.roundToInt() / singleSpace.roundToInt()
-//
-//                                                if (i != j) {
-//                                                    Collections.swap(list, i, j)
-//                                                    onValueChange(Answer.Mtf(list))
-//                                                } else {
-//                                                    val delta = computeAnimateTo(index, i)
-//                                                    translate(yOffset, delta)
-//                                                }
-//                                            }
-//                                        ).awaitAll()
-//                                    }
-//                                }
-//                            )
-//                        }
-//                    }
-//            ) {
-//                OptionText(
-//                    value, modifier = Modifier.padding(horizontal = 16.dp)
-//                )
-//            }
-
+            val logicalPosition = visualOrder.getOrElse(index) { return@forEachIndexed }
 
             DraggableBox(
                 index = index,
@@ -677,21 +460,12 @@ fun ValueColumn(
                 params = params,
                 containerSize = containerSize.value,
                 lastIndex = values.lastIndex,
-                onChange = { j ->
-
-                    val i = visualOrder.getOrElse(index) { return@DraggableBox }
-
+                onChange = { i, j ->
                     if (i != j) {
                         Collections.swap(list, i, j)
                         onValueChange(Answer.Mtf(list))
-                    } else {
-//                        val delta = computeAnimateTo(index, i)
-//                        translate(yOffset, delta)
                     }
-
-                }
-            )
-
+                })
 
             if (index != values.lastIndex) HorizontalDivider(thickness = thickness)
         }
@@ -705,19 +479,22 @@ fun DraggableBox(
     logicalPosition: Int,
     value: String,
     params: ColumnParams,
-    containerSize : Size,
+    containerSize: Size,
     lastIndex: Int,
-    onChange: (drop: Int) -> Unit,
+    onChange: (lgp: Int, drop: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
 
     val xOffset = remember { Animatable(0f) }
     val yOffset = remember { Animatable(0f) }
 
+    val currentLogicalPosition by rememberUpdatedState(logicalPosition)
     val (answer, trueOption, cornerSize, dividerThickness, animationDuration) = params
     var isDragging by rememberSaveable { mutableStateOf(false) }
     var zIndex by rememberSaveable { mutableFloatStateOf(0f) }
+    var count by rememberSaveable { mutableIntStateOf(0) }
 
     val boxSize = remember { mutableStateOf(Size.Zero) }
     val cornerSizePx = remember(boxSize.value) {
@@ -746,37 +523,28 @@ fun DraggableBox(
         boxHeight + dividerThickness
     }
 
-    val activeColor =
-        MaterialTheme.colorScheme.surfaceContainerHighest
-    val idleColor: Color =
-        if (logicalPosition < 3 && answer != null) {
-            val exactAnswer = answer[logicalPosition]
-            val trueAnswer = trueOption[logicalPosition]
-            if (exactAnswer == trueAnswer) Color(0x1600FF00)
-            else Color(0x16FF0000)
-        }
-        else MaterialTheme.colorScheme.surfaceContainerHigh
+    val activeColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val idleColor: Color = if (currentLogicalPosition < 3 && answer != null) {
+        val exactAnswer = answer[currentLogicalPosition]
+        val trueAnswer = trueOption[currentLogicalPosition]
+        if (exactAnswer == trueAnswer) Color(0x1600FF00)
+        else Color(0x16FF0000)
+    } else MaterialTheme.colorScheme.surfaceContainerHigh
     val backgroundColor by animateColorAsState(
         targetValue = if (isDragging) activeColor else idleColor,
         animationSpec = tween(animationDuration),
         label = "boxBackgroundColor"
     )
     val topEnd by animateFloatAsState(
-        targetValue = if (logicalPosition == 0) singleCornerSize else 0f,
+        targetValue = if (currentLogicalPosition == 0) singleCornerSize else 0f,
         animationSpec = tween(animationDuration),
         label = "boxTopEndShape"
     )
     val bottomEnd by animateFloatAsState(
-        targetValue = if (logicalPosition == lastIndex) singleCornerSize else 0f,
+        targetValue = if (currentLogicalPosition == lastIndex) singleCornerSize else 0f,
         animationSpec = tween(animationDuration),
         label = "boxBottomEndShape"
     )
-
-    fun computeAnimateTo(index: Int, logicalPosition: Int): Float {
-        val diff = logicalPosition - index
-        val cdg = dividerThickness * diff
-        return boxHeight * diff + cdg
-    }
 
     suspend fun translate(
         offset: Animatable<Float, AnimationVector1D>,
@@ -784,16 +552,65 @@ fun DraggableBox(
     ) {
         if (!isDragging) zIndex = 0.5f
         offset.animateTo(
-            delta,
-            tween(animationDuration)
+            delta, tween(animationDuration)
         )
         isDragging = false
         zIndex = 0f
     }
 
-    val target = computeAnimateTo(index, logicalPosition)
+    fun handleDrag(change: PointerInputChange, dragAmount: Offset) {
+        scope.launch {
+            change.consume()
 
-    LaunchedEffect(target) {
+            // X Axis Logic
+            val currentX = xOffset.value
+            val xNormalized = (currentX / extraX).coerceIn(-1f, 1f)
+            val xResistance = 1f - xNormalized.absoluteValue
+            val xDrag = currentX + dragAmount.x * xResistance
+
+
+            // Y Axis Logic
+            val currentY = yOffset.value
+            val yFrom = 0f - componentOffset
+            val yTo = maxOffset - componentOffset
+
+            val belowMin = (yFrom - currentY).coerceAtLeast(0f)
+            val aboveMax = (currentY - yTo).coerceAtLeast(0f)
+            val overshoot = belowMin + aboveMax
+
+            val yNormalized = (overshoot / extraY).coerceIn(0f, 1f)
+            val yResistance = 1f - yNormalized
+            val yDrag = currentY + dragAmount.y * yResistance
+
+            val newX = xDrag.coerceIn(-extraX, extraX)
+            val newY = yDrag.coerceIn(
+                -(extraY + componentOffset), (maxOffset - componentOffset) + extraY
+            )
+
+
+            xOffset.snapTo(newX)
+            yOffset.snapTo(newY)
+        }
+    }
+
+    fun handleDragEnd() {
+        scope.launch {
+            async {
+                translate(xOffset, 0f)
+            }
+            async {
+                val currentOffset = yOffset.value + componentOffset + halfDivider
+                val middlePointer = currentOffset + (singleSpace / 2)
+                val drop = middlePointer.roundToInt() / singleSpace.roundToInt()
+                onChange(currentLogicalPosition, drop)
+                count++
+            }
+        }
+    }
+
+    val target = computeAnimateTo(index, currentLogicalPosition, boxHeight, dividerThickness)
+
+    LaunchedEffect(count, target) {
         runCatching {
             translate(yOffset, target)
         }.onFailure { error -> error.printStackTrace() }
@@ -806,8 +623,7 @@ fun DraggableBox(
             .height(64.dp)
             .offset {
                 IntOffset(
-                    xOffset.value.roundToInt(),
-                    yOffset.value.roundToInt()
+                    xOffset.value.roundToInt(), yOffset.value.roundToInt()
                 )
             }
             .onSizeChanged { boxSize.value = it.toSize() }
@@ -818,83 +634,13 @@ fun DraggableBox(
             )
             .zIndex(zIndex)
             .pointerInput(Unit) {
-                coroutineScope {
-                    detectDragGestures(
-                        onDragStart = {
-                            isDragging = true
-                            zIndex = 1f
-                        },
-
-                        onDrag = { change, dragAmount ->
-                            launch {
-                                change.consume()
-
-                                // X Axis Logic
-                                val currentX = xOffset.value
-                                val xNormalized = (currentX / extraX).coerceIn(-1f, 1f)
-                                val xResistance = 1f - xNormalized.absoluteValue
-                                val xDrag = currentX + dragAmount.x * xResistance
-
-
-                                // Y Axis Logic
-                                val currentY = yOffset.value
-                                val yFrom = 0f - componentOffset
-                                val yTo = maxOffset - componentOffset
-
-                                val belowMin = (yFrom - currentY).coerceAtLeast(0f)
-                                val aboveMax = (currentY - yTo).coerceAtLeast(0f)
-                                val overshoot = belowMin + aboveMax
-
-                                val yNormalized = (overshoot / extraY).coerceIn(0f, 1f)
-                                val yResistance = 1f - yNormalized
-                                val yDrag = currentY + dragAmount.y * yResistance
-
-                                val newX = xDrag.coerceIn(-extraX, extraX)
-                                val newY = yDrag.coerceIn(
-                                    -(extraY + componentOffset),
-                                    (maxOffset - componentOffset) + extraY
-                                )
-
-
-                                xOffset.snapTo(newX)
-                                yOffset.snapTo(newY)
-                            }
-                        },
-
-                        onDragEnd = {
-                            launch {
-                                listOf(
-                                    async {
-                                        translate(xOffset, 0f)
-                                    },
-                                    async {
-
-                                        val currentOffset =
-                                            yOffset.value + componentOffset + halfDivider
-                                        val middlePointer =
-                                            currentOffset + (singleSpace / 2)
-
-//                                        val i =
-//                                            visualOrder.getOrElse(index) { return@async }
-                                        val drop =
-                                            middlePointer.roundToInt() / singleSpace.roundToInt()
-                                        onChange(drop)
-
-//                                        if (i != drop) {
-//                                            Collections.swap(list, i, drop)
-//                                            onValueChange(Answer.Mtf(list))
-//                                        } else {
-//                                            val delta = computeAnimateTo(index, i)
-//                                            translate(yOffset, delta)
-//                                        }
-                                    }
-                                ).awaitAll()
-                            }
-                        }
-                    )
-                }
-            }
-    ) {
+                detectDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                        zIndex = 1f
+                    }, onDrag = ::handleDrag, onDragEnd = ::handleDragEnd
+                )
+            }) {
         OptionText(
             value, modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -903,10 +649,7 @@ fun DraggableBox(
 
 @Composable
 fun OptionIcon(
-    correct: Boolean,
-    wrong: Boolean,
-    modifier: Modifier = Modifier,
-    default: @Composable () -> Unit
+    correct: Boolean, wrong: Boolean, modifier: Modifier = Modifier, default: @Composable () -> Unit
 ) {
     val enterTransition: EnterTransition = fadeIn() + scaleIn()
     val exitTransition: ExitTransition = fadeOut() + scaleOut()
@@ -983,6 +726,18 @@ data class ColumnParams(
 private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
 private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
 private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
+
+
+private fun computeAnimateTo(
+    index: Int,
+    logicalPosition: Int,
+    boxHeight: Float,
+    dividerThickness: Float
+): Float {
+    val diff = logicalPosition - index
+    val cdg = dividerThickness * diff
+    return boxHeight * diff + cdg
+}
 
 private fun <T> List<T>.toFastIndexOfList(original: List<T>): List<Int> {
     val org = original.withIndex().associate { it.value to it.index }
