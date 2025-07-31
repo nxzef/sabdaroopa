@@ -26,6 +26,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.FilterState
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreenState
 import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
+import com.nascriptone.siddharoopa.ui.screen.quiz.Action
 import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
@@ -184,7 +185,7 @@ class SiddharoopaViewModel @Inject constructor(
 //    }
 
 
-    fun submitAnswer(id: Int) {
+    fun updateAnswer(id: Int, action: Action) {
         val currentState = quizUIState.value
         val questionOptions = currentState.questionList
             .requireSuccess { it.isNotEmpty() } ?: return
@@ -193,15 +194,18 @@ class SiddharoopaViewModel @Inject constructor(
         val updatedList = questionOptions.mapIndexed { index, questionOption ->
             if (index != id) return@mapIndexed questionOption
 
-            val newState = when (val state = questionOption.state) {
-                is State.McqState -> {
-                    val answer = (currentAnswer as? Answer.Mcq)?.answer
-                    state.copy(data = state.data.copy(answer = answer))
-                }
+            val newState = when (action) {
+                Action.SKIP -> questionOption.state
+                Action.SUBMIT -> when (val state = questionOption.state) {
+                    is State.McqState -> {
+                        val answer = (currentAnswer as? Answer.Mcq)?.answer
+                        state.copy(data = state.data.copy(answer = answer))
+                    }
 
-                is State.MtfState -> {
-                    val answer = (currentAnswer as? Answer.Mtf)?.answer
-                    state.copy(data = state.data.copy(answer = answer))
+                    is State.MtfState -> {
+                        val answer = (currentAnswer as? Answer.Mtf)?.answer
+                        state.copy(data = state.data.copy(answer = answer))
+                    }
                 }
             }
 
