@@ -19,6 +19,11 @@ sealed class CreationState<out T> {
     data class Error(val message: String) : CreationState<Nothing>()
 }
 
+enum class Action {
+    SKIP,
+    SUBMIT
+}
+
 enum class QuizMode(@StringRes val uiName: Int) {
     All(R.string.all_question_type),
     MCQ(R.string.multiple_choice_question),
