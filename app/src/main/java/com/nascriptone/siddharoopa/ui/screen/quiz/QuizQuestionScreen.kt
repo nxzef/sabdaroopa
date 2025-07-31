@@ -66,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -142,6 +143,20 @@ fun QuizQuestionScreenContent(
     val lastQuestionIndex = questionCount - 1
     val scope = rememberCoroutineScope()
 
+
+    fun onClick(id: Int, action: Action) {
+        scope.launch {
+            enabled = false
+            viewModel.updateAnswer(id, action)
+            delay(1000)
+            if (questionIndex < lastQuestionIndex) {
+                questionIndex++
+            } else {
+                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+            }
+        }
+    }
+
     Surface {
         Column(
             modifier = modifier
@@ -168,9 +183,9 @@ fun QuizQuestionScreenContent(
                         onValueChange = { answer ->
                             viewModel.updateCurrentAnswer(answer)
                         },
+                        onLaunch = { enabled = it }
                     )
                 }
-
             }
             Column {
                 Row(
@@ -178,32 +193,17 @@ fun QuizQuestionScreenContent(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     OutlinedButton(
-                        onClick = {
-                            scope.launch {
-                                delay(1000)
-                                if (questionIndex < lastQuestionIndex) {
-                                    questionIndex++
-                                } else {
-                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
-                                }
-                            }
-                        }, modifier = Modifier.weight(1F)
+                        enabled = enabled,
+                        onClick = { onClick(questionIndex, Action.SKIP) },
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text("SKIP")
                     }
                     Spacer(Modifier.width(12.dp))
                     Button(
-                        enabled = enabled, onClick = {
-                            scope.launch {
-                                viewModel.submitAnswer(questionIndex)
-                                delay(1000)
-                                if (questionIndex == lastQuestionIndex) {
-                                    navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
-                                } else {
-                                    questionIndex++
-                                }
-                            }
-                        }, modifier = Modifier.weight(1F)
+                        enabled = quizSectionState.currentAnswer !is Answer.Unspecified,
+                        onClick = { onClick(questionIndex, Action.SUBMIT) },
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(
                             if (questionIndex == lastQuestionIndex) "SUBMIT"
@@ -217,30 +217,41 @@ fun QuizQuestionScreenContent(
     }
 }
 
-
 @Composable
 fun QuestionOption(
     isVisible: Boolean,
-    questionOption: QuestionOption,
     enabled: Boolean,
+    questionOption: QuestionOption,
+    onLaunch: (Boolean) -> Unit,
     onValueChange: (Answer) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     AnimatedVisibility(
-        isVisible, enter = slideInHorizontally(
-            initialOffsetX = { (it * 70) / 100 }) + fadeIn(), exit = slideOutHorizontally(
-            targetOffsetX = { -it / 4 }) + fadeOut(), modifier = modifier
+        isVisible,
+        enter = slideInHorizontally(
+            initialOffsetX = { (it * 70) / 100 }) + fadeIn(),
+        exit = slideOutHorizontally(
+            targetOffsetX = { -it / 4 }) + fadeOut(),
+        modifier = modifier
     ) {
+
+        LaunchedEffect(Unit) { onLaunch(true) }
+
         Column(
             modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             when (val state = questionOption.state) {
                 is State.McqState -> StateMcq(
-                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
+                    state = state,
+                    enabled = enabled,
+                    onValueChange = { onValueChange(it) }
+                )
 
                 is State.MtfState -> StateMtf(
-                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
+                    state = state,
+                    enabled = enabled,
+                    onValueChange = { onValueChange(it) }
+                )
             }
         }
     }
@@ -271,7 +282,11 @@ fun StateMcq(
             isWrongSelectedOption -> Color(0x16FF0000)
             else -> Color.Unspecified
         }
-        val selected = currentAnswer == option
+        val highlight = isCorrectOption || isWrongSelectedOption != enabled
+        val selected = remember(enabled, currentAnswer) {
+            currentAnswer = if (enabled) currentAnswer else null
+            currentAnswer == option
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
@@ -279,16 +294,20 @@ fun StateMcq(
                 .clip(MaterialTheme.shapes.medium)
                 .background(backgroundColor)
                 .selectable(
-                    enabled = enabled, selected = selected, onClick = {
+                    enabled = highlight,
+                    selected = selected,
+                    onClick = {
                         currentAnswer = option
                         onValueChange(
-                            Answer.Mcq(currentAnswer!!)
+                            Answer.Mcq(option)
                         )
                     })
                 .padding(8.dp)
         ) {
             OptionIcon(
-                isCorrectOption, isWrongSelectedOption, modifier = Modifier.padding(12.dp)
+                correct = isCorrectOption,
+                wrong = isWrongSelectedOption,
+                modifier = Modifier.padding(12.dp)
             ) {
                 RadioButton(
                     enabled = enabled,
@@ -297,7 +316,10 @@ fun StateMcq(
                 )
             }
             Spacer(Modifier.width(12.dp))
-            OptionText(text = option)
+            OptionText(
+                text = option,
+                enabled = highlight
+            )
         }
     }
 }
@@ -355,6 +377,7 @@ fun StateMtf(
         Row(Modifier.padding(thickness)) {
             KeyColumn(
                 keys = keys,
+                enabled = enabled,
                 params = sharedParams,
                 thickness = thickness,
                 modifier = Modifier.weight(1f)
@@ -362,6 +385,7 @@ fun StateMtf(
             VerticalDivider(thickness = thickness)
             ValueColumn(
                 values = values,
+                enabled = enabled,
                 params = sharedParams,
                 thickness = thickness,
                 onValueChange = { onValueChange(it) },
@@ -373,7 +397,11 @@ fun StateMtf(
 
 @Composable
 fun KeyColumn(
-    keys: List<String?>, params: ColumnParams, thickness: Dp, modifier: Modifier = Modifier
+    keys: List<String?>,
+    enabled: Boolean,
+    params: ColumnParams,
+    thickness: Dp,
+    modifier: Modifier = Modifier
 ) {
 
     val density = LocalDensity.current
@@ -419,7 +447,9 @@ fun KeyColumn(
             ) {
                 if (key != null) {
                     OptionText(
-                        key, modifier = Modifier.padding(horizontal = 16.dp)
+                        key,
+                        enabled = enabled,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             }
@@ -431,6 +461,7 @@ fun KeyColumn(
 @Composable
 fun ValueColumn(
     values: List<String>,
+    enabled: Boolean,
     params: ColumnParams,
     thickness: Dp,
     onValueChange: (Answer) -> Unit,
@@ -457,6 +488,7 @@ fun ValueColumn(
                 index = index,
                 logicalPosition = logicalPosition,
                 value = value,
+                enabled = enabled,
                 params = params,
                 containerSize = containerSize.value,
                 lastIndex = values.lastIndex,
@@ -478,6 +510,7 @@ fun DraggableBox(
     index: Int,
     logicalPosition: Int,
     value: String,
+    enabled: Boolean,
     params: ColumnParams,
     containerSize: Size,
     lastIndex: Int,
@@ -633,23 +666,33 @@ fun DraggableBox(
                 )
             )
             .zIndex(zIndex)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = {
-                        isDragging = true
-                        zIndex = 1f
-                    }, onDrag = ::handleDrag, onDragEnd = ::handleDragEnd
-                )
-            }) {
+            .then(
+                if (enabled) Modifier
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = {
+                                isDragging = true
+                                zIndex = 1f
+                            }, onDrag = ::handleDrag, onDragEnd = ::handleDragEnd
+                        )
+                    }
+                else Modifier
+            )
+    ) {
         OptionText(
-            value, modifier = Modifier.padding(horizontal = 16.dp)
+            text = value,
+            enabled = enabled,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 }
 
 @Composable
 fun OptionIcon(
-    correct: Boolean, wrong: Boolean, modifier: Modifier = Modifier, default: @Composable () -> Unit
+    correct: Boolean,
+    wrong: Boolean,
+    modifier: Modifier = Modifier,
+    default: @Composable () -> Unit
 ) {
     val enterTransition: EnterTransition = fadeIn() + scaleIn()
     val exitTransition: ExitTransition = fadeOut() + scaleOut()
@@ -679,6 +722,7 @@ fun OptionIcon(
 fun OptionText(
     text: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     val keyText = text.uppercase()
@@ -710,7 +754,11 @@ fun OptionText(
         else -> keyText
     }
     Text(
-        adjustedText, style = style, modifier = modifier.then(Modifier)
+        adjustedText,
+        style = style,
+        modifier = Modifier
+            .alpha(if (enabled) 1f else 0.4f)
+            .then(modifier)
     )
 }
 
