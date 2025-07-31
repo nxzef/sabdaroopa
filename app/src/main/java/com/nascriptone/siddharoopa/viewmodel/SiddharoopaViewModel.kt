@@ -233,7 +233,6 @@ class SiddharoopaViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             _quizUIState.update { it.copy(questionList = CreationState.Loading) }
             val result = runCatching {
-                delay(1000)
                 val entireSabdaList = entireSabdaList.value
                 val userSelectedTable = quizUIState.value.questionFrom
                 val userSelectedQuestionType = quizUIState.value.quizMode
