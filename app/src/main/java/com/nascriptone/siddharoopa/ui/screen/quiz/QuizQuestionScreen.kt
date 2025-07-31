@@ -105,8 +105,13 @@ fun QuizQuestionScreen(
     modifier: Modifier = Modifier
 ) {
 
+    var isFetched by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
-        viewModel.createQuizQuestions()
+        if (!isFetched) {
+            viewModel.createQuizQuestions()
+            isFetched = true
+        }
     }
 
     when (val result = quizSectionState.questionList) {
@@ -159,21 +164,22 @@ fun QuizQuestionScreenContent(
 
     Surface {
         Column(
-            modifier = modifier
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier =
+                modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    "Question ${questionIndex + 1} of $questionCount",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
+            Text(
+                "Question ${questionIndex + 1} of $questionCount",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 20.dp)
+            )
             Box(
-                contentAlignment = Alignment.Center
+                modifier = Modifier.weight(1f),
+                propagateMinConstraints = true
             ) {
                 data.forEachIndexed { index, questionOption ->
                     QuestionOption(
@@ -183,35 +189,34 @@ fun QuizQuestionScreenContent(
                         onValueChange = { answer ->
                             viewModel.updateCurrentAnswer(answer)
                         },
-                        onLaunch = { enabled = it }
+                        onLaunch = { enabled = it },
+//                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 }
             }
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.padding(vertical = 20.dp)
+            ) {
+                OutlinedButton(
+                    enabled = enabled,
+                    onClick = { onClick(questionIndex, Action.SKIP) },
+                    modifier = Modifier.weight(1f)
                 ) {
-                    OutlinedButton(
-                        enabled = enabled,
-                        onClick = { onClick(questionIndex, Action.SKIP) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("SKIP")
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Button(
-                        enabled = quizSectionState.currentAnswer !is Answer.Unspecified,
-                        onClick = { onClick(questionIndex, Action.SUBMIT) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            if (questionIndex == lastQuestionIndex) "SUBMIT"
-                            else "NEXT"
-                        )
-                    }
+                    Text("SKIP")
                 }
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.width(12.dp))
+                Button(
+                    enabled = quizSectionState.currentAnswer !is Answer.Unspecified,
+                    onClick = { onClick(questionIndex, Action.SUBMIT) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        if (questionIndex == lastQuestionIndex) "SUBMIT"
+                        else "NEXT"
+                    )
+                }
             }
         }
     }
@@ -232,14 +237,16 @@ fun QuestionOption(
             initialOffsetX = { (it * 70) / 100 }) + fadeIn(),
         exit = slideOutHorizontally(
             targetOffsetX = { -it / 4 }) + fadeOut(),
-        modifier = modifier
     ) {
 
         LaunchedEffect(Unit) { onLaunch(true) }
 
         Column(
-            modifier = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier
+                .then(modifier)
+                .verticalScroll(rememberScrollState())
         ) {
+            Spacer(Modifier.height(70.dp))
             when (val state = questionOption.state) {
                 is State.McqState -> StateMcq(
                     state = state,
@@ -302,12 +309,12 @@ fun StateMcq(
                             Answer.Mcq(option)
                         )
                     })
-                .padding(8.dp)
+                .padding(16.dp)
         ) {
             OptionIcon(
                 correct = isCorrectOption,
                 wrong = isWrongSelectedOption,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier.padding(0.dp)
             ) {
                 RadioButton(
                     enabled = enabled,
@@ -315,7 +322,7 @@ fun StateMcq(
                     onClick = null,
                 )
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
             OptionText(
                 text = option,
                 enabled = highlight
