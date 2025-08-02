@@ -4,21 +4,22 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.data.local.QuizQuestion
+import com.nascriptone.siddharoopa.data.local.QuizResultMessage
+import com.nascriptone.siddharoopa.data.model.CaseName
+import com.nascriptone.siddharoopa.data.model.Declension
+import com.nascriptone.siddharoopa.data.model.EntireSabda
+import com.nascriptone.siddharoopa.data.model.FormName
+import com.nascriptone.siddharoopa.data.model.Gender
+import com.nascriptone.siddharoopa.data.model.IsFavorite
+import com.nascriptone.siddharoopa.data.model.MCQ
+import com.nascriptone.siddharoopa.data.model.MTF
+import com.nascriptone.siddharoopa.data.model.Phrase
+import com.nascriptone.siddharoopa.data.model.QTemplate
+import com.nascriptone.siddharoopa.data.model.Sound
+import com.nascriptone.siddharoopa.data.model.Table
 import com.nascriptone.siddharoopa.data.model.entity.Favorite
 import com.nascriptone.siddharoopa.data.model.entity.RestProp
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
-import com.nascriptone.siddharoopa.data.model.uiobj.Declension
-import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
-import com.nascriptone.siddharoopa.data.model.uiobj.FormName
-import com.nascriptone.siddharoopa.data.model.uiobj.Gender
-import com.nascriptone.siddharoopa.data.model.uiobj.IsFavorite
-import com.nascriptone.siddharoopa.data.model.uiobj.MCQ
-import com.nascriptone.siddharoopa.data.model.uiobj.MTF
-import com.nascriptone.siddharoopa.data.model.uiobj.Phrase
-import com.nascriptone.siddharoopa.data.model.uiobj.QTemplate
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
-import com.nascriptone.siddharoopa.data.model.uiobj.Table
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenState
@@ -29,12 +30,17 @@ import com.nascriptone.siddharoopa.ui.screen.home.ObserveSabda
 import com.nascriptone.siddharoopa.ui.screen.quiz.Action
 import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.CreationState
+import com.nascriptone.siddharoopa.ui.screen.quiz.Dashboard
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
+import com.nascriptone.siddharoopa.ui.screen.quiz.McqStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
+import com.nascriptone.siddharoopa.ui.screen.quiz.MtfStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
+import com.nascriptone.siddharoopa.ui.screen.quiz.Result
 import com.nascriptone.siddharoopa.ui.screen.quiz.State
+import com.nascriptone.siddharoopa.ui.screen.quiz.ValuationState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import com.nascriptone.siddharoopa.ui.screen.table.StringParse
@@ -43,6 +49,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +61,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 
@@ -145,44 +154,42 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
+    fun quizValuation() {
+        val data = quizUIState.value.questionList.requireSuccess {
+            it.isNotEmpty()
+        } ?: run {
+            Log.d("quizValuation", "Skipped: question list empty or not in success state")
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            _quizUIState.update { it.copy(result = ValuationState.Calculate) }
+            val result = runCatching {
+                delay(1000)
 
-//    fun quizValuation() {
-//        val data = quizUIState.value.questionList.requireSuccess {
-//            it.isNotEmpty()
-//        } ?: run {
-//            Log.d("quizValuation", "Skipped: question list empty or not in success state")
-//            return
-//        }
-//        viewModelScope.launch(Dispatchers.Default) {
-//            _quizUIState.update { it.copy(result = ValuationState.Calculate) }
-//            val result = runCatching {
-//                delay(1000)
-//                val currentMode = quizUIState.value.quizMode
-//                val totalScore = (12..56).random()
-//                val score = (0..totalScore).random()
-//                val accuracy = (score.toFloat() / totalScore.toFloat())
-//
-//                val x = data.map { it.answer }.mapIndexed { i, v ->
-//                    v is Answer.Unspecified
-//                }
-//
-//                val dashboard = Dashboard(
-//                    mode = currentMode, accuracy = accuracy, score = score, totalScore = totalScore
-//                )
-//
-//                Result(
-//                    dashboard = dashboard
-//                )
-//            }.map {
-//                ValuationState.Success(result = it)
-//            }.getOrElse { e ->
-//                Log.d("quizValuation", "Valuation failed", e)
-//                ValuationState.Error(message = e.message.orEmpty())
-//            }
-//            _quizUIState.update { it.copy(result = result) }
-//        }
-//    }
+                val mcqStates =
+                    data.mapNotNull { it.state as? State.McqState }.takeIf { it.isNotEmpty() }
+                val mtfStates =
+                    data.mapNotNull { it.state as? State.MtfState }.takeIf { it.isNotEmpty() }
+                val mcqStats = mcqStates?.calculateMcqStats()
+                val mtfStats = mtfStates?.calculateMtfStats()
 
+                val table = quizUIState.value.questionFrom
+                val dashboard = getDashboardData(mcqStats, mtfStats, table)
+
+                Result(
+                    mcqStats = mcqStats,
+                    mtfStats = mtfStats,
+                    dashboard = dashboard
+                )
+            }.map {
+                ValuationState.Success(result = it)
+            }.getOrElse { e ->
+                Log.d("quizValuation", "Valuation failed", e)
+                ValuationState.Error(message = e.message.orEmpty())
+            }
+            _quizUIState.update { it.copy(result = result) }
+        }
+    }
 
     fun updateAnswer(id: Int, action: Action) {
         val currentState = quizUIState.value
@@ -695,6 +702,84 @@ class SiddharoopaViewModel @Inject constructor(
 
     fun filterSabda(entireSabdaList: List<EntireSabda>) = applyFilter(entireSabdaList)
 }
+
+private fun List<State.McqState>.calculateMcqStats(): McqStats {
+    val total = size
+    val attended = count { it.data.answer != null }
+    val correct = count { it.data.answer == it.data.trueOption }
+    val wrong = attended - correct
+    val skipped = total - attended
+    val score = correct * 2
+
+    return McqStats(
+        totalQuestions = total,
+        attended = attended,
+        skipped = skipped,
+        correct = correct,
+        wrong = wrong,
+        score = score
+    )
+}
+
+private fun List<State.MtfState>.calculateMtfStats(): MtfStats {
+    val totalSet = size
+    val totalPairs = totalSet * 3
+
+    var correct = 0
+    var attended = 0
+
+    forEach { state ->
+        val userAnswers = state.data.answer
+        val correctAnswers = state.data.trueOption
+
+        if (userAnswers != null) {
+            attended++
+            correct += userAnswers.zip(correctAnswers).count { (a, b) -> a == b }
+        }
+    }
+
+    val wrong = (attended * 3) - correct
+    val skipped = totalSet - attended
+
+    return MtfStats(
+        totalSet = totalSet,
+        totalPairs = totalPairs,
+        attended = attended,
+        skipped = skipped,
+        correct = correct,
+        wrong = wrong,
+        score = correct
+    )
+}
+
+private fun getDashboardData(mcqStats: McqStats?, mtfStats: MtfStats?, table: Table?): Dashboard {
+
+    val score = (mcqStats?.score ?: 0) + (mtfStats?.score ?: 0)
+    val totalPossibleScore = (((mcqStats?.totalQuestions
+        ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
+    val accuracy = getQuizAccuracy(score, totalPossibleScore)
+    val message = getMessage(accuracy)
+
+    return Dashboard(
+        accuracy = accuracy,
+        message = message,
+        table = table,
+        score = score,
+        totalPossibleScore = totalPossibleScore
+    )
+}
+
+private fun getQuizAccuracy(es: Int, tps: Int): Float {
+    if (tps == 0) return 0f
+    return BigDecimal(es * 100).divide(BigDecimal(tps), 1, RoundingMode.HALF_UP).toFloat()
+}
+
+private fun getMessage(accuracy: Float): Int {
+    val p = 100 / 4
+    val i = (accuracy / p).toInt().coerceAtMost(3)
+    return QuizResultMessage.messageList[i].random()
+}
+
 
 private inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
     val success = this as? CreationState.Success<T> ?: return null
