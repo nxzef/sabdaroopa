@@ -83,9 +83,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
-import com.nascriptone.siddharoopa.data.model.uiobj.FormName
-import com.nascriptone.siddharoopa.data.model.uiobj.Gender
+import com.nascriptone.siddharoopa.data.model.CaseName
+import com.nascriptone.siddharoopa.data.model.FormName
+import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
