@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,8 +24,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.nascriptone.siddharoopa.data.model.uiobj.CaseName
-import com.nascriptone.siddharoopa.data.model.uiobj.FormName
+import com.nascriptone.siddharoopa.data.model.CaseName
+import com.nascriptone.siddharoopa.data.model.FormName
 
 
 // Regex Text
@@ -52,7 +51,12 @@ fun RegexText(
     }
     val finalKey = mutableKey.toMap()
     val text = replacePlaceholders(stringRes, finalKey)
-    Text(text, style = MaterialTheme.typography.titleLarge, modifier = modifier)
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Medium,
+        modifier = modifier.padding(horizontal = 8.dp)
+    )
 }
 
 // Common View Layout
@@ -88,7 +92,7 @@ fun ModeView(
 @Composable
 fun TextWithDivider(
     text: String,
-    result: String? = "12",
+    result: Int? = null,
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
@@ -110,7 +114,7 @@ fun TextWithDivider(
         )
         result?.let {
             Text(
-                text = it,
+                text = it.toString(),
                 style = style
             )
         }
