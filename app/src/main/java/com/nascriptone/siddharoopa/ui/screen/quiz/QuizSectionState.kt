@@ -2,7 +2,7 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.uiobj.Table
+import com.nascriptone.siddharoopa.data.model.Table
 
 data class QuizSectionState(
     val questionFrom: Table? = null,
@@ -10,7 +10,7 @@ data class QuizSectionState(
     val questionRange: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
     val questionList: CreationState<List<QuestionOption>> = CreationState.Loading,
-//    val result: ValuationState = ValuationState.Calculate
+    val result: ValuationState = ValuationState.Calculate
 )
 
 sealed class CreationState<out T> {
@@ -59,19 +59,58 @@ sealed interface Answer {
     data class Mtf(val answer: List<String>) : Answer
 }
 
-//sealed class ValuationState {
-//    data object Calculate : ValuationState()
-//    data class Success(val result: Result) : ValuationState()
-//    data class Error(val message: String) : ValuationState()
-//}
-//
-//data class Result(
-//    val dashboard: Dashboard
-//)
-//
-//data class Dashboard(
-//    val mode: QuizMode,
-//    val accuracy: Float,
-//    val score: Int,
-//    val totalScore: Int
-//)
+sealed interface ValuationState {
+    data object Calculate : ValuationState
+    data class Success(val result: Result) : ValuationState
+    data class Error(val message: String) : ValuationState
+}
+
+data class Result(
+    val mcqStats: McqStats? = null,
+    val mtfStats: MtfStats? = null,
+    val dashboard: Dashboard
+) {
+
+    val summary: Summary?
+        get() = Summary(
+            totalQuestions = (mcqStats?.totalQuestions ?: 0) + (mtfStats?.totalSet ?: 0),
+            totalPossibleScore = dashboard.totalPossibleScore,
+            score = dashboard.score,
+            accuracy = dashboard.accuracy
+        ).takeIf { mcqStats != null && mtfStats != null }
+
+}
+
+data class Dashboard(
+    val accuracy: Float = 0f,
+    @StringRes val message: Int = 0,
+    val table: Table? = null,
+    val score: Int = 0,
+    val totalPossibleScore: Int = 0,
+)
+
+data class McqStats(
+    val totalQuestions: Int,
+    val attended: Int,
+    val skipped: Int,
+    val correct: Int,
+    val wrong: Int,
+    val score: Int
+)
+
+data class MtfStats(
+    val totalSet: Int,
+    val totalPairs: Int,
+    val attended: Int,
+    val skipped: Int,
+    val correct: Int,
+    val wrong: Int,
+    val score: Int
+)
+
+data class Summary(
+    val totalQuestions: Int,
+    val totalPossibleScore: Int,
+    val score: Int,
+    val accuracy: Float
+)
