@@ -2,7 +2,7 @@ package com.nascriptone.siddharoopa.data.model.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.nascriptone.siddharoopa.data.model.uiobj.Table
+import com.nascriptone.siddharoopa.data.model.Table
 
 @Entity(tableName = "rest_props")
 data class RestProp(

@@ -1,4 +1,4 @@
-package com.nascriptone.siddharoopa.data.model.uiobj
+package com.nascriptone.siddharoopa.data.model
 
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
