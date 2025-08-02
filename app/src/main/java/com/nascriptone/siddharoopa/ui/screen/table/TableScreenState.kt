@@ -1,7 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
-import com.nascriptone.siddharoopa.data.model.uiobj.Declension
-import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
+import com.nascriptone.siddharoopa.data.model.Declension
+import com.nascriptone.siddharoopa.data.model.EntireSabda
 
 data class TableScreenState(
     val selectedSabda: EntireSabda? = null,

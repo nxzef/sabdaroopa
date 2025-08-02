@@ -50,9 +50,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.uiobj.Declension
-import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
-import com.nascriptone.siddharoopa.data.model.uiobj.Gender
+import com.nascriptone.siddharoopa.data.model.Declension
+import com.nascriptone.siddharoopa.data.model.EntireSabda
+import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.launch
