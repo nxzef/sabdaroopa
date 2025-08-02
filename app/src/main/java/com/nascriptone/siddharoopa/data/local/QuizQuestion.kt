@@ -1,10 +1,10 @@
 package com.nascriptone.siddharoopa.data.local
 
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.uiobj.MCQ
-import com.nascriptone.siddharoopa.data.model.uiobj.MTF
-import com.nascriptone.siddharoopa.data.model.uiobj.Phrase
-import com.nascriptone.siddharoopa.data.model.uiobj.QTemplate
+import com.nascriptone.siddharoopa.data.model.MCQ
+import com.nascriptone.siddharoopa.data.model.MTF
+import com.nascriptone.siddharoopa.data.model.Phrase
+import com.nascriptone.siddharoopa.data.model.QTemplate
 
 object QuizQuestion {
     val mcqQuestions = listOf(
