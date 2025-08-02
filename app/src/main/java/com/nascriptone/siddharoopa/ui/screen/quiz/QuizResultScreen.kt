@@ -1,9 +1,13 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -13,9 +17,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +29,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,7 +46,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import kotlin.math.roundToInt
 
 @Composable
 fun QuizResultScreen(
@@ -49,16 +59,14 @@ fun QuizResultScreen(
 ) {
 
     val screenTitle = stringResource(R.string.quiz_result_title)
-
     var calculated by rememberSaveable { mutableStateOf(false) }
 
-
-//    LaunchedEffect(Unit) {
-//        if (!calculated) {
-//            viewModel.quizValuation()
-//            calculated = true
-//        }
-//    }
+    LaunchedEffect(Unit) {
+        if (!calculated) {
+            viewModel.quizValuation()
+            calculated = true
+        }
+    }
 
     Surface {
         Column(
@@ -77,46 +85,60 @@ fun QuizResultScreen(
                     .padding(vertical = 20.dp)
             )
 
-//            when (val data = quizSectionState.result) {
-//                is ValuationState.Calculate -> CurrentState {
-//                    CircularProgressIndicator()
-//                }
-//
-//                is ValuationState.Error -> CurrentState {
-//                    Text(data.message)
-//                }
-//
-//                is ValuationState.Success -> {
-//                    MainDashboard(
-//                        dashboard = data.result.dashboard
-//                    )
-//                    Spacer(Modifier.height(12.dp))
-//                    MultipleChoiceQuestion()
-//                    MatchTheFollowing()
-//                    FinalSummary()
-//                    ReviewView()
-//                }
-//            }
+            when (val data = quizSectionState.result) {
+                is ValuationState.Calculate -> CurrentState {
+                    CircularProgressIndicator()
+                }
+
+                is ValuationState.Error -> CurrentState {
+                    Text(data.message)
+                }
+
+                is ValuationState.Success -> {
+                    val dashboard = data.result.dashboard
+                    val mcqStats = data.result.mcqStats
+                    val mtfStats = data.result.mtfStats
+                    val summary = data.result.summary
+
+                    MainDashboard(dashboard)
+                    Spacer(Modifier.height(12.dp))
+                    if (mcqStats != null) {
+                        MultipleChoiceQuestion(mcqStats)
+                    }
+                    if (mtfStats != null) {
+                        MatchTheFollowing(mtfStats)
+                    }
+                    if (summary != null) {
+                        FinalSummary(summary)
+                    }
+                    ReviewView()
+                }
+            }
         }
     }
 }
 
-/*
 @Composable
 fun MainDashboard(
     dashboard: Dashboard,
     modifier: Modifier = Modifier
 ) {
 
-    var progress by rememberSaveable { mutableFloatStateOf(0f) }
+    var accuracy by rememberSaveable { mutableFloatStateOf(0f) }
 
-    val currentProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(2000),
+    val currentBarProgress by animateFloatAsState(
+        targetValue = accuracy / 100f,
+        animationSpec = tween(2000)
     )
 
+    val currentProgress by animateIntAsState(
+        targetValue = accuracy.roundToInt(),
+        animationSpec = tween(2000)
+    )
+
+
     LaunchedEffect(Unit) {
-        progress = 0.46f
+        accuracy = dashboard.accuracy
     }
 
     Column(
@@ -127,12 +149,12 @@ fun MainDashboard(
     ) {
         Box(contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
-                progress = { currentProgress },
+                progress = { currentBarProgress },
                 strokeWidth = 8.dp,
                 modifier = Modifier.size(116.dp)
             )
             Text(
-                text = "",
+                text = "$currentProgress",
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -145,7 +167,7 @@ fun MainDashboard(
         )
         Spacer(Modifier.height(12.dp))
         MessageText(
-            message = stringResource(R.string.quarter_1)
+            message = stringResource(dashboard.message)
         )
         Spacer(Modifier.height(24.dp))
         Column(
@@ -181,17 +203,17 @@ fun MainDashboard(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "${dashboard.score} / ${dashboard.totalScore}",
+                text = "${dashboard.score} / ${dashboard.totalPossibleScore}",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
             )
         }
     }
 }
-*/
 
 @Composable
 fun FinalSummary(
+    summary: Summary,
     modifier: Modifier = Modifier,
 ) {
 
@@ -203,44 +225,54 @@ fun FinalSummary(
         title = "Final Summary",
         modifier = modifier
     ) {
-        TextWithDivider("Total Questions", style = style)
-        TextWithDivider("Total Possible Marks", style = style)
-        TextWithDivider("Total Score", style = style)
-        TextWithDivider("Accuracy", style = style, disableDivider = true)
+        TextWithDivider("Total Questions", result = summary.totalQuestions, style = style)
+        TextWithDivider("Total Possible Marks", result = summary.totalPossibleScore, style = style)
+        TextWithDivider("Total Score", result = summary.score, style = style)
+        TextWithDivider(
+            "Accuracy",
+            result = summary.accuracy.roundToInt(),
+            style = style,
+            disableDivider = true
+        )
     }
 }
 
 @Composable
 fun MultipleChoiceQuestion(
+    mcqStats: McqStats,
     modifier: Modifier = Modifier
 ) {
+    val (totalQuestions, attended, skipped, correct, wrong, score) = mcqStats
     ModeView(
         title = "Multiple Choice (MCQ)",
         modifier = modifier
     ) {
-        TextWithDivider("Number of Questions")
-        TextWithDivider("Attended")
-        TextWithDivider("Skipped")
-        TextWithDivider("Correct Answers")
-        TextWithDivider("Wrong Answers")
-        TextWithDivider("MCQ Score", disableDivider = true)
+        TextWithDivider("Number of Questions", totalQuestions)
+        TextWithDivider("Attended", attended)
+        TextWithDivider("Skipped", skipped)
+        TextWithDivider("Correct Answers", correct)
+        TextWithDivider("Wrong Answers", wrong)
+        TextWithDivider("MCQ Score", score, disableDivider = true)
     }
 }
 
 @Composable
 fun MatchTheFollowing(
+    mtfStats: MtfStats,
     modifier: Modifier = Modifier
 ) {
+    val (totalSet, totalPairs, attended, skipped, correct, wrong, score) = mtfStats
     ModeView(
         title = "Match the Following",
         modifier = modifier
     ) {
-        TextWithDivider("Number of Sets")
-        TextWithDivider("Pairs to Match")
-        TextWithDivider("Attended Sets")
-        TextWithDivider("Skipped Sets")
-        TextWithDivider("Correct Matches")
-        TextWithDivider("MTF Score", disableDivider = true)
+        TextWithDivider("Number of Sets", totalSet)
+        TextWithDivider("Pairs to Match", totalPairs)
+        TextWithDivider("Attended Sets", attended)
+        TextWithDivider("Skipped Sets", skipped)
+        TextWithDivider("Correct Matches", correct)
+        TextWithDivider("Wrong Matches", wrong)
+        TextWithDivider("MTF Score", score, disableDivider = true)
     }
 }
 
@@ -316,12 +348,10 @@ fun MultipleChoiceReview(
     ) {
         TextWithDivider(
             text = "Correct Answer",
-            result = "Hello World!",
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         TextWithDivider(
             text = "Your Answer",
-            result = "Hello World!",
             backgroundColor = Color(0x1600FF00),
             disableDivider = true,
             modifier = Modifier.padding(horizontal = 8.dp)
@@ -372,13 +402,13 @@ fun MatchTheFollowingReview(
     }
 }
 
-private fun customFormatNumber(value: Double): String {
-    return if (value % 1.0 == 0.0) {
-        value.toInt().toString()
-    } else {
-        value.toString()
-    }
-}
+//private fun customFormatNumber(value: Double): String {
+//    return if (value % 1.0 == 0.0) {
+//        value.toInt().toString()
+//    } else {
+//        value.toString()
+//    }
+//}
 
 //@Preview
 //@Composable
