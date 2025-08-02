@@ -1,9 +1,9 @@
 package com.nascriptone.siddharoopa.ui.screen.category
 
-import com.nascriptone.siddharoopa.data.model.uiobj.EntireSabda
-import com.nascriptone.siddharoopa.data.model.uiobj.Gender
-import com.nascriptone.siddharoopa.data.model.uiobj.Sound
-import com.nascriptone.siddharoopa.data.model.uiobj.Table
+import com.nascriptone.siddharoopa.data.model.EntireSabda
+import com.nascriptone.siddharoopa.data.model.Gender
+import com.nascriptone.siddharoopa.data.model.Sound
+import com.nascriptone.siddharoopa.data.model.Table
 
 
 data class CategoryScreenState(
