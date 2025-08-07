@@ -36,7 +36,7 @@ import com.nascriptone.siddharoopa.ui.screen.quiz.McqStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.Option
-import com.nascriptone.siddharoopa.ui.screen.quiz.Question
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionWithNumber
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
@@ -318,13 +318,13 @@ class SiddharoopaViewModel @Inject constructor(
             }
         }
 
-        val question = Question(
+        val getTemplateString = resourceProvider.getString(template)
+        val regexQuestion: String = replacePlaceholders(getTemplateString, templateKey)
+        val questionWithNumber = QuestionWithNumber(
             number = index,
-            template = template,
-            templateKey = templateKey
+            question = regexQuestion
         )
-
-        return QuestionOption(question = question, option = option)
+        return QuestionOption(questionWithNumber = questionWithNumber, option = option)
     }
 
     private fun generateMcqDeepInfo(
@@ -358,8 +358,8 @@ class SiddharoopaViewModel @Inject constructor(
                 trueOption = requireNotNull(temp)
                 options = getUniqueShuffledSet(allWords, trueOption)
                 templateKey = mapOf(
-                    "vibhakti" to randomCase.name,
-                    "vachana" to randomForm.name,
+                    "vibhakti" to resourceProvider.getString(randomCase.sktName),
+                    "vachana" to resourceProvider.getString(randomForm.sktName),
                     "sabda" to sabda.word
                 )
 
@@ -794,6 +794,14 @@ private data class DeepInfo(
     val templateKey: Map<String, String>,
     val option: Option
 )
+
+private const val PATTERN = "\\{(\\w+)\\}"
+private val placeholderRegex = Regex(PATTERN)
+private fun replacePlaceholders(template: String, values: Map<String, String>): String {
+    return placeholderRegex.replace(template) { match ->
+        values[match.groupValues[1]] ?: match.value
+    }
+}
 
 private fun getQuizAccuracy(es: Int, tps: Int): Float {
     if (tps == 0) return 0f
