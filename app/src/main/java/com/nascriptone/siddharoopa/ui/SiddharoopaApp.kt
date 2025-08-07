@@ -172,7 +172,9 @@ fun SiddharoopaApp(
                                 )
                             }
                             composable(SiddharoopaRoutes.QuizReview.name) {
-                                QuizReviewScreen()
+                                QuizReviewScreen(
+                                    quizSectionState = quizUIState
+                                )
                             }
                         }
                     }
