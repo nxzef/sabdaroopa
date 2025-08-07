@@ -35,11 +35,12 @@ import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
 import com.nascriptone.siddharoopa.ui.screen.quiz.MtfStats
+import com.nascriptone.siddharoopa.ui.screen.quiz.Option
+import com.nascriptone.siddharoopa.ui.screen.quiz.Question
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.quiz.Result
-import com.nascriptone.siddharoopa.ui.screen.quiz.State
 import com.nascriptone.siddharoopa.ui.screen.quiz.ValuationState
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreenState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
@@ -69,7 +70,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SiddharoopaViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
+    private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
     private val _entireSabdaList = MutableStateFlow(listOf<EntireSabda>())
@@ -167,18 +169,19 @@ class SiddharoopaViewModel @Inject constructor(
                 delay(1000)
 
                 val mcqStates =
-                    data.mapNotNull { it.state as? State.McqState }.takeIf { it.isNotEmpty() }
+                    data.mapNotNull { it.option as? Option.McqOption }.takeIf { it.isNotEmpty() }
                 val mtfStates =
-                    data.mapNotNull { it.state as? State.MtfState }.takeIf { it.isNotEmpty() }
+                    data.mapNotNull { it.option as? Option.MtfOption }.takeIf { it.isNotEmpty() }
                 val mcqStats = mcqStates?.calculateMcqStats()
                 val mtfStats = mtfStates?.calculateMtfStats()
 
-                val table = quizUIState.value.questionFrom
+                val table = quizUIState.value.table
                 val dashboard = getDashboardData(mcqStats, mtfStats, table)
 
                 Result(
                     mcqStats = mcqStats,
                     mtfStats = mtfStats,
+                    finalData = data.take(2),
                     dashboard = dashboard
                 )
             }.map {
@@ -193,29 +196,28 @@ class SiddharoopaViewModel @Inject constructor(
 
     fun updateAnswer(id: Int, action: Action) {
         val currentState = quizUIState.value
-        val questionOptions = currentState.questionList
-            .requireSuccess { it.isNotEmpty() } ?: return
+        val questionOptions = currentState.questionList.requireSuccess { it.isNotEmpty() } ?: return
 
         val currentAnswer = currentState.currentAnswer
         val updatedList = questionOptions.mapIndexed { index, questionOption ->
             if (index != id) return@mapIndexed questionOption
 
             val newState = when (action) {
-                Action.SKIP -> questionOption.state
-                Action.SUBMIT -> when (val state = questionOption.state) {
-                    is State.McqState -> {
+                Action.SKIP -> questionOption.option
+                Action.SUBMIT -> when (val state = questionOption.option) {
+                    is Option.McqOption -> {
                         val answer = (currentAnswer as? Answer.Mcq)?.answer
-                        state.copy(data = state.data.copy(answer = answer))
+                        state.copy(mcqGeneratedData = state.mcqGeneratedData.copy(answer = answer))
                     }
 
-                    is State.MtfState -> {
+                    is Option.MtfOption -> {
                         val answer = (currentAnswer as? Answer.Mtf)?.answer
-                        state.copy(data = state.data.copy(answer = answer))
+                        state.copy(mtfGeneratedData = state.mtfGeneratedData.copy(answer = answer))
                     }
                 }
             }
 
-            questionOption.copy(state = newState)
+            questionOption.copy(option = newState)
         }
 
         _quizUIState.update {
@@ -240,7 +242,7 @@ class SiddharoopaViewModel @Inject constructor(
             _quizUIState.update { it.copy(questionList = CreationState.Loading) }
             val result = runCatching {
                 val entireSabdaList = entireSabdaList.value
-                val userSelectedTable = quizUIState.value.questionFrom
+                val userSelectedTable = quizUIState.value.table
                 val userSelectedQuestionType = quizUIState.value.quizMode
                 val userSelectedQuestionRange = quizUIState.value.questionRange
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
@@ -260,8 +262,7 @@ class SiddharoopaViewModel @Inject constructor(
                     }
                     val sabda = entireSabda.sabda
                     val qTemplate = questionCollection.random()
-                    val mode = getQuestionOption(qTemplate, sabda, entireSabdaList)
-                    QuestionOption(state = mode)
+                    getQuestionOption(index, qTemplate, sabda, entireSabdaList)
                 }
 
                 CreationState.Success(data = data)
@@ -274,59 +275,72 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     private fun getQuestionOption(
+        index: Int,
         qTemplate: QTemplate,
         sabda: Sabda,
         entireSabdaList: List<EntireSabda>
-    ): State {
+    ): QuestionOption {
+
         val template = qTemplate.questionResId
-        val allGenders = entireSabdaList.map { it.sabda.gender }.toSet()
+        val allGenders = Gender.entries.toSet()
+        val allForms = FormName.entries.toSet()
         val allSabda = entireSabdaList.map { it.sabda }.toSet()
         val allAntas = entireSabdaList.map { it.sabda.anta }.toSet()
         val declension = Json.decodeFromString<Declension>(sabda.declension)
 
-        return when (val result = qTemplate.phrase) {
+        lateinit var templateKey: Map<String, String>
+
+        val option: Option = when (val result = qTemplate.phrase) {
             is Phrase.McqKey -> {
-                val mcqData = generateMcqOption(
+                val mcqDeepInfo = generateMcqDeepInfo(
                     type = result.type,
                     sabda = sabda,
                     declension = declension,
                     genders = allGenders,
                     anta = allAntas,
-                    template = template
+                    allForms = allForms
                 )
-                State.McqState(mcqData)
+                templateKey = mcqDeepInfo.templateKey
+                mcqDeepInfo.option
             }
 
             is Phrase.MtfKey -> {
-                val mtfData = generateMtfOption(
+                val mtfData = generateMtfDeepInfo(
                     type = result.type,
                     sabda = sabda,
                     declension = declension,
                     genders = allGenders,
+                    allForms = allForms,
                     allSabda = allSabda,
-                    template = template
                 )
-                State.MtfState(mtfData)
+                templateKey = mtfData.templateKey
+                mtfData.option
             }
         }
+
+        val question = Question(
+            number = index,
+            template = template,
+            templateKey = templateKey
+        )
+
+        return QuestionOption(question = question, option = option)
     }
 
-    private fun generateMcqOption(
+    private fun generateMcqDeepInfo(
         type: MCQ,
         sabda: Sabda,
         declension: Declension,
-        genders: Set<String>,
+        genders: Set<Gender>,
         anta: Set<String>,
-        template: Int,
-    ): McqGeneratedData {
-
+        allForms: Set<FormName>
+    ): DeepInfo {
 
         lateinit var templateKey: Map<String, String>
         lateinit var options: Set<String>
         lateinit var trueOption: String
 
-        val allForm = declension.values.flatMap { it.values }
-        val allVachana = declension.values.flatMap { it.keys }.toSet().map { it.name }
+        val allWords = declension.values.flatMap { it.values }
 
         when (type) {
             MCQ.ONE, MCQ.TWO, MCQ.THREE, MCQ.EIGHT -> {
@@ -342,7 +356,7 @@ class SiddharoopaViewModel @Inject constructor(
 
 
                 trueOption = requireNotNull(temp)
-                options = getUniqueShuffledSet(allForm, trueOption)
+                options = getUniqueShuffledSet(allWords, trueOption)
                 templateKey = mapOf(
                     "vibhakti" to randomCase.name,
                     "vachana" to randomForm.name,
@@ -352,8 +366,9 @@ class SiddharoopaViewModel @Inject constructor(
             }
 
             MCQ.FOUR -> {
-                val listOfGenders = genders.toList()
-                trueOption = sabda.gender
+                val listOfGenders = genders.map { resourceProvider.getString(it.sktName) }.toList()
+                val fEnum = Gender.valueOf(sabda.gender.uppercase())
+                trueOption = resourceProvider.getString(fEnum.sktName)
                 options = getUniqueShuffledSet(listOfGenders, trueOption)
                 templateKey = mapOf(
                     "sabda" to sabda.word
@@ -370,8 +385,8 @@ class SiddharoopaViewModel @Inject constructor(
                     chosenFormValue = declension.getValue(randomCase).getValue(selectedForm)
                 } while (chosenFormValue == null)
 
-                trueOption = selectedForm.name
-                options = allVachana.shuffled().toSet()
+                trueOption = resourceProvider.getString(selectedForm.sktName)
+                options = allForms.map { resourceProvider.getString(it.sktName) }.shuffled().toSet()
                 templateKey = mapOf(
                     "form" to chosenFormValue, "sabda" to sabda.word
                 )
@@ -396,22 +411,25 @@ class SiddharoopaViewModel @Inject constructor(
             }
         }
 
-        return McqGeneratedData(
-            template = template,
-            templateKey = templateKey,
+        val data = McqGeneratedData(
             options = options,
             trueOption = trueOption,
         )
+
+        return DeepInfo(
+            templateKey = templateKey,
+            option = Option.McqOption(data)
+        )
     }
 
-    private fun generateMtfOption(
+    private fun generateMtfDeepInfo(
         type: MTF,
         sabda: Sabda,
         declension: Declension,
-        genders: Set<String>,
+        genders: Set<Gender>,
+        allForms: Set<FormName>,
         allSabda: Set<Sabda>,
-        template: Int
-    ): MtfGeneratedData {
+    ): DeepInfo {
 
         var templateKey = emptyMap<String, String>()
         lateinit var options: Map<String?, String>
@@ -425,27 +443,27 @@ class SiddharoopaViewModel @Inject constructor(
 
                 lateinit var temp: Map<String, String>
                 var extraOption: String? = null
-                val forms = declension.values.flatMap { it.keys }.toSet().shuffled()
+                val forms = allForms.shuffled()
 
                 for (form in forms) {
                     val formSet = declension.mapNotNull { it.value[form] }.toMutableSet()
                     val validEntries = shuffledDeclension.filterValues {
                         val currentForm = it[form]
                         currentForm != null && formSet.remove(currentForm)
-                    }
+                    }.mapKeys { resourceProvider.getString(it.key.sktName) }
                     if (validEntries.size >= 4) {
                         val correctOptions = validEntries.entries.take(3)
                         val distractorCandidates = validEntries.entries.drop(3)
                         temp = correctOptions.associate { (k, v) ->
                             when (type) {
-                                MTF.ONE -> k.name to v[form]!!
-                                else -> v[form]!! to k.name
+                                MTF.ONE -> k to v[form]!!
+                                else -> v[form]!! to k
                             }
                         }
                         val candidate = distractorCandidates.randomOrNull()
                         extraOption = when (type) {
                             MTF.ONE -> candidate?.value?.get(form)
-                            else -> candidate?.key?.name
+                            else -> candidate?.key
                         }
                         break
                     }
@@ -475,8 +493,11 @@ class SiddharoopaViewModel @Inject constructor(
                 val sabdaByGender = allSabda.groupBy { it.gender }
                 val shuffledGenders = genders.shuffled()
                 temp = shuffledGenders.mapNotNull { gender ->
-                    sabdaByGender[gender]?.random()
-                }.associate { sabda -> sabda.gender to sabda.word }
+                    sabdaByGender[gender.name.lowercase()]?.random()
+                }.associate { sabda ->
+                    val resId = Gender.valueOf(sabda.gender.uppercase()).sktName
+                    resourceProvider.getString(resId) to sabda.word
+                }
 
 
                 trueOption = temp.values.toList()
@@ -510,15 +531,14 @@ class SiddharoopaViewModel @Inject constructor(
                     } else {
                         val previousValues = mutableSetOf<String>()
                         temp = keySet.shuffled().associate { key ->
-                            val currentSet =
-                                currentDeclension.values.mapNotNull { it[key] }.toSet()
+                            val currentSet = currentDeclension.values.mapNotNull { it[key] }.toSet()
                             val available = currentSet.minus(previousValues)
                             require(available.isNotEmpty()) {
                                 "No unique value available for key: ${key.name}"
                             }
                             val chosen = available.random()
                             previousValues.add(chosen)
-                            key.name to chosen
+                            resourceProvider.getString(key.sktName) to chosen
                         }
                         break
                     }
@@ -532,11 +552,15 @@ class SiddharoopaViewModel @Inject constructor(
                 )
             }
         }
-        return MtfGeneratedData(
-            template = template,
-            templateKey = templateKey,
+
+        val data = MtfGeneratedData(
             options = options,
-            trueOption = trueOption,
+            trueOption = trueOption
+        )
+
+        return DeepInfo(
+            templateKey = templateKey,
+            option = Option.MtfOption(data)
         )
     }
 
@@ -560,7 +584,7 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateQuizQuestionTable(table: Table?) {
         _quizUIState.update {
             it.copy(
-                questionFrom = table,
+                table = table,
             )
         }
     }
@@ -650,9 +674,7 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateTable(selectedTable: Table, selectedSound: Sound) {
         _categoryUIState.update {
             it.copy(
-                selectedTable = selectedTable,
-                selectedSound = selectedSound,
-                selectedGender = null
+                selectedTable = selectedTable, selectedSound = selectedSound, selectedGender = null
             )
         }
     }
@@ -703,10 +725,10 @@ class SiddharoopaViewModel @Inject constructor(
     fun filterSabda(entireSabdaList: List<EntireSabda>) = applyFilter(entireSabdaList)
 }
 
-private fun List<State.McqState>.calculateMcqStats(): McqStats {
+private fun List<Option.McqOption>.calculateMcqStats(): McqStats {
     val total = size
-    val attended = count { it.data.answer != null }
-    val correct = count { it.data.answer == it.data.trueOption }
+    val attended = count { it.mcqGeneratedData.answer != null }
+    val correct = count { it.mcqGeneratedData.answer == it.mcqGeneratedData.trueOption }
     val wrong = attended - correct
     val skipped = total - attended
     val score = correct * 2
@@ -721,7 +743,7 @@ private fun List<State.McqState>.calculateMcqStats(): McqStats {
     )
 }
 
-private fun List<State.MtfState>.calculateMtfStats(): MtfStats {
+private fun List<Option.MtfOption>.calculateMtfStats(): MtfStats {
     val totalSet = size
     val totalPairs = totalSet * 3
 
@@ -729,8 +751,8 @@ private fun List<State.MtfState>.calculateMtfStats(): MtfStats {
     var attended = 0
 
     forEach { state ->
-        val userAnswers = state.data.answer
-        val correctAnswers = state.data.trueOption
+        val userAnswers = state.mtfGeneratedData.answer
+        val correctAnswers = state.mtfGeneratedData.trueOption
 
         if (userAnswers != null) {
             attended++
@@ -755,8 +777,7 @@ private fun List<State.MtfState>.calculateMtfStats(): MtfStats {
 private fun getDashboardData(mcqStats: McqStats?, mtfStats: MtfStats?, table: Table?): Dashboard {
 
     val score = (mcqStats?.score ?: 0) + (mtfStats?.score ?: 0)
-    val totalPossibleScore = (((mcqStats?.totalQuestions
-        ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
+    val totalPossibleScore = (((mcqStats?.totalQuestions ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
     val accuracy = getQuizAccuracy(score, totalPossibleScore)
     val message = getMessage(accuracy)
 
@@ -769,6 +790,11 @@ private fun getDashboardData(mcqStats: McqStats?, mtfStats: MtfStats?, table: Ta
     )
 }
 
+private data class DeepInfo(
+    val templateKey: Map<String, String>,
+    val option: Option
+)
+
 private fun getQuizAccuracy(es: Int, tps: Int): Float {
     if (tps == 0) return 0f
     return BigDecimal(es * 100).divide(BigDecimal(tps), 1, RoundingMode.HALF_UP).toFloat()
@@ -780,8 +806,7 @@ private fun getMessage(accuracy: Float): Int {
     return QuizResultMessage.messageList[i].random()
 }
 
-
-private inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
+inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
     val success = this as? CreationState.Success<T> ?: return null
     return if (predicate(success.data)) success.data else null
 }
