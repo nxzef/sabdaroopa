@@ -75,7 +75,6 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -83,14 +82,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.data.model.CaseName
-import com.nascriptone.siddharoopa.data.model.FormName
-import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Collections
 import kotlin.math.absoluteValue
@@ -144,8 +139,7 @@ fun QuizQuestionScreenContent(
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
     var enabled by rememberSaveable { mutableStateOf(true) }
-    val questionCount = quizSectionState.questionRange
-    val lastQuestionIndex = questionCount - 1
+    val questionRange = quizSectionState.questionRange
     val scope = rememberCoroutineScope()
 
 
@@ -153,8 +147,8 @@ fun QuizQuestionScreenContent(
         scope.launch {
             enabled = false
             viewModel.updateAnswer(id, action)
-            delay(1000)
-            if (questionIndex < lastQuestionIndex) {
+//            delay(1000)
+            if (questionIndex < data.lastIndex) {
                 questionIndex++
             } else {
                 navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
@@ -171,7 +165,7 @@ fun QuizQuestionScreenContent(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "Question ${questionIndex + 1} of $questionCount",
+                "Question ${questionIndex + 1} of $questionRange",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -213,7 +207,7 @@ fun QuizQuestionScreenContent(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        if (questionIndex == lastQuestionIndex) "SUBMIT"
+                        if (questionIndex == data.lastIndex) "SUBMIT"
                         else "NEXT"
                     )
                 }
@@ -238,7 +232,6 @@ fun QuestionOption(
         exit = slideOutHorizontally(
             targetOffsetX = { -it / 4 }) + fadeOut(),
     ) {
-
         LaunchedEffect(Unit) { onLaunch(true) }
 
         Column(
@@ -247,14 +240,16 @@ fun QuestionOption(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(Modifier.height(70.dp))
-            when (val state = questionOption.state) {
-                is State.McqState -> StateMcq(
+            QuestionText(questionOption.questionWithNumber.question)
+            Spacer(Modifier.height(40.dp))
+            when (val state = questionOption.option) {
+                is Option.McqOption -> StateMcq(
                     state = state,
                     enabled = enabled,
                     onValueChange = { onValueChange(it) }
                 )
 
-                is State.MtfState -> StateMtf(
+                is Option.MtfOption -> StateMtf(
                     state = state,
                     enabled = enabled,
                     onValueChange = { onValueChange(it) }
@@ -266,21 +261,17 @@ fun QuestionOption(
 
 @Composable
 fun StateMcq(
-    state: State.McqState,
+    state: Option.McqOption,
     enabled: Boolean,
     onValueChange: (Answer) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val template = state.data.template
-    val templateKey = state.data.templateKey
-    val options = state.data.options
-    val trueOption = state.data.trueOption
-    val answer = state.data.answer
+    val options = state.mcqGeneratedData.options
+    val trueOption = state.mcqGeneratedData.trueOption
+    val answer = state.mcqGeneratedData.answer
 
     var currentAnswer by rememberSaveable { mutableStateOf(answer) }
 
-    RegexText(template, templateKey)
-    Spacer(Modifier.height(40.dp))
     options.forEachIndexed { i, option ->
         val isCorrectOption = option == trueOption && answer != null
         val isWrongSelectedOption = answer != null && answer == option && !isCorrectOption
@@ -333,18 +324,16 @@ fun StateMcq(
 
 @Composable
 fun StateMtf(
-    state: State.MtfState,
+    state: Option.MtfOption,
     enabled: Boolean,
     onValueChange: (Answer) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
-    val template = state.data.template
-    val templateKey = state.data.templateKey
-    val keys = remember(state) { state.data.options.keys.toList() }
-    val values = remember(state) { state.data.options.values.toList() }
-    val trueOption = remember(state) { state.data.trueOption }
-    val answer = state.data.answer
+    val keys = remember(state) { state.mtfGeneratedData.options.keys.toList() }
+    val values = remember(state) { state.mtfGeneratedData.options.values.toList() }
+    val trueOption = remember(state) { state.mtfGeneratedData.trueOption }
+    val answer = state.mtfGeneratedData.answer
 
     val thickness = 4.dp
     val animationDuration = 120
@@ -362,8 +351,6 @@ fun StateMtf(
         animationDuration = animationDuration
     )
 
-    RegexText(template, templateKey)
-    Spacer(Modifier.height(40.dp))
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -502,7 +489,8 @@ fun ValueColumn(
                 onChange = { i, j ->
                     if (i != j) {
                         Collections.swap(list, i, j)
-                        onValueChange(Answer.Mtf(list))
+                        val answer = list.take(3)
+                        onValueChange(Answer.Mtf(answer))
                     }
                 })
 
@@ -732,36 +720,8 @@ fun OptionText(
     enabled: Boolean = true,
     style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
-    val keyText = text.uppercase()
-    val adjustedText = when (keyText) {
-        in caseNameStrings -> {
-            runCatching {
-                stringResource(enumValueOf<CaseName>(keyText).sktName)
-            }.getOrDefault(
-                keyText
-            )
-        }
-
-        in genderNameStrings -> {
-            runCatching {
-                stringResource(enumValueOf<Gender>(keyText).skt)
-            }.getOrDefault(
-                keyText
-            )
-        }
-
-        in formNameStrings -> {
-            runCatching {
-                stringResource(enumValueOf<FormName>(keyText).sktName)
-            }.getOrDefault(
-                keyText
-            )
-        }
-
-        else -> keyText
-    }
     Text(
-        adjustedText,
+        text,
         style = style,
         modifier = Modifier
             .alpha(if (enabled) 1f else 0.4f)
@@ -776,12 +736,6 @@ data class ColumnParams(
     val dividerThickness: Float,
     val animationDuration: Int
 )
-
-
-private val caseNameStrings = enumValues<CaseName>().map { it.name }.toSet()
-private val genderNameStrings = enumValues<Gender>().map { it.name }.toSet()
-private val formNameStrings = enumValues<FormName>().map { it.name }.toSet()
-
 
 private fun computeAnimateTo(
     index: Int,

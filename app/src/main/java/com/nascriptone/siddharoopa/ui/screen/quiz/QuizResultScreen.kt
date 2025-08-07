@@ -4,30 +4,33 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,7 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -47,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
@@ -58,60 +62,90 @@ fun QuizResultScreen(
     modifier: Modifier = Modifier
 ) {
 
-    val screenTitle = stringResource(R.string.quiz_result_title)
-    var calculated by rememberSaveable { mutableStateOf(false) }
+    var valuated by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (!calculated) {
+        if (!valuated) {
             viewModel.quizValuation()
-            calculated = true
+            valuated = true
         }
     }
+    when (val data = quizSectionState.result) {
+        is ValuationState.Calculate -> CurrentState {
+            CircularProgressIndicator()
+        }
+
+        is ValuationState.Error -> CurrentState {
+            Text(data.message)
+        }
+
+        is ValuationState.Success -> ResultScreenMainContent(
+            result = data.result,
+            navHostController = navHostController,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+fun ResultScreenMainContent(
+    result: Result,
+    navHostController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    val dashboard = result.dashboard
+    val mcqStats = result.mcqStats
+    val mtfStats = result.mtfStats
+    val summary = result.summary
+
+    val screenTitle = stringResource(R.string.quiz_result_title)
 
     Surface {
         Column(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+            modifier = modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
         ) {
             Text(
                 text = screenTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 20.dp)
             )
-
-            when (val data = quizSectionState.result) {
-                is ValuationState.Calculate -> CurrentState {
-                    CircularProgressIndicator()
+            MainDashboard(dashboard)
+            Spacer(Modifier.height(12.dp))
+            if (mcqStats != null) {
+                MultipleChoiceQuestion(mcqStats)
+            }
+            if (mtfStats != null) {
+                MatchTheFollowing(mtfStats)
+            }
+            if (summary != null) {
+                FinalSummary(summary)
+            }
+            ReviewView(
+                items = result.finalData,
+                onClick = {
+                    navHostController.navigate(SiddharoopaRoutes.QuizReview.name)
                 }
-
-                is ValuationState.Error -> CurrentState {
-                    Text(data.message)
+            )
+            Spacer(Modifier.height(40.dp))
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(vertical = 20.dp)
+                    .fillMaxWidth()
+            ) {
+                OutlinedButton(onClick = {}, modifier = Modifier.weight(1f)) {
+                    Text("QUIT")
                 }
-
-                is ValuationState.Success -> {
-                    val dashboard = data.result.dashboard
-                    val mcqStats = data.result.mcqStats
-                    val mtfStats = data.result.mtfStats
-                    val summary = data.result.summary
-
-                    MainDashboard(dashboard)
-                    Spacer(Modifier.height(12.dp))
-                    if (mcqStats != null) {
-                        MultipleChoiceQuestion(mcqStats)
-                    }
-                    if (mtfStats != null) {
-                        MatchTheFollowing(mtfStats)
-                    }
-                    if (summary != null) {
-                        FinalSummary(summary)
-                    }
-                    ReviewView()
+                Spacer(Modifier.width(12.dp))
+                Button(onClick = {}, modifier = Modifier.weight(1f)) {
+                    Text("RETRY")
                 }
             }
         }
@@ -225,12 +259,16 @@ fun FinalSummary(
         title = "Final Summary",
         modifier = modifier
     ) {
-        TextWithDivider("Total Questions", result = summary.totalQuestions, style = style)
-        TextWithDivider("Total Possible Marks", result = summary.totalPossibleScore, style = style)
-        TextWithDivider("Total Score", result = summary.score, style = style)
+        TextWithDivider("Total Questions", res = Res.InInt(summary.totalQuestions), style = style)
+        TextWithDivider(
+            "Total Possible Marks",
+            res = Res.InInt(summary.totalPossibleScore),
+            style = style
+        )
+        TextWithDivider("Total Score", res = Res.InInt(summary.score), style = style)
         TextWithDivider(
             "Accuracy",
-            result = summary.accuracy.roundToInt(),
+            res = Res.InStr(summary.accuracy.toString()),
             style = style,
             disableDivider = true
         )
@@ -247,12 +285,12 @@ fun MultipleChoiceQuestion(
         title = "Multiple Choice (MCQ)",
         modifier = modifier
     ) {
-        TextWithDivider("Number of Questions", totalQuestions)
-        TextWithDivider("Attended", attended)
-        TextWithDivider("Skipped", skipped)
-        TextWithDivider("Correct Answers", correct)
-        TextWithDivider("Wrong Answers", wrong)
-        TextWithDivider("MCQ Score", score, disableDivider = true)
+        TextWithDivider("Number of Questions", Res.InInt(totalQuestions))
+        TextWithDivider("Attended", Res.InInt(attended))
+        TextWithDivider("Skipped", Res.InInt(skipped))
+        TextWithDivider("Correct Answers", Res.InInt(correct))
+        TextWithDivider("Wrong Answers", Res.InInt(wrong))
+        TextWithDivider("MCQ Score", Res.InInt(score), disableDivider = true)
     }
 }
 
@@ -266,13 +304,13 @@ fun MatchTheFollowing(
         title = "Match the Following",
         modifier = modifier
     ) {
-        TextWithDivider("Number of Sets", totalSet)
-        TextWithDivider("Pairs to Match", totalPairs)
-        TextWithDivider("Attended Sets", attended)
-        TextWithDivider("Skipped Sets", skipped)
-        TextWithDivider("Correct Matches", correct)
-        TextWithDivider("Wrong Matches", wrong)
-        TextWithDivider("MTF Score", score, disableDivider = true)
+        TextWithDivider("Number of Sets", Res.InInt(totalSet))
+        TextWithDivider("Pairs to Match", Res.InInt(totalPairs))
+        TextWithDivider("Attended Sets", Res.InInt(attended))
+        TextWithDivider("Skipped Sets", Res.InInt(skipped))
+        TextWithDivider("Correct Matches", Res.InInt(correct))
+        TextWithDivider("Wrong Matches", Res.InInt(wrong))
+        TextWithDivider("MTF Score", Res.InInt(score), disableDivider = true)
     }
 }
 
@@ -303,119 +341,93 @@ fun MessageText(
     )
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun ReviewView(
+    items: List<QuestionOption>,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ModeView(
         title = "Quiz Review",
-        disableBackgroundColor = false,
+        topLayer = {
+            FadeEndView(onClick)
+        },
         modifier = modifier
+            .clickable(onClick = onClick)
     ) {
-        repeat(5) {
-            val questionNumber = it + 1
-            Spacer(Modifier.height(if (it != 0) 12.dp else 4.dp))
-            QuestionWithNumber(
-                questionNumber,
-                modifier = modifier
-            ) {
-                if (questionNumber <= 3) {
-                    MultipleChoiceReview()
-                } else {
-                    MatchTheFollowingReview()
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-            HorizontalDivider()
+        items.forEach { item ->
+            QuestionAnswerReview(item, items.lastIndex)
         }
     }
 }
 
 @Composable
-fun MultipleChoiceReview(
-    modifier: Modifier = Modifier
+fun ModeView(
+    title: String,
+    modifier: Modifier = Modifier,
+    disableBackgroundColor: Boolean = false,
+    topLayer: @Composable (() -> Unit)? = null,
+    content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Column(
-        modifier = Modifier
-            .then(modifier)
-            .border(
-                border = BorderStroke(
-                    width = DividerDefaults.Thickness,
-                    color = DividerDefaults.color
-                ), shape = MaterialTheme.shapes.small
-            )
-            .clip(MaterialTheme.shapes.small)
-    ) {
-        TextWithDivider(
-            text = "Correct Answer",
-            modifier = Modifier.padding(horizontal = 8.dp)
+    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
         )
-        TextWithDivider(
-            text = "Your Answer",
-            backgroundColor = Color(0x1600FF00),
-            disableDivider = true,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-    }
-}
-
-@Composable
-fun MatchTheFollowingReview(
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .border(
-                border = BorderStroke(
-                    width = DividerDefaults.Thickness,
-                    color = DividerDefaults.color
-                ), shape = MaterialTheme.shapes.small
-            )
-            .clip(MaterialTheme.shapes.small)
-    ) {
-        repeat(3) {
-            Column(Modifier.weight(1f)) {
-                repeat(4) { inner ->
-                    val backgroundColor = when {
-                        it != 0 && inner != 0 -> Color(0x1600FF00)
-                        else -> Color.Unspecified
-                    }
-                    Box(
-                        Modifier
-                            .background(backgroundColor)
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            "Column ${it + inner}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    if (inner != 3) HorizontalDivider()
-                }
-            }
-            if (it != 2) VerticalDivider()
+        Spacer(Modifier.height(8.dp))
+        Box(
+            propagateMinConstraints = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = if (!disableBackgroundColor) MaterialTheme.colorScheme.surfaceContainer
+                        else Color.Unspecified,
+                        shape = MaterialTheme.shapes.large
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .then(modifier)
+            ) { content() }
+            topLayer?.invoke()
         }
     }
 }
 
-//private fun customFormatNumber(value: Double): String {
-//    return if (value % 1.0 == 0.0) {
-//        value.toInt().toString()
-//    } else {
-//        value.toString()
-//    }
-//}
-
-//@Preview
-//@Composable
-//fun ReviewViewPreview() {
-//    SiddharoopaTheme(true) {
-//        Surface {
-//            ReviewView()
-//        }
-//    }
-//}
+@Composable
+fun FadeEndView(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color.Unspecified,
+                        MaterialTheme.colorScheme.surfaceDim
+                    ),
+                ),
+                shape = MaterialTheme.shapes.large.copy(
+                    topStart = CornerSize(0),
+                    topEnd = CornerSize(0)
+                )
+            )
+            .padding(16.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Button(onClick) {
+            Text("View All")
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                modifier = Modifier.size(20.dp),
+                contentDescription = null
+            )
+        }
+    }
+}

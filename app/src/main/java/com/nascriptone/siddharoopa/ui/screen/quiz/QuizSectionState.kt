@@ -5,7 +5,7 @@ import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Table
 
 data class QuizSectionState(
-    val questionFrom: Table? = null,
+    val table: Table? = null,
     val quizMode: QuizMode = QuizMode.All,
     val questionRange: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
@@ -30,24 +30,25 @@ enum class QuizMode(@StringRes val uiName: Int) {
     MTF(R.string.match_the_following)
 }
 
-data class QuestionOption(val state: State)
+data class QuestionOption(val questionWithNumber: QuestionWithNumber, val option: Option)
 
-sealed class State {
-    data class McqState(val data: McqGeneratedData) : State()
-    data class MtfState(val data: MtfGeneratedData) : State()
+data class QuestionWithNumber(
+    val number: Int,
+    val question: String
+)
+
+sealed class Option {
+    data class McqOption(val mcqGeneratedData: McqGeneratedData) : Option()
+    data class MtfOption(val mtfGeneratedData: MtfGeneratedData) : Option()
 }
 
 data class McqGeneratedData(
-    @StringRes val template: Int,
-    val templateKey: Map<String, String>,
     val options: Set<String>,
     val trueOption: String,
     val answer: String? = null
 )
 
 data class MtfGeneratedData(
-    @StringRes val template: Int,
-    val templateKey: Map<String, String>,
     val options: Map<String?, String>,
     val trueOption: List<String>,
     val answer: List<String>? = null
@@ -68,6 +69,7 @@ sealed interface ValuationState {
 data class Result(
     val mcqStats: McqStats? = null,
     val mtfStats: MtfStats? = null,
+    val finalData: List<QuestionOption>,
     val dashboard: Dashboard
 ) {
 

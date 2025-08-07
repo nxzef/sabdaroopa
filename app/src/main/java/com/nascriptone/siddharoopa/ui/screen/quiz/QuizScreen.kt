@@ -87,7 +87,7 @@ fun QuizHomeScreen(
                     val subTitle = table?.subEng?.let { stringResource(it) }
                     QuizChooseOption(
                         optionName = optionName,
-                        selected = quizSectionState.questionFrom == table,
+                        selected = quizSectionState.table == table,
                         onClick = { viewModel.updateQuizQuestionTable(table) },
                         optionSubTitle = subTitle
                     )

@@ -1,7 +1,8 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,91 +14,55 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.nascriptone.siddharoopa.data.model.CaseName
-import com.nascriptone.siddharoopa.data.model.FormName
 
 
 // Regex Text
 @Composable
-fun RegexText(
-    @StringRes template: Int,
-    key: Map<String, String>,
+fun QuestionText(
+    text: String,
     modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
-    val mutableKey = key.toMutableMap()
-    val stringRes = stringResource(template)
-    val vibaktiKey = "vibhakti"
-    val vachanaKey = "vachana"
-    if (mutableKey.containsKey(vibaktiKey) || mutableKey.containsKey(vachanaKey)) {
-        val vibaktiValue = key.getValue(vibaktiKey)
-        val vachanaValue = key.getValue(vachanaKey)
-        val vibaktiEnum = CaseName.valueOf(vibaktiValue)
-        val vachanaEnum = FormName.valueOf(vachanaValue)
-        val vibaktiSktName = stringResource(vibaktiEnum.sktName)
-        val vachanaSktName = stringResource(vachanaEnum.sktName)
-        mutableKey[vibaktiKey] = vibaktiSktName
-        mutableKey[vachanaKey] = vachanaSktName
-    }
-    val finalKey = mutableKey.toMap()
-    val text = replacePlaceholders(stringRes, finalKey)
     Text(
         text = text,
-        style = MaterialTheme.typography.titleLarge,
+        style = style,
         fontWeight = FontWeight.Medium,
-        modifier = modifier.padding(horizontal = 8.dp)
+        modifier = modifier
     )
 }
 
-// Common View Layout
-
-@Composable
-fun ModeView(
-    title: String,
-    modifier: Modifier = Modifier,
-    disableBackgroundColor: Boolean = false,
-    content: @Composable (ColumnScope.() -> Unit)
-) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(Modifier.height(8.dp))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = if (!disableBackgroundColor) MaterialTheme.colorScheme.surfaceContainer
-                    else Color.Unspecified,
-                    shape = MaterialTheme.shapes.large
-                )
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) { content() }
-    }
-}
 
 // Text with a divider under the text
 
 @Composable
 fun TextWithDivider(
     text: String,
-    result: Int? = null,
+    res: Res,
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.Unspecified,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     disableDivider: Boolean = false,
 ) {
+
+    val result: String = when (res) {
+        is Res.InInt -> "${res.int}"
+        is Res.InStr -> res.str
+    }
+
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -112,47 +77,183 @@ fun TextWithDivider(
             text = "$text:",
             style = style,
         )
-        result?.let {
-            Text(
-                text = it.toString(),
-                style = style
-            )
-        }
+        Text(
+            text = result,
+            style = style
+        )
     }
     if (!disableDivider) HorizontalDivider()
 }
 
+
 @Composable
 fun QuestionWithNumber(
-    questionNumber: Int,
+    questionWithNumber: QuestionWithNumber,
+    lastIndex: Int,
     modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Row(modifier) {
-        Box(
-            modifier = Modifier
-                .width(28.dp),
-            contentAlignment = Alignment.TopEnd
-        ) {
-            Text(
-                text = "$questionNumber.",
-                fontWeight = FontWeight.Medium
-            )
+    Column(modifier = modifier) {
+        Row {
+            Box(
+                modifier = Modifier
+                    .width(28.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Text(
+                    text = "${questionWithNumber.number + 1}.",
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Column {
+                Text(questionWithNumber.question, style = style)
+                Spacer(Modifier.height(8.dp))
+                content()
+            }
         }
-        Column {
-            Text(
-                text = "What is the dual nominative form of some kind of sabda?",
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            content()
+        if (questionWithNumber.number != lastIndex) HorizontalDivider(Modifier.padding(vertical = 20.dp))
+    }
+}
+
+@Composable
+fun QuestionAnswerReview(
+    item: QuestionOption,
+    lastIndex: Int,
+    modifier: Modifier = Modifier
+) {
+    QuestionWithNumber(
+        questionWithNumber = item.questionWithNumber,
+        lastIndex = lastIndex,
+        modifier = modifier
+    ) {
+        when (val state = item.option) {
+            is Option.McqOption -> MultipleChoiceReview(state.mcqGeneratedData)
+            is Option.MtfOption -> MatchTheFollowingReview(state.mtfGeneratedData)
         }
     }
 }
 
-private fun replacePlaceholders(template: String, values: Map<String, String>): String {
-    return template.replace(Regex("\\{(\\w+)\\}")) { match ->
-        values[match.groupValues[1]] ?: match.value
+@Composable
+fun MultipleChoiceReview(
+    mcqGeneratedData: McqGeneratedData,
+    modifier: Modifier = Modifier,
+) {
+
+    val correct = mcqGeneratedData.trueOption
+    val answer = mcqGeneratedData.answer
+
+    val status = answer?.let { it == correct }
+
+    Column(
+        modifier = Modifier
+            .then(modifier)
+            .border(
+                border = BorderStroke(
+                    width = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
+                ), shape = MaterialTheme.shapes.small
+            )
+            .clip(MaterialTheme.shapes.small)
+    ) {
+        MultipleChoiceReviewBox(
+            label = "Correct Answer",
+            value = correct,
+            isHead = true
+        )
+        HorizontalDivider()
+        MultipleChoiceReviewBox(
+            label = "Your Answer",
+            value = answer ?: "Skipped",
+            status = status
+        )
     }
+}
+
+@Composable
+fun MultipleChoiceReviewBox(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    isHead: Boolean = false,
+    status: Boolean? = null,
+    style: TextStyle = MaterialTheme.typography.bodyMedium
+) {
+
+    val backgroundColor = when {
+        isHead -> Color.Unspecified
+        status == null -> MaterialTheme.colorScheme.surfaceContainerHighest
+        status -> Color(0x1600FF00)
+        else -> Color(0x16FF0000)
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .background(backgroundColor)
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp)
+        ) { Text(label, style = style) }
+        VerticalDivider()
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) { Text(value, style = style) }
+    }
+}
+
+@Composable
+fun MatchTheFollowingReview(
+    mtfGeneratedData: MtfGeneratedData,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .border(
+                border = BorderStroke(
+                    width = DividerDefaults.Thickness,
+                    color = DividerDefaults.color
+                ), shape = MaterialTheme.shapes.small
+            )
+            .clip(MaterialTheme.shapes.small)
+    ) {
+        repeat(3) {
+            Column(Modifier.weight(1f)) {
+                repeat(4) { inner ->
+                    val backgroundColor = when {
+                        it != 0 && inner != 0 -> Color(0x1600FF00)
+                        else -> Color.Unspecified
+                    }
+                    Box(
+                        Modifier
+                            .background(backgroundColor)
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "Column ${it + inner}",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    if (inner != 3) HorizontalDivider()
+                }
+            }
+            if (it != 2) VerticalDivider()
+        }
+    }
+}
+
+sealed interface Res {
+    data class InInt(val int: Int) : Res
+    data class InStr(val str: String) : Res
 }
