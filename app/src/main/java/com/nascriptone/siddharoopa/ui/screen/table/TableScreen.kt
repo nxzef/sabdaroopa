@@ -135,7 +135,7 @@ fun TableScreenContent(
 
     val sabda = currentSabda.sabda
     val gender = Gender.valueOf(sabda.gender.uppercase())
-    val genderSkt = stringResource(gender.skt)
+    val genderSkt = stringResource(gender.sktName)
     val sabdaSkt = stringResource(R.string.sabda)
     val addFavMsg = stringResource(R.string.add_favorite_msg)
     val removeFavMsg = stringResource(R.string.remove_favorite_msg)

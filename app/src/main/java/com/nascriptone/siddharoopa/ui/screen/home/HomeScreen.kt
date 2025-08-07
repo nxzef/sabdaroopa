@@ -51,8 +51,7 @@ fun HomeScreen(
         }
 
         is ObserveSabda.Success -> HomeScreenContent(
-            viewModel = viewModel,
-            navHostController = navHostController
+            viewModel = viewModel, navHostController = navHostController, modifier = modifier
         )
     }
 }
@@ -65,22 +64,17 @@ fun HomeScreenContent(
 ) {
 
     val tableViews = remember {
-        listOf<TableView>(
+        listOf(
             TableView(
-                table = Table.GENERAL,
-                option = OptionView(
-                    sound = Sound.entries,
-                    displayWord = DisplayWord(
+                table = Table.GENERAL, option = OptionView(
+                    sound = Sound.entries, displayWord = DisplayWord(
                         vowelResId = R.string.general_vowel,
                         consonantResId = R.string.general_consonant
                     )
                 )
-            ),
-            TableView(
-                table = Table.SPECIFIC,
-                option = OptionView(
-                    sound = Sound.entries,
-                    displayWord = DisplayWord(
+            ), TableView(
+                table = Table.SPECIFIC, option = OptionView(
+                    sound = Sound.entries, displayWord = DisplayWord(
                         vowelResId = R.string.specific_vowel,
                         consonantResId = R.string.specific_consonant
                     )
@@ -111,13 +105,10 @@ fun HomeScreenContent(
                         }
                         val displayWord = stringResource(displayWordResId)
                         Option(
-                            title = title,
-                            displayWord = displayWord,
-                            onCardClick = {
+                            title = title, displayWord = displayWord, onCardClick = {
                                 viewModel.updateTable(tables.table, sound)
                                 navHostController.navigate(SiddharoopaRoutes.Category.name)
-                            }
-                        )
+                            })
                     }
                 }
             }
@@ -148,8 +139,7 @@ fun Option(
     title: String, displayWord: String, onCardClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onCardClick, modifier = modifier
-            .padding(vertical = 8.dp)
+        onClick = onCardClick, modifier = modifier.padding(vertical = 8.dp)
     ) {
         Column(
             modifier = Modifier
@@ -180,16 +170,13 @@ fun Option(
 }
 
 data class TableView(
-    val table: Table,
-    val option: OptionView
+    val table: Table, val option: OptionView
 )
 
 data class OptionView(
-    val sound: List<Sound>,
-    val displayWord: DisplayWord
+    val sound: List<Sound>, val displayWord: DisplayWord
 )
 
 data class DisplayWord(
-    @StringRes val vowelResId: Int,
-    @StringRes val consonantResId: Int
+    @StringRes val vowelResId: Int, @StringRes val consonantResId: Int
 )

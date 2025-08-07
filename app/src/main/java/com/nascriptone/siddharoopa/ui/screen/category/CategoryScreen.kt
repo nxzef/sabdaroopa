@@ -131,7 +131,7 @@ fun CategoryScreenContent(
                 Spacer(Modifier.width(16.dp))
                 genderSuggestions.forEach { gender ->
                     val selected = currentGender == gender
-                    val label = stringResource(gender?.skt ?: R.string.all_skt)
+                    val label = stringResource(gender?.sktName ?: R.string.all_skt)
                     FilterChip(
                         selected = selected, label = {
                         Text(
@@ -182,7 +182,7 @@ fun SabdaItem(
 
     val sabda = entireSabda.sabda
     val gender = Gender.valueOf(sabda.gender.uppercase())
-    val genderInSkt = stringResource(gender.skt)
+    val genderInSkt = stringResource(gender.sktName)
     val sabdaInSkt = stringResource(R.string.sabda)
     val supportingText = "${sabda.anta} $genderInSkt \"${sabda.word}\" $sabdaInSkt"
 
