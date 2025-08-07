@@ -25,10 +25,10 @@ enum class Sound(@StringRes val eng: Int, @StringRes val skt: Int) {
     CONSONANTS(eng = R.string.consonant_eng, skt = R.string.consonant_skt),
 }
 
-enum class Gender(@StringRes val eng: Int, @StringRes val skt: Int) {
-    MASCULINE(eng = R.string.masculine_eng, skt = R.string.masculine_skt),
-    FEMININE(eng = R.string.feminine_eng, skt = R.string.feminine_skt),
-    NEUTER(eng = R.string.neuter_eng, skt = R.string.neuter_skt)
+enum class Gender(@StringRes val eng: Int, @StringRes val sktName: Int) {
+    MASCULINE(eng = R.string.masculine_eng, sktName = R.string.masculine_skt),
+    FEMININE(eng = R.string.feminine_eng, sktName = R.string.feminine_skt),
+    NEUTER(eng = R.string.neuter_eng, sktName = R.string.neuter_skt)
 }
 
 

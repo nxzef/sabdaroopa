@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui.component
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -14,16 +15,14 @@ import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
 fun CurrentState(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.Center,
-    content: @Composable () -> Unit
+    content: @Composable (BoxScope.() -> Unit)
 ) {
     Surface {
         Box(
-            modifier = modifier
-                .fillMaxSize(),
-            contentAlignment = contentAlignment
-        ) {
-            content()
-        }
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = contentAlignment,
+            content = content
+        )
     }
 }
 
