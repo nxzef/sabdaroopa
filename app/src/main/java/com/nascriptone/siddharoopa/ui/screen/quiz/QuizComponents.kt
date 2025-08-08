@@ -212,8 +212,14 @@ fun MultipleChoiceReviewBox(
 @Composable
 fun MatchTheFollowingReview(
     mtfGeneratedData: MtfGeneratedData,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
+
+    val options = mtfGeneratedData.options
+    val trueOption = mtfGeneratedData.trueOption
+    val answer = mtfGeneratedData.answer
+    val columns = mergeCollectionsAsColumns(options, trueOption, answer)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -226,32 +232,71 @@ fun MatchTheFollowingReview(
             )
             .clip(MaterialTheme.shapes.small)
     ) {
-        repeat(3) {
+        columns.forEachIndexed { outerIndex, column ->
             Column(Modifier.weight(1f)) {
-                repeat(4) { inner ->
-                    val backgroundColor = when {
-                        it != 0 && inner != 0 -> Color(0x1600FF00)
-                        else -> Color.Unspecified
-                    }
+                column.forEachIndexed { innerIndex, cell ->
+
+                    val isHeader = innerIndex == 0 && cell == null
+
+                    val idleColor: Color =
+                        if (outerIndex != 0 && answer != null && innerIndex < 4) {
+                            val afterIndex = (innerIndex - 1).coerceAtLeast(0)
+                            if (trueOption[afterIndex] == answer[afterIndex]) Color(0x1600FF00)
+                            else Color(0x16FF0000)
+                        } else MaterialTheme.colorScheme.surfaceContainer
+
+                    val backgroundColor: Color =
+                        if (isHeader) MaterialTheme.colorScheme.surfaceContainerHighest
+                        else idleColor
+
+
+                    val fillNull: String = if (isHeader && outerIndex == 0) "Keys"
+                    else if (isHeader && outerIndex == 1) "Correct"
+                    else if (isHeader && outerIndex == 2) "Yours"
+                    else if (!isHeader && outerIndex == 2 && cell == null) "Skipped"
+                    else ""
+                    val text: String = cell ?: fillNull
+
                     Box(
                         Modifier
                             .background(backgroundColor)
                             .fillMaxWidth()
                             .height(IntrinsicSize.Min)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(8.dp)
                     ) {
-                        Text(
-                            "Column ${it + inner}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                        Text(text, style = MaterialTheme.typography.bodyMedium)
                     }
-                    if (inner != 3) HorizontalDivider()
+                    if (innerIndex != column.size - 1) HorizontalDivider()
                 }
             }
-            if (it != 2) VerticalDivider()
+            if (outerIndex != columns.size - 1) VerticalDivider()
         }
     }
 }
+
+
+private fun mergeCollectionsAsColumns(
+    options: Map<String?, String>,
+    trueOption: List<String>,
+    answer: List<String>?
+): List<List<String?>> {
+    val safeList1 = trueOption.take(3) + List(3 - trueOption.size.coerceAtMost(3)) { null }
+
+    val actualList2 = answer ?: List(3) { null }
+    val safeList2: List<String?> =
+        actualList2.take(3) + List(3 - actualList2.size.coerceAtMost(3)) { null }
+
+    val col1 = options.keys.toList().withSingleNullFirst()
+    val col2 = safeList1.withSingleNullFirst()
+    val col3 = safeList2.withSingleNullFirst()
+
+    return listOf(col1, col2, col3)
+}
+
+private fun <T> List<T>.withSingleNullFirst(): List<T?> {
+    return listOf<T?>(null) + if (this.all { it == null }) this else this.filterNotNull()
+}
+
 
 sealed interface Res {
     data class InInt(val int: Int) : Res
