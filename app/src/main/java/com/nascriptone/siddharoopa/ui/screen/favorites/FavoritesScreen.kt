@@ -5,7 +5,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -125,11 +124,8 @@ fun FavoritesScreenContent(
                 }
                 isDialogOpened = false
             },
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.extraLarge)
         )
     }
-
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -177,7 +173,10 @@ fun FavoritesSabdaCard(
             ) {
                 Text(sabda.word, style = MaterialTheme.typography.headlineMedium)
                 IconButton(onClick = onHeartIconClick) {
-                    Icon(heartIcon, null, tint = MaterialTheme.colorScheme.secondary)
+                    Icon(
+                        heartIcon, null,
+                        tint = MaterialTheme.colorScheme.surfaceTint
+                    )
                 }
             }
             Text(
@@ -216,38 +215,40 @@ fun FavoritesSabdaCard(
 
 @Composable
 fun DeletionDialog(
-    onConfirm: () -> Unit,
     isOpen: Boolean,
+    onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
-    if (isOpen) {
-        Dialog(onDismissRequest) {
-            Box(
-                modifier = modifier
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+    if (!isOpen) return
+    Dialog(onDismissRequest) {
+        Column(
+            modifier = modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = MaterialTheme.shapes.extraLarge
+                )
+                .widthIn(280.dp, 560.dp)
+                .padding(16.dp)
+        ) {
+            Text("Remove Sabda?", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Do you want to remove this from your favorites?",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(32.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.End)
             ) {
-                Column(
-                    modifier = Modifier
-                        .widthIn(280.dp, 560.dp)
-                        .padding(24.dp)
-                ) {
-                    Text("Do you want to delete this from your favorites?")
-                    Spacer(Modifier.height(36.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(onDismissRequest) {
-                            Text("Cancel")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onConfirm) {
-                            Text("OK")
-                        }
-                    }
+                TextButton(onDismissRequest) {
+                    Text("Cancel")
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onConfirm) {
+                    Text("OK")
                 }
             }
         }

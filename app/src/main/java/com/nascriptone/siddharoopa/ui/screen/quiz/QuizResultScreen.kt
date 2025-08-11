@@ -1,6 +1,8 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
@@ -31,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,10 +49,13 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.Routes
+import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
@@ -92,10 +98,15 @@ fun ResultScreenMainContent(
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+
+    var isDialogOpen by rememberSaveable { mutableStateOf(false) }
+
     val dashboard = result.dashboard
     val mcqStats = result.mcqStats
     val mtfStats = result.mtfStats
     val summary = result.summary
+
+    BackHandler { isDialogOpen = true }
 
     Surface {
         Column(
@@ -128,9 +139,10 @@ fun ResultScreenMainContent(
                     .padding(vertical = 20.dp)
                     .fillMaxWidth()
             ) {
-                OutlinedButton(onClick = {
-                    navHostController.navigateUp()
-                }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = { isDialogOpen = true },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("QUIT")
                 }
                 Spacer(Modifier.width(12.dp))
@@ -143,6 +155,16 @@ fun ResultScreenMainContent(
                 }
             }
         }
+        QuitDialog(
+            isOpen = isDialogOpen,
+            onConfirm = {
+                isDialogOpen = false
+                navHostController.navigateUp()
+            },
+            onDismissRequest = {
+                isDialogOpen = false
+            }
+        )
     }
 }
 
@@ -422,6 +444,62 @@ fun FadeEndView(
                 modifier = Modifier.size(20.dp),
                 contentDescription = null
             )
+        }
+    }
+}
+
+
+@SuppressLint("ConfigurationScreenWidthHeight")
+@Composable
+fun QuitDialog(
+    isOpen: Boolean,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!isOpen) return
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogWidth = when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> screenWidth * 0.85f
+        else -> minOf(screenWidth * 0.6f, 600.dp)
+    }
+    Dialog(onDismissRequest) {
+        Column(
+            modifier = modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = MaterialTheme.shapes.extraLarge
+                )
+                .width(dialogWidth)
+                .padding(16.dp)
+        ) {
+            Text("Leave Quiz?", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(4.dp))
+            Text("Are you sure you want to exit?", style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(28.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                TextButton(onClick = onDismissRequest) {
+                    Text("Cancel")
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onConfirm) {
+                    Text("OK")
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun QuitDialogPreview() {
+    SabdaroopaTheme {
+        Surface {
+            QuitDialog(true, onDismissRequest = {}, onConfirm = {})
         }
     }
 }
