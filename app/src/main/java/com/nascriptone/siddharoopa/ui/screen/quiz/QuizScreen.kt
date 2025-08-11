@@ -15,15 +15,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -43,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Table
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
@@ -66,25 +61,15 @@ fun QuizHomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
                 .verticalScroll(scrollState)
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 20.dp)
         ) {
-
-            IconButton(
-                onClick = {
-                    navHostController.navigate(SiddharoopaRoutes.QuizInstruction.name)
-                }, modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(vertical = 8.dp)
-            ) {
-                Icon(Icons.Outlined.Info, null)
-            }
-
+            Spacer(Modifier.height(20.dp))
             QuizChooseOptionView(
                 title = "Choose Category"
             ) {
                 categoryOptions.forEachIndexed { index, table ->
-                    val optionName = stringResource(table?.skt ?: R.string.all_category)
-                    val subTitle = table?.subEng?.let { stringResource(it) }
+                    val optionName = stringResource(table?.subEng ?: R.string.all_category)
+                    val subTitle = table?.skt?.let { stringResource(it) }
                     QuizChooseOption(
                         optionName = optionName,
                         selected = quizSectionState.table == table,
@@ -113,21 +98,16 @@ fun QuizHomeScreen(
                 }
 
             }
-            QuizChooseOptionView(
-                title = "Question Range"
-            ) {
-                StepSlider(
-                    viewModel = viewModel,
-                    quizSectionState = quizSectionState
-                )
-            }
+            StepSlider(
+                viewModel = viewModel,
+                quizSectionState = quizSectionState
+            )
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = {
-                    navHostController.navigate(SiddharoopaRoutes.QuizQuestion.name)
-                }, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                    navHostController.navigate(Routes.QuizQuestion.name)
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Begin Quiz")
             }
@@ -156,13 +136,12 @@ fun StepSlider(
     )
     sliderPosition = sliderState.value.roundToInt()
 
-    Column(modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+    Column(modifier.padding(vertical = 16.dp)) {
         Text(
-            "Questions: $sliderPosition",
-            modifier = Modifier.padding(start = 14.dp),
-            style = MaterialTheme.typography.titleMedium
+            "Question Range: $sliderPosition",
+            style = MaterialTheme.typography.titleLarge
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         Slider(
             state = sliderState,
             colors = SliderDefaults.colors(
@@ -199,15 +178,19 @@ fun QuizChooseOptionView(
 ) {
     Column(
         modifier = modifier
-            .padding(vertical = 20.dp, horizontal = 8.dp)
+            .padding(vertical = 12.dp)
     ) {
         Text(
             title,
             style = MaterialTheme.typography.titleLarge
         )
-        Spacer(Modifier.height(16.dp))
-        OutlinedCard(
-            modifier = Modifier.padding(horizontal = 4.dp)
+        Spacer(Modifier.height(12.dp))
+        Column(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = MaterialTheme.shapes.large
+                )
         ) {
             content()
         }
@@ -240,7 +223,7 @@ fun QuizChooseOption(
             Column {
                 Text(
                     optionName,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                 )
                 if (optionSubTitle != null) {
                     Text(
