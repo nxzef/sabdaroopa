@@ -55,7 +55,7 @@ fun FavoritesScreen(
     modifier: Modifier = Modifier
 ) {
 
-    val favoriteSabdaList = entireSabdaList.filter { it.isFavorite.status == true }
+    val favoriteSabdaList = entireSabdaList.filter { it.isFavorite.status }
         .sortedByDescending { it.isFavorite.timestamp }
 
     if (favoriteSabdaList.isEmpty()) {
