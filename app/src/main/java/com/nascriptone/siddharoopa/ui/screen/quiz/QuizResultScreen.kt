@@ -48,9 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
@@ -98,23 +97,12 @@ fun ResultScreenMainContent(
     val mtfStats = result.mtfStats
     val summary = result.summary
 
-    val screenTitle = stringResource(R.string.quiz_result_title)
-
     Surface {
         Column(
             modifier = modifier
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
-            Text(
-                text = screenTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 20.dp)
-            )
             MainDashboard(dashboard)
             Spacer(Modifier.height(12.dp))
             if (mcqStats != null) {
@@ -129,7 +117,7 @@ fun ResultScreenMainContent(
             ReviewView(
                 items = result.finalData,
                 onClick = {
-                    navHostController.navigate(SiddharoopaRoutes.QuizReview.name)
+                    navHostController.navigate(Routes.QuizReview.name)
                 }
             )
             Spacer(Modifier.height(40.dp))
@@ -140,11 +128,17 @@ fun ResultScreenMainContent(
                     .padding(vertical = 20.dp)
                     .fillMaxWidth()
             ) {
-                OutlinedButton(onClick = {}, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = {
+                    navHostController.navigateUp()
+                }, modifier = Modifier.weight(1f)) {
                     Text("QUIT")
                 }
                 Spacer(Modifier.width(12.dp))
-                Button(onClick = {}, modifier = Modifier.weight(1f)) {
+                Button(onClick = {
+                    navHostController.navigate(Routes.QuizQuestion.name) {
+                        popUpTo(Routes.QuizResult.name) { inclusive = true }
+                    }
+                }, modifier = Modifier.weight(1f)) {
                     Text("RETRY")
                 }
             }
@@ -224,7 +218,7 @@ fun MainDashboard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "All Categories",
+                    text = dashboard.table?.name ?: "All Categories",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier

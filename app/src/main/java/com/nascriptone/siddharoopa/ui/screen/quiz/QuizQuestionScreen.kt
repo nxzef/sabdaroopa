@@ -60,6 +60,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -83,9 +84,10 @@ import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Collections
 import kotlin.math.absoluteValue
@@ -147,11 +149,13 @@ fun QuizQuestionScreenContent(
         scope.launch {
             enabled = false
             viewModel.updateAnswer(id, action)
-//            delay(1000)
+            delay(1000)
             if (questionIndex < data.lastIndex) {
                 questionIndex++
             } else {
-                navHostController.navigate(SiddharoopaRoutes.QuizResult.name)
+                navHostController.navigate(Routes.QuizResult.name) {
+                    popUpTo(Routes.QuizQuestion.name) { inclusive = true }
+                }
             }
         }
     }
@@ -184,7 +188,6 @@ fun QuizQuestionScreenContent(
                             viewModel.updateCurrentAnswer(answer)
                         },
                         onLaunch = { enabled = it },
-//                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 }
             }
@@ -515,8 +518,8 @@ fun DraggableBox(
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
 
-    val xOffset = remember { Animatable(0f) }
-    val yOffset = remember { Animatable(0f) }
+    val xOffset = rememberSaveableAnimatable(0f)
+    val yOffset = rememberSaveableAnimatable(0f)
 
     val currentLogicalPosition by rememberUpdatedState(logicalPosition)
     val (answer, trueOption, cornerSize, dividerThickness, animationDuration) = params
@@ -727,6 +730,17 @@ fun OptionText(
             .alpha(if (enabled) 1f else 0.4f)
             .then(modifier)
     )
+}
+
+@Composable
+fun rememberSaveableAnimatable(initialValue: Float): Animatable<Float, AnimationVector1D> {
+    return rememberSaveable(
+        saver = Saver(
+            save = { it.value },
+            restore = { Animatable(it) }
+        )) {
+        Animatable(initialValue)
+    }
 }
 
 data class ColumnParams(
