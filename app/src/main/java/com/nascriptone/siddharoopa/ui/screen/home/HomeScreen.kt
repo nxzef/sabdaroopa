@@ -31,7 +31,7 @@ import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.data.model.Table
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
@@ -107,7 +107,7 @@ fun HomeScreenContent(
                         Option(
                             title = title, displayWord = displayWord, onCardClick = {
                                 viewModel.updateTable(tables.table, sound)
-                                navHostController.navigate(SiddharoopaRoutes.Category.name)
+                                navHostController.navigate(Routes.Category.name)
                             })
                     }
                 }
