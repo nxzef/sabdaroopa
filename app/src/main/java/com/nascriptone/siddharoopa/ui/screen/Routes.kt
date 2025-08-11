@@ -1,15 +1,20 @@
 package com.nascriptone.siddharoopa.ui.screen
 
-enum class SiddharoopaRoutes {
+enum class Routes {
     Home,
     Category,
     Table,
-    Settings,
-    Favorites,
-    Quiz,
+    SettingsHome,
+    FavoritesHome,
     QuizHome,
     QuizQuestion,
     QuizInstruction,
     QuizResult,
     QuizReview
+}
+
+enum class Navigation {
+    Quiz,
+    Favorites,
+    Settings
 }
