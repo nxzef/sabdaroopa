@@ -246,11 +246,11 @@ class SiddharoopaViewModel @Inject constructor(
                 val userSelectedQuestionType = quizUIState.value.quizMode
                 val userSelectedQuestionRange = quizUIState.value.questionRange
                 val maxMCQ = (userSelectedQuestionRange * 70) / 100
-                val chosenData = entireSabdaList.filter { sabda ->
+                val chosenTable = entireSabdaList.filter { sabda ->
                     listOfNotNull(
                         userSelectedTable?.let { it == sabda.table }).all { it }
                 }
-                val randomPickedSabda = chosenData.shuffled().take(userSelectedQuestionRange)
+                val randomPickedSabda = chosenTable.shuffled().take(userSelectedQuestionRange)
 
                 val data = randomPickedSabda.mapIndexed { index, entireSabda ->
                     val questionCollection = when (userSelectedQuestionType) {
