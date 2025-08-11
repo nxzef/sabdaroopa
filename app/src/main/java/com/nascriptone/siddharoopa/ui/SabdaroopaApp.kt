@@ -1,9 +1,11 @@
 package com.nascriptone.siddharoopa.ui
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.nascriptone.siddharoopa.core.utils.isDarkTheme
 import com.nascriptone.siddharoopa.data.model.Table
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Navigation
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
@@ -37,19 +40,22 @@ import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizQuestionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
+import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
-fun SiddharoopaApp(
+fun SabdaroopaApp(
     modifier: Modifier = Modifier,
     viewModel: SiddharoopaViewModel = hiltViewModel(),
     navHostController: NavHostController = rememberNavController()
@@ -66,8 +72,7 @@ fun SiddharoopaApp(
     val backStackEntry by navHostController.currentBackStackEntryAsState()
     val currentRoute by remember(backStackEntry) {
         derivedStateOf {
-            backStackEntry?.destination?.route?.let { SiddharoopaRoutes.valueOf(it) }
-                ?: SiddharoopaRoutes.Home
+            backStackEntry?.destination?.route?.let { Routes.valueOf(it) } ?: Routes.Home
         }
     }
 
@@ -77,12 +82,13 @@ fun SiddharoopaApp(
         isDarkTheme(userPrefTheme, systemTheme)
     }
 
+    val onBackPress: () -> Unit = { navHostController.navigateUp() }
     val snackbarHostState = remember { SnackbarHostState() }
 
 
     AnimatedContent(
         isDark, transitionSpec = { fadeIn() togetherWith fadeOut() }) { darkTheme ->
-        SiddharoopaTheme(
+        SabdaroopaTheme(
             darkTheme = darkTheme
         ) {
             Surface {
@@ -92,29 +98,28 @@ fun SiddharoopaApp(
                             navHostController = navHostController,
                             currentRoute = currentRoute,
                             categoryScreenTitle = categoryScreenState.selectedTable,
-                            tableScreenTitle = tableUIState.selectedSabda?.sabda?.word
+                            tableScreenTitle = tableUIState.selectedSabda?.sabda?.word,
+                            onBackPress = onBackPress
                         )
-                    },
-                    snackbarHost = {
+                    }, snackbarHost = {
                         SnackbarHost(snackbarHostState)
-                    },
-                    modifier = modifier
+                    }, modifier = modifier
                 ) {
                     NavHost(
                         navController = navHostController,
-                        startDestination = SiddharoopaRoutes.Home.name,
+                        startDestination = Routes.Home.name,
                         modifier = modifier
                             .fillMaxSize()
                             .padding(it)
                     ) {
-                        composable(SiddharoopaRoutes.Home.name) {
+                        composable(Routes.Home.name) {
                             HomeScreen(
                                 viewModel = viewModel,
                                 navHostController = navHostController,
                                 homeScreenState = homeUiState,
                             )
                         }
-                        composable(SiddharoopaRoutes.Category.name) {
+                        composable(Routes.Category.name) {
                             CategoryScreen(
                                 viewModel = viewModel,
                                 navHostController = navHostController,
@@ -122,7 +127,7 @@ fun SiddharoopaApp(
                                 categoryScreenState = categoryScreenState
                             )
                         }
-                        composable(SiddharoopaRoutes.Table.name) {
+                        composable(Routes.Table.name) {
                             TableScreen(
                                 tableUIState = tableUIState,
                                 entireSabdaList = entireSabdaList,
@@ -130,48 +135,59 @@ fun SiddharoopaApp(
                                 snackbarHostState = snackbarHostState
                             )
                         }
-                        composable(SiddharoopaRoutes.Favorites.name) {
-                            FavoritesScreen(
-                                viewModel = viewModel,
-                                navHostController = navHostController,
-                                favoritesUIState = favoritesUIState,
-                                entireSabdaList = entireSabdaList
-                            )
-                        }
-                        composable(SiddharoopaRoutes.Settings.name) {
-                            SettingsScreen(
-                                settingsUIState = settingsUIState, viewModel = viewModel
-                            )
+                        navigation(
+                            route = Navigation.Favorites.name,
+                            startDestination = Routes.FavoritesHome.name
+                        ) {
+                            composable(Routes.FavoritesHome.name) {
+                                FavoritesScreen(
+                                    viewModel = viewModel,
+                                    navHostController = navHostController,
+                                    favoritesUIState = favoritesUIState,
+                                    entireSabdaList = entireSabdaList
+                                )
+                            }
                         }
                         navigation(
-                            route = SiddharoopaRoutes.Quiz.name,
-                            startDestination = SiddharoopaRoutes.QuizHome.name
+                            route = Navigation.Settings.name,
+                            startDestination = Routes.SettingsHome.name
                         ) {
-                            composable(SiddharoopaRoutes.QuizHome.name) {
+                            composable(Routes.SettingsHome.name) {
+                                SettingsScreen(
+                                    settingsUIState = settingsUIState, viewModel = viewModel
+                                )
+                            }
+                        }
+                        navigation(
+                            route = Navigation.Quiz.name, startDestination = Routes.QuizHome.name
+                        ) {
+                            composable(Routes.QuizHome.name) {
                                 QuizHomeScreen(
                                     viewModel = viewModel,
                                     quizSectionState = quizUIState,
                                     navHostController = navHostController
                                 )
                             }
-                            composable(SiddharoopaRoutes.QuizQuestion.name) {
+                            composable(Routes.QuizQuestion.name) {
                                 QuizQuestionScreen(
                                     viewModel = viewModel,
                                     quizSectionState = quizUIState,
                                     navHostController = navHostController
                                 )
                             }
-                            composable(SiddharoopaRoutes.QuizInstruction.name) {
-                                QuizInstructionScreen()
+                            composable(Routes.QuizInstruction.name) {
+                                QuizInstructionScreen(
+                                    onBackPress = onBackPress
+                                )
                             }
-                            composable(SiddharoopaRoutes.QuizResult.name) {
+                            composable(Routes.QuizResult.name) {
                                 QuizResultScreen(
                                     viewModel = viewModel,
                                     quizSectionState = quizUIState,
                                     navHostController = navHostController
                                 )
                             }
-                            composable(SiddharoopaRoutes.QuizReview.name) {
+                            composable(Routes.QuizReview.name) {
                                 QuizReviewScreen(
                                     quizSectionState = quizUIState
                                 )
@@ -187,53 +203,49 @@ fun SiddharoopaApp(
 @Composable
 fun AppTopBar(
     navHostController: NavHostController,
-    currentRoute: SiddharoopaRoutes,
+    currentRoute: Routes,
     categoryScreenTitle: Table?,
     tableScreenTitle: String?,
+    onBackPress: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
 
-    val onBackPress: () -> Unit = {
-        navHostController.navigateUp()
-    }
+    AnimatedContent(
+        targetState = currentRoute,
+        transitionSpec = {
+            fadeIn() + scaleIn(initialScale = 0.8f) togetherWith
+                    fadeOut() + scaleOut(targetScale = 1.2f)
+        },
+        label = "TopBarAnimation",
+        modifier = modifier
+    ) { route ->
+        when (route) {
+            Routes.Home -> HomeTopBar(navHostController)
+            Routes.Category -> {
+                val title = categoryScreenTitle?.let { stringResource(it.skt) }.orEmpty()
+                CategoryScreenTopBar(title = title, onBackPress = onBackPress)
+            }
 
-    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Home) {
-        HomeTopBar(
-            navHostController = navHostController
-        )
-    }
+            Routes.Table -> {
+                val title = tableScreenTitle.orEmpty()
+                TableScreenTopBar(title = title, onBackPress = onBackPress)
+            }
 
-    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Category) {
-        CategoryScreenTopBar(
-            title = categoryScreenTitle?.let { stringResource(it.skt) }.orEmpty(),
-            onBackPress = onBackPress
-        )
-    }
+            Routes.FavoritesHome -> FavoritesTopBar(onBackPress)
+            Routes.SettingsHome -> SettingsTopBar(onBackPress)
+            Routes.QuizHome -> {
+                QuizTopBar(
+                    onBackPress = onBackPress,
+                    onInfoActionClick = {
+                        navHostController.navigate(Routes.QuizInstruction.name)
+                    }
+                )
+            }
 
-    AnimatedVisibility(
-        currentRoute == SiddharoopaRoutes.Table
-    ) {
-        TableScreenTopBar(
-            title = tableScreenTitle.orEmpty(), onBackPress = onBackPress
-        )
-    }
-
-    AnimatedVisibility(
-        currentRoute == SiddharoopaRoutes.Favorites
-    ) {
-        FavoritesTopBar(
-            onBackPress = onBackPress
-        )
-    }
-
-    AnimatedVisibility(currentRoute == SiddharoopaRoutes.Settings) {
-        SettingsTopBar(
-            onBackPress = onBackPress
-        )
-    }
-
-    AnimatedVisibility(currentRoute == SiddharoopaRoutes.QuizHome) {
-        QuizTopBar(
-            onBackPress = onBackPress
-        )
+            Routes.QuizResult -> QuizResultScreenTopBar()
+            Routes.QuizReview -> QuizReviewScreenTopBar(onBackPress)
+            Routes.QuizInstruction -> QuizInstructionScreenTopBar(onBackPress)
+            else -> {}
+        }
     }
 }
