@@ -152,4 +152,10 @@
     <string name="full_3">You nailed it! Keep the streak alive!</string>
     <string name="full_4">Brilliant work! You\'re close to mastery.</string>
 
+    <!-- Quiz Instructions -->
+
+    <string name="instruction_intro_title">Welcome to the Quiz!</string>
+    <string name="instruction_intro">This page contains everything you need to know before you start. Read through the instructions carefully to understand how the quiz works, how to answer, and how your score is calculated.</string>
+
+
 </resources>
