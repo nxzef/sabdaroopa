@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.nascriptone.siddharoopa.ui.theme.SiddharoopaTheme
+import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 
 @Composable
 fun CurrentState(
@@ -29,7 +29,7 @@ fun CurrentState(
 @Preview
 @Composable
 fun CurrentStatePreview() {
-    SiddharoopaTheme {
+    SabdaroopaTheme {
         CurrentState {
             Text("Hello World!")
         }
