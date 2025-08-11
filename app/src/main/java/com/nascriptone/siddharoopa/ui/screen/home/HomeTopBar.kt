@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.ui.screen.SiddharoopaRoutes
+import com.nascriptone.siddharoopa.ui.screen.Navigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,9 +29,9 @@ fun HomeTopBar(
 
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
 
-    fun navigate(route: SiddharoopaRoutes) {
+    fun navigate(navigations: Navigation) {
         menuExpanded = !menuExpanded
-        navHostController.navigate(route.name)
+        navHostController.navigate(navigations.name)
     }
 
     TopAppBar(
@@ -54,17 +54,17 @@ fun HomeTopBar(
                 DropdownMenuItem(text = {
                     Text("Quiz")
                 }, onClick = {
-                    navigate(SiddharoopaRoutes.Quiz)
+                    navigate(Navigation.Quiz)
                 })
                 DropdownMenuItem(text = {
                     Text("Favorites")
                 }, onClick = {
-                    navigate(SiddharoopaRoutes.Favorites)
+                    navigate(Navigation.Favorites)
                 })
                 DropdownMenuItem(text = {
                     Text("Settings")
                 }, onClick = {
-                    navigate(SiddharoopaRoutes.Settings)
+                    navigate(Navigation.Settings)
                 })
             }
         }
