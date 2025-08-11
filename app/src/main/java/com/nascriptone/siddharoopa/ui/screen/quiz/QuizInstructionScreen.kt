@@ -17,9 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,15 +27,14 @@ import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 
 @Composable
 fun QuizInstructionScreen(
-    onBackPress: () -> Unit,
-    modifier: Modifier = Modifier
+    onBackPress: () -> Unit, modifier: Modifier = Modifier
 ) {
     Surface {
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
             Spacer(Modifier.height(16.dp))
             Text(
@@ -46,7 +44,9 @@ fun QuizInstructionScreen(
             Text(
                 text = stringResource(R.string.instruction_intro),
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 12.dp)
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .alpha(0.8f)
             )
             Spacer(Modifier.height(16.dp))
             SectionView("Marking System") {
@@ -89,12 +89,10 @@ fun QuizInstructionScreen(
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Example:",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Example:", style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "If you choose “All Categories” with 10 questions:\n" +
-                            "→ You’ll get 7 MCQs + 3 MTF sets",
+                    text = "If you choose “All Categories” with 10 questions:\n" + "→ You’ll get 7 MCQs + 3 MTF sets",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -139,9 +137,8 @@ fun QuizInstructionScreen(
                 )
             }
             Button(
-                onClick = onBackPress,
-                modifier = Modifier
-                    .padding(vertical = 16.dp)
+                onClick = onBackPress, modifier = Modifier
+                    .padding(vertical = 20.dp)
                     .fillMaxWidth()
             ) {
                 Text("Got It! Let’s Start Quiz")
@@ -152,26 +149,32 @@ fun QuizInstructionScreen(
 
 @Composable
 fun BulletList(
-    list: List<String>,
-    modifier: Modifier = Modifier
+    list: List<String>, modifier: Modifier = Modifier
 ) {
-    val bullet = remember { "\u2022" }
+    val bullet = "\u2022"
+    val textModifier = Modifier.alpha(0.9f)
     list.forEach { item ->
-        Row(modifier) {
-            Box(contentAlignment = Alignment.TopCenter) {
-                Text(bullet)
+        Row(modifier.padding(vertical = 4.dp)) {
+            Box {
+                Text(
+                    text = bullet,// "•"
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = textModifier
+                )
             }
             Spacer(Modifier.width(8.dp))
-            Text(item, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = item,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = textModifier
+            )
         }
     }
 }
 
 @Composable
 fun SectionView(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable (ColumnScope.() -> Unit)
+    title: String, modifier: Modifier = Modifier, content: @Composable (ColumnScope.() -> Unit)
 ) {
     Column(
         modifier = modifier.padding(vertical = 16.dp)
