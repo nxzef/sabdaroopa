@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.nascriptone.siddharoopa.ui.theme
 
 import android.app.Activity
@@ -53,7 +55,6 @@ private val lightScheme = lightColorScheme(
     surfaceContainerHigh = surfaceContainerHighLight,
     surfaceContainerHighest = surfaceContainerHighestLight,
 )
-
 private val darkScheme = darkColorScheme(
     primary = primaryDark,
     onPrimary = onPrimaryDark,
