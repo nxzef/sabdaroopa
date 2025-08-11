@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.nascriptone.siddharoopa.ui.SiddharoopaApp
+import com.nascriptone.siddharoopa.ui.SabdaroopaApp
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -15,6 +15,6 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContent { SiddharoopaApp() }
+        setContent { SabdaroopaApp() }
     }
 }
