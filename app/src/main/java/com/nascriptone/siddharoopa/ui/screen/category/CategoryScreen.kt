@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -54,58 +53,19 @@ fun CategoryScreen(
     modifier: Modifier = Modifier
 ) {
 
-    LaunchedEffect(Unit) {
-        viewModel.filterSabda(entireSabdaList)
-    }
-
-
-    when (val result = categoryScreenState.result) {
-        is FilterState.Loading -> {
-            CurrentState {
-                CircularProgressIndicator()
-            }
-        }
-
-        is FilterState.Error -> {
-            CurrentState {
-                Text(result.msg)
-                Log.e("room_error", result.msg)
-            }
-        }
-
-        is FilterState.Success -> {
-            CategoryScreenContent(
-                data = result.filteredData,
-                currentSound = categoryScreenState.selectedSound,
-                currentGender = categoryScreenState.selectedGender,
-                viewModel = viewModel,
-                navHostController = navHostController,
-                modifier = modifier
-            )
-        }
-    }
-}
-
-@Composable
-fun CategoryScreenContent(
-    data: List<EntireSabda>,
-    currentSound: Sound?,
-    currentGender: Gender?,
-    viewModel: SiddharoopaViewModel,
-    navHostController: NavHostController,
-    modifier: Modifier = Modifier
-) {
-
-
+    val currentSound = categoryScreenState.selectedSound
+    val currentGender = categoryScreenState.selectedGender
     val tabItems = Sound.entries
     val genderSuggestions: Set<Gender?> = setOf(
         null, *Gender.entries.toTypedArray()
     )
 
+    LaunchedEffect(Unit) {
+        viewModel.filterSabda(entireSabdaList)
+    }
+
     Surface {
-        Column(
-            modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier) {
             SecondaryTabRow(
                 selectedTabIndex = tabItems.indexOf(currentSound)
             ) {
@@ -113,14 +73,13 @@ fun CategoryScreenContent(
                     val label = stringResource(sound.skt)
                     Tab(
                         selected = sound == currentSound, onClick = {
-                        viewModel.updateSoundFilter(sound)
-                    }, text = {
-                        Text(label, style = MaterialTheme.typography.titleLarge)
-                    }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            viewModel.updateSoundFilter(sound)
+                        }, text = {
+                            Text(label, style = MaterialTheme.typography.titleLarge)
+                        }, unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,50 +93,76 @@ fun CategoryScreenContent(
                     val label = stringResource(gender?.sktName ?: R.string.all_skt)
                     FilterChip(
                         selected = selected, label = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.W600
-                        )
-                    }, onClick = {
-                        viewModel.updateGenderFilter(gender)
-                    }, leadingIcon = {
-                        AnimatedVisibility(selected) {
-                            Icon(Icons.Rounded.Check, null)
-                        }
-                    }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.W600
+                            )
+                        }, onClick = {
+                            viewModel.updateGenderFilter(gender)
+                        }, leadingIcon = {
+                            AnimatedVisibility(selected) {
+                                Icon(Icons.Rounded.Check, null)
+                            }
+                        }, modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
                     )
                 }
                 Spacer(Modifier.width(16.dp))
             }
+            when (val result = categoryScreenState.result) {
+                is FilterState.Loading -> {
+                    CurrentState(modifier = Modifier.weight(1f)) {
+                        CircularProgressIndicator()
+                    }
+                }
 
-            LazyColumn(
-                modifier = modifier.weight(1F)
-            ) {
+                is FilterState.Error -> {
+                    CurrentState(modifier = Modifier.weight(1f)) {
+                        Text(result.msg)
+                        Log.e("room_error", result.msg)
+                    }
+                }
 
-                items(data) { sabda ->
-                    SabdaItem(
-                        entireSabda = sabda, onClick = { details ->
+                is FilterState.Success -> {
+                    CategoryScreenList(
+                        data = result.filteredData,
+                        onClick = { details, sabda ->
                             viewModel.updateSelectedSabda(sabda)
                             navHostController.navigate(Routes.Table.name) {
                                 launchSingleTop = true
                             }
-                        })
-                }
-
-                item {
-                    Spacer(Modifier.height(52.dp))
+                        },
+                    )
                 }
             }
-
         }
     }
+}
 
+@Composable
+fun CategoryScreenList(
+    data: List<EntireSabda>,
+    onClick: (String, EntireSabda) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier) {
+        items(data) { sabda ->
+            SabdaItem(
+                entireSabda = sabda,
+                onClick = onClick
+            )
+        }
+        item {
+            Spacer(Modifier.height(52.dp))
+        }
+    }
 }
 
 @Composable
 fun SabdaItem(
-    entireSabda: EntireSabda, onClick: (String) -> Unit, modifier: Modifier = Modifier
+    entireSabda: EntireSabda,
+    onClick: (String, EntireSabda) -> Unit,
+    modifier: Modifier = Modifier
 ) {
 
     val sabda = entireSabda.sabda
@@ -188,22 +173,22 @@ fun SabdaItem(
 
     ListItem(
         headlineContent = {
-        Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
-    }, supportingContent = {
-        Text(
-            supportingText,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
-        )
-    }, trailingContent = {
-        if (entireSabda.isFavorite.status) {
-            Icon(
-                Icons.Rounded.Favorite,
-                null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(12.dp)
+            Text(sabda.word, style = MaterialTheme.typography.headlineSmall)
+        }, supportingContent = {
+            Text(
+                supportingText,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7F)
             )
-        }
-    }, modifier = modifier.clickable(onClick = { onClick(supportingText) })
+        }, trailingContent = {
+            if (entireSabda.isFavorite.status) {
+                Icon(
+                    Icons.Rounded.Favorite,
+                    null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
+        }, modifier = modifier.clickable(onClick = { onClick(supportingText, entireSabda) })
     )
 }
