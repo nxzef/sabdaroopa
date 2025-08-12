@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -230,13 +231,14 @@ fun DeletionDialog(
                     shape = MaterialTheme.shapes.extraLarge
                 )
                 .widthIn(280.dp, 560.dp)
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text("Remove Sabda?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Do you want to remove this from your favorites?",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = modifier.alpha(0.85f)
             )
             Spacer(Modifier.height(32.dp))
             Row(
