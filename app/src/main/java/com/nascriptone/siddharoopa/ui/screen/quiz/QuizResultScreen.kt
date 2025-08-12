@@ -43,19 +43,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
@@ -106,7 +105,7 @@ fun ResultScreenMainContent(
     val mtfStats = result.mtfStats
     val summary = result.summary
 
-    BackHandler { isDialogOpen = true }
+    BackHandler { isDialogOpen = !isDialogOpen }
 
     Surface {
         Column(
@@ -472,12 +471,16 @@ fun QuitDialog(
                     shape = MaterialTheme.shapes.extraLarge
                 )
                 .width(dialogWidth)
-                .padding(16.dp)
+                .padding(20.dp)
         ) {
             Text("Leave Quiz?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
-            Text("Are you sure you want to exit?", style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Are you sure you want to exit?",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = modifier.alpha(0.85f)
+            )
+            Spacer(Modifier.height(32.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.align(Alignment.End)
@@ -490,16 +493,6 @@ fun QuitDialog(
                     Text("OK")
                 }
             }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun QuitDialogPreview() {
-    SabdaroopaTheme {
-        Surface {
-            QuitDialog(true, onDismissRequest = {}, onConfirm = {})
         }
     }
 }
