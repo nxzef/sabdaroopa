@@ -1,5 +1,8 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.annotation.SuppressLint
+import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -49,6 +52,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -75,12 +79,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
@@ -141,6 +147,7 @@ fun QuizQuestionScreenContent(
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
     var enabled by rememberSaveable { mutableStateOf(true) }
+    var isDialogOpen by rememberSaveable { mutableStateOf(false) }
     val questionRange = quizSectionState.questionRange
     val scope = rememberCoroutineScope()
 
@@ -159,6 +166,8 @@ fun QuizQuestionScreenContent(
             }
         }
     }
+
+    BackHandler { isDialogOpen = !isDialogOpen }
 
     Surface {
         Column(
@@ -216,6 +225,14 @@ fun QuizQuestionScreenContent(
                 }
             }
         }
+        ExitDialog(
+            isOpen = isDialogOpen,
+            onConfirm = {
+                isDialogOpen = false
+                navHostController.navigateUp()
+            },
+            onDismissRequest = { isDialogOpen = false }
+        )
     }
 }
 
@@ -715,7 +732,6 @@ fun OptionIcon(
     }
 }
 
-
 @Composable
 fun OptionText(
     text: String,
@@ -740,6 +756,56 @@ fun rememberSaveableAnimatable(initialValue: Float): Animatable<Float, Animation
             restore = { Animatable(it) }
         )) {
         Animatable(initialValue)
+    }
+}
+
+@SuppressLint("ConfigurationScreenWidthHeight")
+@Composable
+fun ExitDialog(
+    isOpen: Boolean,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!isOpen) return
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val dialogWidth = when (configuration.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> screenWidth * 0.85f
+        else -> minOf(screenWidth * 0.6f, 600.dp)
+    }
+    Dialog(onDismissRequest) {
+        Column(
+            modifier = modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = MaterialTheme.shapes.extraLarge
+                )
+                .width(dialogWidth)
+                .padding(20.dp)
+        ) {
+            Text("Abandon Quiz?", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "You haven’t finished the quiz yet.\n" +
+                        "Leaving now will erase all your answers",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = modifier.alpha(0.85f)
+            )
+            Spacer(Modifier.height(32.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                TextButton(onClick = onDismissRequest) {
+                    Text("Cancel")
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onConfirm) {
+                    Text("OK")
+                }
+            }
+        }
     }
 }
 
