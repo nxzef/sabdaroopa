@@ -9,7 +9,6 @@ import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.nascriptone.siddharoopa.data.local.converter.Converter
 import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
 import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
@@ -39,25 +38,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun specificSabdaDao(): SpecificSabdaDao
     abstract fun restPropDao(): RestPropDao
 
-
     @RenameTable("favorite_sabda", "rest_prop")
     @RenameColumn("favorite_sabda", "favSabdaId", "favorite")
     @DeleteColumn("favorite_sabda", "favSabdaCategory")
-    class AutoMigration3 : AutoMigrationSpec {
-        override fun onPostMigrate(db: SupportSQLiteDatabase) {
-            super.onPostMigrate(db)
-        }
-    }
-
+    class AutoMigration3 : AutoMigrationSpec
 
     @DeleteTable.Entries(
         DeleteTable(tableName = "rest_prop")
     )
-    class AutoMigration4 : AutoMigrationSpec {
-        override fun onPostMigrate(db: SupportSQLiteDatabase) {
-            super.onPostMigrate(db)
-        }
-    }
+    class AutoMigration4 : AutoMigrationSpec
 
 
 }
