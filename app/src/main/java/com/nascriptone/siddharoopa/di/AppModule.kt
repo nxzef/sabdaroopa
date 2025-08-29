@@ -6,9 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.nascriptone.siddharoopa.data.local.AppDatabase
-import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
-import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
-import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
+import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,19 +35,7 @@ object AppModule {
     }
 
     @Provides
-    fun provideGeneralSabdaDao(db: AppDatabase): GeneralSabdaDao {
-        return db.generalSabdaDao()
-    }
-
-    @Provides
-    fun provideSpecificSabdaDao(db: AppDatabase): SpecificSabdaDao {
-        return db.specificSabdaDao()
-    }
-
-    @Provides
-    fun provideRestPropDao(db: AppDatabase): RestPropDao {
-        return db.restPropDao()
-    }
+    fun provideSabdaDao(db: AppDatabase): SabdaDao = db.sabdaDao()
 
     @Provides
     @Singleton
