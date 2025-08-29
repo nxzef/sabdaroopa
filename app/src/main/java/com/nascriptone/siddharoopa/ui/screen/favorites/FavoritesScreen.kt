@@ -1,8 +1,17 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
-import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,38 +20,50 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Quiz
+import androidx.compose.material.icons.rounded.TableView
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.EntireSabda
-import com.nascriptone.siddharoopa.data.model.Sound
-import com.nascriptone.siddharoopa.data.model.Table
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.component.CustomDialog
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
+import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
@@ -50,61 +71,97 @@ import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 fun FavoritesScreen(
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
-    favoritesUIState: FavoritesScreenState,
-    entireSabdaList: List<EntireSabda>,
+    favoriteUIState: FavoritesState,
     modifier: Modifier = Modifier
 ) {
 
-    val favoriteSabdaList = entireSabdaList.filter { it.isFavorite.status }
-        .sortedByDescending { it.isFavorite.timestamp }
-
-    if (favoriteSabdaList.isEmpty()) {
-        CurrentState {
-            Text("There is nothing!")
-        }
-    } else {
-        FavoritesScreenContent(
+    when (val gatherState = favoriteUIState.gatherState) {
+        is GatherState.Success -> FavoritesScreenContent(
+            favoriteList = gatherState.favoriteList,
             viewModel = viewModel,
             navHostController = navHostController,
-            favoritesUIState = favoritesUIState,
-            favoritesSabdaList = favoriteSabdaList,
+            favoriteUIState = favoriteUIState,
             modifier = modifier
         )
+
+        is GatherState.Empty -> CurrentState {
+            Text("Empty....")
+        }
+
+        is GatherState.Loading -> CurrentState {
+            CircularProgressIndicator()
+        }
+
+        is GatherState.Error -> CurrentState {
+            Text(gatherState.message)
+        }
     }
 }
 
-
 @Composable
 fun FavoritesScreenContent(
+    favoriteList: List<Sabda>,
     viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
-    favoritesUIState: FavoritesScreenState,
-    favoritesSabdaList: List<EntireSabda>,
+    favoriteUIState: FavoritesState,
     modifier: Modifier = Modifier
 ) {
 
-    var isDialogOpened by rememberSaveable { mutableStateOf(false) }
-    Log.d("remove", "${favoritesUIState.sabdaToRemove}")
+    var currentDrop by rememberSaveable { mutableStateOf<Int?>(null) }
+    val defaultDeleteState = remember { DeleteDialogState(null, false) }
+    var deleteItem by rememberSaveable(
+        stateSaver = listSaver(
+            save = {
+                listOf(it.id, it.visible)
+            },
+            restore = {
+                DeleteDialogState(it[0] as Int?, it[1] as Boolean)
+            }
+        )
+    ) { mutableStateOf(defaultDeleteState) }
+
+    LaunchedEffect(favoriteUIState.isSelectMode) { currentDrop = null }
 
     Surface {
         LazyColumn(
-            modifier = modifier.padding(horizontal = 4.dp)
+            modifier = modifier.animateContentSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 Spacer(Modifier.height(16.dp))
             }
 
-            items(favoritesSabdaList) { sabda ->
-                FavoritesSabdaCard(
-                    onClick = {
-                        viewModel.updateSelectedSabda(sabda)
-                        navHostController.navigate(Routes.Table.name)
-                    }, onLongClick = {
-                        Log.d("click", "LongClick Works!")
-                    }, onHeartIconClick = {
-                        viewModel.updateSabdaToRemove(sabda)
-                        isDialogOpened = !isDialogOpened
-                    }, details = sabda, modifier = Modifier.padding(8.dp)
+            items(favoriteList, key = { s -> s.id }) { sabda ->
+                val isInSelected = sabda.id in favoriteUIState.selectedIds
+                val isSelectMode = favoriteUIState.isSelectMode
+                FavoriteCard(
+                    sabda = sabda,
+                    isSelectMode = isSelectMode,
+                    isInSelected = isInSelected,
+                    currentDrop = currentDrop,
+                    onTableClick = { id ->
+                        navHostController.navigate(Routes.Table.name.plus("/$id")) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onQuizClick = {},
+                    onDeleteClick = { id ->
+                        deleteItem = DeleteDialogState(
+                            id = id,
+                            visible = true
+                        )
+                    },
+                    onCardClick = { id ->
+                        if (favoriteUIState.isSelectMode) {
+                            viewModel.toggleSelectedId(id)
+                        } else {
+                            currentDrop = if (currentDrop == id) null else id
+                        }
+                    },
+                    onCardLongClick = viewModel::toggleSelectedId,
+                    modifier = Modifier
+                        .animateContentSize()
+                        .animateItem()
                 )
             }
 
@@ -113,147 +170,241 @@ fun FavoritesScreenContent(
             }
         }
 
-        DeletionDialog(
-            isOpen = isDialogOpened,
+        DeleteDialog(
+            visible = deleteItem.visible,
             onDismissRequest = {
-                viewModel.updateSabdaToRemove(null)
-                isDialogOpened = false
+                deleteItem = defaultDeleteState
             },
             onConfirm = {
-                favoritesUIState.sabdaToRemove?.let {
-                    viewModel.toggleFavoriteSabda(it)
-                }
-                isDialogOpened = false
+                viewModel.toggleFavoriteSabda(deleteItem.id!!)
+                deleteItem = defaultDeleteState
             },
         )
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoritesSabdaCard(
-    onLongClick: () -> Unit,
-    onClick: () -> Unit,
-    onHeartIconClick: () -> Unit,
-    details: EntireSabda,
+fun FavoriteCard(
+    sabda: Sabda,
+    isSelectMode: Boolean,
+    isInSelected: Boolean,
+    currentDrop: Int?,
+    onTableClick: (Int) -> Unit,
+    onQuizClick: (Int) -> Unit,
+    onDeleteClick: (Int) -> Unit,
+    onCardClick: (Int) -> Unit,
+    onCardLongClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sabda = details.sabda
-    val sabdaSkt = stringResource(R.string.sabda)
-    val table = when (details.table) {
-        Table.GENERAL -> stringResource(R.string.general_table)
-        Table.SPECIFIC -> stringResource(R.string.specific_table)
+    val isDropped = currentDrop == sabda.id
+    val haptic = LocalHapticFeedback.current
+    val cardOptions: List<CardOption> = remember {
+        listOf(
+            CardOption(
+                name = "Table",
+                icon = Icons.Rounded.TableView,
+            ),
+            CardOption(
+                name = "Quiz",
+                icon = Icons.Rounded.Quiz,
+            ),
+            CardOption(
+                name = "Delete",
+                icon = Icons.Rounded.Delete
+            )
+        )
     }
-    val genderInSkt = when (sabda.gender) {
-        stringResource(R.string.masculine_eng).lowercase() -> stringResource(R.string.masculine_skt)
-        stringResource(R.string.feminine_eng).lowercase() -> stringResource(R.string.feminine_skt)
-        else -> stringResource(R.string.neuter_skt)
-    }
-
-    val sound = Sound.valueOf(sabda.sound.uppercase())
-    val detailedText = "${sabda.anta} $genderInSkt $sabdaSkt"
-
-    val heartIcon = painterResource(R.drawable.heart_minus_24px_1_)
-
-    Card(
-        modifier = modifier
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .then(
+                if (isInSelected) {
+                    Modifier.border(
+                        border = BorderStroke(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.tertiary
+                        ),
+                        shape = MaterialTheme.shapes.large
+                    )
+                } else Modifier
+            )
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = MaterialTheme.shapes.large
+            )
             .clip(MaterialTheme.shapes.large)
             .combinedClickable(
-                onClick = onClick, onLongClick = onLongClick
-            ),
+                onClick = { onCardClick(sabda.id) },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onCardLongClick(sabda.id)
+                }
+            )
+            .then(modifier)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(sabda.word, style = MaterialTheme.typography.headlineMedium)
-                IconButton(onClick = onHeartIconClick) {
-                    Icon(
-                        heartIcon, null,
-                        tint = MaterialTheme.colorScheme.surfaceTint
-                    )
-                }
-            }
-            Text(
-                detailedText,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F)
+            modifier = Modifier.padding(
+                start = 16.dp,
+                top = 16.dp,
+                end = 8.dp,
+                bottom = 8.dp
             )
-            Spacer(Modifier.height(16.dp))
-
+        ) {
+            Text(
+                text = "${sabda.word.plus("ः")}\t(${sabda.meaning})",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = getSupportingText(sabda),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "$table (${stringResource(sound.skt)})",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F)
+                    text = "${stringResource(sabda.sound.skt)}\t\u2022\t${stringResource(sabda.category.skt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F),
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                    tooltip = {
+                        PlainTooltip { Text(if (isDropped) "Drop Up" else "Drop Down") }
+                    },
+                    state = rememberTooltipState()
                 ) {
-                    TextButton(onClick) {
-                        Text("See table")
+                    IconButton(
+                        enabled = !isSelectMode,
+                        onClick = { onCardClick(sabda.id) }
+                    ) {
+                        val rotate by animateFloatAsState(
+                            targetValue = if (isDropped) 180f else 0f,
+                            animationSpec = tween(200)
+                        )
+                        Icon(
+                            imageVector = Icons.Rounded.KeyboardArrowDown,
+                            contentDescription = null,
+                            modifier = Modifier.rotate(rotate)
+                        )
                     }
+                }
+            }
+        }
+        AnimatedVisibility(
+            visible = isDropped,
+            enter = fadeIn() + expandVertically(
+                animationSpec = tween(60)
+            ),
+            exit = fadeOut() + shrinkVertically(
+                animationSpec = tween(60)
+            )
+        ) {
+            OptionsComponent(
+                onTableClick = { onTableClick(sabda.id) },
+                onQuizClick = { onQuizClick(sabda.id) },
+                onDeleteClick = { onDeleteClick(sabda.id) },
+                cardOptions = cardOptions,
+                modifier = Modifier
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OptionsComponent(
+    onTableClick: () -> Unit,
+    onQuizClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    cardOptions: List<CardOption>,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.padding(
+            start = 16.dp,
+            top = 0.dp,
+            end = 16.dp,
+            bottom = 16.dp
+        )
+    ) {
+        cardOptions.forEachIndexed { index, option ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(MaterialTheme.shapes.large)
+                    .clickable(
+                        onClick = when (index) {
+                            0 -> onTableClick
+                            1 -> onQuizClick
+                            else -> onDeleteClick
+                        }
+                    )
+                    .padding(8.dp)
+            ) {
+                val color: Color = if (index == 2) Color.Red.copy(
+                    green = 0.3f,
+                    blue = 0.3f
+                )
+                else LocalContentColor.current
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                    tooltip = {
+                        PlainTooltip {
+                            Text(option.name)
+                        }
+                    },
+                    state = rememberTooltipState()
+                ) {
                     Icon(
-                        Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                        null,
-                        tint = MaterialTheme.colorScheme.primary
+                        imageVector = option.icon,
+                        tint = color,
+                        contentDescription = null,
                     )
                 }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = option.name,
+                    color = color,
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
         }
     }
 }
 
 @Composable
-fun DeletionDialog(
-    isOpen: Boolean,
+fun DeleteDialog(
+    visible: Boolean,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    if (!isOpen) return
-    Dialog(onDismissRequest) {
-        Column(
-            modifier = modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.extraLarge
-                )
-                .widthIn(280.dp, 560.dp)
-                .padding(20.dp)
-        ) {
-            Text("Remove Sabda?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Do you want to remove this from your favorites?",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = modifier.alpha(0.85f)
-            )
-            Spacer(Modifier.height(32.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                TextButton(onDismissRequest) {
-                    Text("Cancel")
-                }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onConfirm) {
-                    Text("OK")
-                }
-            }
-        }
-    }
+    CustomDialog(
+        visible = visible,
+        onDismissRequest = onDismissRequest,
+        head = { CustomDialogHead(text = "Remove Sabda?") },
+        description = {
+            CustomDialogDescription(text = "Do you want to remove this from your favorites?")
+        },
+        showDefaultAction = true,
+        onConfirm = onConfirm,
+        onCancel = onDismissRequest,
+        modifier = modifier
+    )
 }
 
+data class CardOption(
+    val name: String,
+    val icon: ImageVector,
+)
+
+data class DeleteDialogState(
+    val id: Int? = null,
+    val visible: Boolean = false
+)
