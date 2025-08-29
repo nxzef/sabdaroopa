@@ -32,7 +32,7 @@ import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun SettingsScreen(
-    settingsUIState: SettingsScreenState,
+    settingsUIState: AppPreferencesState,
     viewModel: SiddharoopaViewModel,
     modifier: Modifier = Modifier
 ) {
