@@ -83,8 +83,12 @@
 
     <!-- Favorite Screen -->
 
-    <string name="add_favorite_msg">Added to Favorites</string>
-    <string name="remove_favorite_msg">Removed from Favorites</string>
+
+    <string name="add_favorite_msg">Add to Favorites</string>
+    <string name="remove_favorite_msg">Remove from Favorites</string>
+
+    <string name="added_favorite_msg">Added to Favorites</string>
+    <string name="removed_favorite_msg">Removed from Favorites</string>
 
 
     <!-- Quiz Screen -->
