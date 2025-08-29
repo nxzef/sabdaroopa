@@ -1,7 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -33,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,7 +41,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -51,9 +48,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
+import com.nascriptone.siddharoopa.core.utils.toPascalCase
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.component.CustomDialog
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
@@ -70,7 +70,7 @@ fun QuizResultScreen(
 
     LaunchedEffect(Unit) {
         if (!valuated) {
-            viewModel.quizValuation()
+//            viewModel.quizValuation()
             valuated = true
         }
     }
@@ -98,14 +98,14 @@ fun ResultScreenMainContent(
     modifier: Modifier = Modifier
 ) {
 
-    var isDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var visible by rememberSaveable { mutableStateOf(false) }
 
     val dashboard = result.dashboard
     val mcqStats = result.mcqStats
     val mtfStats = result.mtfStats
     val summary = result.summary
 
-    BackHandler { isDialogOpen = !isDialogOpen }
+    BackHandler { visible = !visible }
 
     Surface {
         Column(
@@ -139,7 +139,7 @@ fun ResultScreenMainContent(
                     .fillMaxWidth()
             ) {
                 OutlinedButton(
-                    onClick = { isDialogOpen = true },
+                    onClick = { visible = true },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("QUIT")
@@ -155,13 +155,13 @@ fun ResultScreenMainContent(
             }
         }
         QuitDialog(
-            isOpen = isDialogOpen,
+            visible = visible,
             onConfirm = {
-                isDialogOpen = false
+                visible = false
                 navHostController.navigateUp()
             },
             onDismissRequest = {
-                isDialogOpen = false
+                visible = false
             }
         )
     }
@@ -239,7 +239,7 @@ fun MainDashboard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = dashboard.table?.name ?: "All Categories",
+                    text = dashboard.category?.toPascalCase() ?: "All Categories",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -447,52 +447,29 @@ fun FadeEndView(
     }
 }
 
-
-@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun QuitDialog(
-    isOpen: Boolean,
+    visible: Boolean,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (!isOpen) return
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val dialogWidth = when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> screenWidth * 0.85f
-        else -> minOf(screenWidth * 0.6f, 600.dp)
-    }
-    Dialog(onDismissRequest) {
-        Column(
-            modifier = modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.extraLarge
-                )
-                .width(dialogWidth)
-                .padding(20.dp)
-        ) {
-            Text("Leave Quiz?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "Are you sure you want to exit?",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = modifier.alpha(0.85f)
+    CustomDialog(
+        visible = visible,
+        onDismissRequest = onDismissRequest,
+        head = {
+            CustomDialogHead(
+                text = "Leave Quiz?"
             )
-            Spacer(Modifier.height(32.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                TextButton(onClick = onDismissRequest) {
-                    Text("Cancel")
-                }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onConfirm) {
-                    Text("OK")
-                }
-            }
-        }
-    }
+        },
+        description = {
+            CustomDialogDescription(
+                text = "Are you sure you want to exit?"
+            )
+        },
+        showDefaultAction = true,
+        onConfirm = onConfirm,
+        onCancel = onDismissRequest,
+        modifier = modifier
+    )
 }

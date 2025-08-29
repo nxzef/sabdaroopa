@@ -10,14 +10,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.nascriptone.siddharoopa.viewmodel.requireSuccess
 
 @Composable
 fun QuizReviewScreen(
     quizSectionState: QuizSectionState,
     modifier: Modifier = Modifier
 ) {
-    val list = quizSectionState.questionList.requireSuccess { it.isNotEmpty() } ?: run {
+    val list = quizSectionState.questionOptionList.requireSuccess { it.isNotEmpty() } ?: run {
         Log.d("quizValuation", "Skipped: question list empty or not in success state")
         return
     }

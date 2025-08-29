@@ -1,7 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.annotation.SuppressLint
-import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -52,7 +50,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,17 +76,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.component.CustomDialog
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.async
@@ -112,12 +110,12 @@ fun QuizQuestionScreen(
 
     LaunchedEffect(Unit) {
         if (!isFetched) {
-            viewModel.createQuizQuestions()
+//            viewModel.createQuizQuestions()
             isFetched = true
         }
     }
 
-    when (val result = quizSectionState.questionList) {
+    when (val result = quizSectionState.questionOptionList) {
         is CreationState.Loading -> CurrentState {
             CircularProgressIndicator()
         }
@@ -147,7 +145,7 @@ fun QuizQuestionScreenContent(
 
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
     var enabled by rememberSaveable { mutableStateOf(true) }
-    var isDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var visible by rememberSaveable { mutableStateOf(false) }
     val questionRange = quizSectionState.questionRange
     val scope = rememberCoroutineScope()
 
@@ -155,7 +153,7 @@ fun QuizQuestionScreenContent(
     fun onClick(id: Int, action: Action) {
         scope.launch {
             enabled = false
-            viewModel.updateAnswer(id, action)
+//            viewModel.updateAnswer(id, action)
             delay(1000)
             if (questionIndex < data.lastIndex) {
                 questionIndex++
@@ -167,7 +165,7 @@ fun QuizQuestionScreenContent(
         }
     }
 
-    BackHandler { isDialogOpen = !isDialogOpen }
+    BackHandler { visible = !visible }
 
     Surface {
         Column(
@@ -226,12 +224,12 @@ fun QuizQuestionScreenContent(
             }
         }
         ExitDialog(
-            isOpen = isDialogOpen,
+            visible = visible,
             onConfirm = {
-                isDialogOpen = false
+                visible = false
                 navHostController.navigateUp()
             },
-            onDismissRequest = { isDialogOpen = false }
+            onDismissRequest = { visible = false }
         )
     }
 }
@@ -758,55 +756,32 @@ fun rememberSaveableAnimatable(initialValue: Float): Animatable<Float, Animation
         Animatable(initialValue)
     }
 }
-
-@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun ExitDialog(
-    isOpen: Boolean,
+    visible: Boolean,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (!isOpen) return
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val dialogWidth = when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> screenWidth * 0.85f
-        else -> minOf(screenWidth * 0.6f, 600.dp)
-    }
-    Dialog(onDismissRequest) {
-        Column(
-            modifier = modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.extraLarge
-                )
-                .width(dialogWidth)
-                .padding(20.dp)
-        ) {
-            Text("Abandon Quiz?", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "You haven’t finished the quiz yet.\n" +
-                        "Leaving now will erase all your answers",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = modifier.alpha(0.85f)
+    CustomDialog(
+        visible = visible,
+        onDismissRequest = onDismissRequest,
+        head = {
+            CustomDialogHead(
+                text = "Abandon Quiz?"
             )
-            Spacer(Modifier.height(32.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                TextButton(onClick = onDismissRequest) {
-                    Text("Cancel")
-                }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onConfirm) {
-                    Text("OK")
-                }
-            }
-        }
-    }
+        },
+        description = {
+            CustomDialogDescription(
+                text = "You haven’t finished the quiz yet.\n" +
+                        "Leaving now will erase all your answers"
+            )
+        },
+        showDefaultAction = true,
+        onConfirm = onConfirm,
+        onCancel = onDismissRequest,
+        modifier = modifier
+    )
 }
 
 data class ColumnParams(

@@ -2,14 +2,13 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.Table
+import com.nascriptone.siddharoopa.data.model.Category
 
 data class QuizSectionState(
-    val table: Table? = null,
     val quizMode: QuizMode = QuizMode.All,
     val questionRange: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
-    val questionList: CreationState<List<QuestionOption>> = CreationState.Loading,
+    val questionOptionList: CreationState<List<QuestionOption>> = CreationState.Loading,
     val result: ValuationState = ValuationState.Calculate
 )
 
@@ -86,7 +85,7 @@ data class Result(
 data class Dashboard(
     val accuracy: Float = 0f,
     @StringRes val message: Int = 0,
-    val table: Table? = null,
+    val category: Category? = null,
     val score: Int = 0,
     val totalPossibleScore: Int = 0,
 )
@@ -116,3 +115,8 @@ data class Summary(
     val score: Int,
     val accuracy: Float
 )
+
+internal inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
+    val success = this as? CreationState.Success<T> ?: return null
+    return if (predicate(success.data)) success.data else null
+}

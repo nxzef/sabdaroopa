@@ -28,6 +28,8 @@ import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,7 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.Table
+import com.nascriptone.siddharoopa.data.model.Category
+import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
@@ -49,31 +52,39 @@ fun QuizHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: SiddharoopaViewModel,
 ) {
-    val scrollState = rememberScrollState()
 
+    var currentCategory: Category? by rememberSaveable(
+        stateSaver = Saver(
+            save = { it?.name },
+            restore = { it.let { Category.valueOf(it) } }
+        )
+    ) { mutableStateOf(null) }
     val quizModes = QuizMode.entries
-    val categoryOptions: List<Table?> = listOf(
-        null, *Table.entries.toTypedArray()
+    val categoryOptions: List<Category?> = listOf(
+        null, *Category.entries.toTypedArray()
     )
 
     Surface {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = modifier
-                .verticalScroll(scrollState)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(Modifier.height(20.dp))
             QuizChooseOptionView(
                 title = "Choose Category"
             ) {
-                categoryOptions.forEachIndexed { index, table ->
-                    val optionName = stringResource(table?.subEng ?: R.string.all_category)
-                    val subTitle = table?.skt?.let { stringResource(it) }
+                categoryOptions.forEachIndexed { index, category ->
+                    val optionName = stringResource(category?.eng ?: R.string.all_category)
+                    val subTitle = category?.skt?.let { stringResource(it) }
                     QuizChooseOption(
                         optionName = optionName,
-                        selected = quizSectionState.table == table,
-                        onClick = { viewModel.updateQuizQuestionTable(table) },
+                        selected = currentCategory == category,
+                        onClick = {
+                            currentCategory = category
+//                            viewModel.updateCategoryFilter(currentCategory)
+                        },
                         optionSubTitle = subTitle
                     )
                     if (index < categoryOptions.lastIndex) {
@@ -105,7 +116,7 @@ fun QuizHomeScreen(
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = {
-                    navHostController.navigate(Routes.QuizQuestion.name)
+                    navHostController.navigate("${Navigation.Quiz.name}/${Routes.QuizQuestion.name}")
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -236,4 +247,3 @@ fun QuizChooseOption(
         }
     }
 }
-

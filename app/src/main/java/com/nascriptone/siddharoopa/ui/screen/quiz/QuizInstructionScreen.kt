@@ -27,7 +27,8 @@ import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 
 @Composable
 fun QuizInstructionScreen(
-    onBackPress: () -> Unit, modifier: Modifier = Modifier
+    onBackPress: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface {
         Column(
@@ -137,7 +138,8 @@ fun QuizInstructionScreen(
                 )
             }
             Button(
-                onClick = onBackPress, modifier = Modifier
+                onClick = onBackPress,
+                modifier = Modifier
                     .padding(vertical = 20.dp)
                     .fillMaxWidth()
             ) {
@@ -149,7 +151,8 @@ fun QuizInstructionScreen(
 
 @Composable
 fun BulletList(
-    list: List<String>, modifier: Modifier = Modifier
+    list: List<String>,
+    modifier: Modifier = Modifier
 ) {
     val bullet = "\u2022"
     val textModifier = Modifier.alpha(0.9f)
