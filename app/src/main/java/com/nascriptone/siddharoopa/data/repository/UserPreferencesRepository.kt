@@ -32,11 +32,12 @@ class UserPreferencesRepository @Inject constructor(
             }
         }.map { preferences ->
             val themeName = preferences[CURRENT_THEME]
-            runCatching { Theme.valueOf(themeName ?: Theme.SYSTEM.name) }
-                .getOrElse {
-                    Log.e(TAG, "Invalid theme in preferences: $themeName, defaulting to SYSTEM")
-                    Theme.SYSTEM
-                }
+            runCatching {
+                Theme.valueOf(themeName ?: Theme.SYSTEM.name)
+            }.getOrElse {
+                Log.e(TAG, "Invalid theme in preferences: $themeName, defaulting to SYSTEM")
+                Theme.SYSTEM
+            }
         }
 
 
