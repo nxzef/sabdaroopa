@@ -1,6 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -27,18 +27,14 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,104 +42,62 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Declension
-import com.nascriptone.siddharoopa.data.model.EntireSabda
-import com.nascriptone.siddharoopa.data.model.Gender
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import kotlinx.coroutines.launch
 
 @Composable
 fun TableScreen(
-    tableUIState: TableScreenState,
-    entireSabdaList: List<EntireSabda>,
-    viewModel: SiddharoopaViewModel,
+    id: Int?,
     snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tableViewModel: TableViewModel = hiltViewModel()
 ) {
+    val uiState by tableViewModel.tableUIState.collectAsStateWithLifecycle()
 
-    val lifecycleOwner = rememberUpdatedState(LocalLifecycleOwner.current)
-    var isFetched by rememberSaveable { mutableStateOf(false) }
-    val selectedSabda = tableUIState.selectedSabda
-    val currentSabda =
-        entireSabdaList.find { it.sabda == selectedSabda?.sabda && it.table == selectedSabda.table }
-    if (currentSabda == null) return
-
-    LaunchedEffect(Unit) {
-        if (!isFetched) {
-            viewModel.parseStringToDeclension(currentSabda)
-            isFetched = true
-        }
+    LaunchedEffect(id) {
+        tableViewModel.updateId(id)
     }
 
-    DisposableEffect(Unit) {
+    when (val state = uiState) {
+        is FindState.Success -> TableScreenContent(
+            sabda = state.sabda,
+            tableViewModel = tableViewModel,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier
+        )
 
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_DESTROY) {
-                viewModel.resetTableState()
-                isFetched = false
-            }
-        }
-
-        lifecycleOwner.value.lifecycle.removeObserver(observer)
-
-        onDispose {
-            lifecycleOwner.value.lifecycle.addObserver(observer)
-        }
-
-    }
-
-
-    when (val result = tableUIState.result) {
-        is StringParse.Loading -> CurrentState(
-            modifier.fillMaxSize()
-        ) {
+        is FindState.Loading -> CurrentState {
             CircularProgressIndicator()
         }
 
-        is StringParse.Error -> CurrentState {
-            Text(result.msg)
-        }
-
-        is StringParse.Success -> {
-            TableScreenContent(
-                result.declension,
-                currentSabda,
-                viewModel,
-                snackbarHostState
-            )
-        }
+        is FindState.Error -> Text(
+            text = state.message
+        )
     }
 }
 
 
 @Composable
 fun TableScreenContent(
-    declension: Declension,
-    currentSabda: EntireSabda,
-    viewModel: SiddharoopaViewModel,
+    sabda: Sabda,
+    tableViewModel: TableViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
 
-
+    val isItFavorite = sabda.isFavorite
+    val label = if (isItFavorite) stringResource(R.string.remove_favorite_msg)
+    else stringResource(R.string.add_favorite_msg)
+    val message = if (isItFavorite) stringResource(R.string.removed_favorite_msg)
+    else stringResource(R.string.added_favorite_msg)
     val scope = rememberCoroutineScope()
-
-    val sabda = currentSabda.sabda
-    val gender = Gender.valueOf(sabda.gender.uppercase())
-    val genderSkt = stringResource(gender.sktName)
-    val sabdaSkt = stringResource(R.string.sabda)
-    val addFavMsg = stringResource(R.string.add_favorite_msg)
-    val removeFavMsg = stringResource(R.string.remove_favorite_msg)
-    val displayText = "${sabda.anta} $genderSkt \"${sabda.word}\" $sabdaSkt"
-
-    val isItFavorite = currentSabda.isFavorite.status
-    val snackBarMas = if (isItFavorite) removeFavMsg else addFavMsg
-
 
     Surface {
         Column(
@@ -154,19 +108,29 @@ fun TableScreenContent(
         ) {
             Spacer(Modifier.height(16.dp))
             Text(
-                displayText,
+                text = sabda.word,
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(vertical = 8.dp)
             )
-            DeclensionTable(declension)
+            Text(
+                text = getSupportingText(sabda),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 20.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            DeclensionTable(sabda.declension)
             FavoriteView(
-                isItFavorite = isItFavorite, onClick = {
+                label = label,
+                isItFavorite = isItFavorite,
+                onClick = {
                     scope.launch {
-                        viewModel.toggleFavoriteSabda(currentSabda)
-                        snackbarHostState.showSnackbar(snackBarMas)
+                        tableViewModel.toggleFavoriteSabda(sabda.id)
+                        snackbarHostState.showSnackbar(message)
                     }
-                })
-            Spacer(Modifier.height(28.dp))
+                }
+            )
+            Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
     }
 }
@@ -176,7 +140,6 @@ fun DeclensionTable(
     declension: Declension,
     modifier: Modifier = Modifier
 ) {
-
     val columnFirstItems = remember {
         listOf(
             R.string.vibakti,
@@ -185,7 +148,6 @@ fun DeclensionTable(
             R.string.plural
         )
     }
-
     val rowFirstItems = remember {
         listOf(
             R.string.nominative,
@@ -198,7 +160,6 @@ fun DeclensionTable(
             R.string.locative
         )
     }
-
     OutlinedCard(
         modifier = modifier
             .padding(vertical = 24.dp)
@@ -210,7 +171,7 @@ fun DeclensionTable(
             columnFirstItems.forEachIndexed { i, e ->
                 val cellValue = stringResource(e)
                 key(i to e) {
-                    DeclensionCell(cellValue, isPredefined = true, modifier = Modifier.weight(1F))
+                    DeclensionCell(cellValue, isPredefined = true, modifier = Modifier.weight(1f))
                 }
                 if (i != columnFirstItems.lastIndex) VerticalDivider()
             }
@@ -232,46 +193,11 @@ fun DeclensionTable(
                 val formEntries = case.value.entries.toList()
                 formEntries.forEachIndexed { i, form ->
                     val cellValue = form.value
-                    DeclensionCell(value = cellValue, modifier = Modifier.weight(1F))
+                    DeclensionCell(value = cellValue, modifier = Modifier.weight(1f))
                     if (i != formEntries.lastIndex) VerticalDivider()
                 }
             }
             if (i != caseEntries.lastIndex) HorizontalDivider()
-        }
-    }
-}
-
-
-@Composable
-fun FavoriteView(
-    isItFavorite: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .clickable { onClick() },
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick) {
-                AnimatedVisibility(!isItFavorite) {
-                    Icon(
-                        Icons.Rounded.FavoriteBorder, null
-                    )
-                }
-                AnimatedVisibility(isItFavorite) {
-                    Icon(
-                        Icons.Rounded.Favorite, null, tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            Text("Add to Favorites")
         }
     }
 }
@@ -282,26 +208,22 @@ fun DeclensionCell(
     modifier: Modifier = Modifier,
     isPredefined: Boolean = false,
 ) {
-
     val sepColor = if (isPredefined) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         MaterialTheme.colorScheme.surfaceContainerLow
     }
-
     val setFontWeight = if (isPredefined) {
         FontWeight.W700
     } else {
         LocalTextStyle.current.fontWeight
     }
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(sepColor),
         contentAlignment = Alignment.Center
     ) {
-
         value?.let {
             Text(
                 it,
@@ -313,4 +235,42 @@ fun DeclensionCell(
     }
 }
 
+@Composable
+fun FavoriteView(
+    label: String,
+    onClick: () -> Unit,
+    isItFavorite: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick) {
+                AnimatedContent(
+                    targetState = isItFavorite
+                ) { favorite ->
+                    if (favorite) Icon(
+                        Icons.Rounded.Favorite, null,
+                        tint = MaterialTheme.colorScheme.surfaceTint
+                    ) else Icon(
+                        Icons.Rounded.FavoriteBorder, null
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            AnimatedContent(
+                targetState = label
+            ) { text -> Text(text) }
+        }
+    }
+}
 
