@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,192 +8,339 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.core.utils.isDarkTheme
-import com.nascriptone.siddharoopa.data.model.Table
+import com.nascriptone.siddharoopa.core.utils.toPascalCase
+import com.nascriptone.siddharoopa.data.model.Category
+import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
-import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
-import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
+import com.nascriptone.siddharoopa.ui.screen.category.CategoryViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizQuestionScreen
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreenTopBar
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
-import com.nascriptone.siddharoopa.ui.screen.settings.SettingsScreen
+import com.nascriptone.siddharoopa.ui.screen.search.SearchScreen
+import com.nascriptone.siddharoopa.ui.screen.search.SearchScreenBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun SabdaroopaApp(
-    modifier: Modifier = Modifier,
-    viewModel: SiddharoopaViewModel = hiltViewModel(),
-    navHostController: NavHostController = rememberNavController()
-) {
-
-    val entireSabdaList by viewModel.entireSabdaList.collectAsStateWithLifecycle()
-    val homeUiState by viewModel.homeUIState.collectAsStateWithLifecycle()
-    val categoryScreenState by viewModel.categoryUIState.collectAsStateWithLifecycle()
-    val tableUIState by viewModel.tableUIState.collectAsStateWithLifecycle()
-    val favoritesUIState by viewModel.favoritesUIState.collectAsStateWithLifecycle()
-    val quizUIState by viewModel.quizUIState.collectAsStateWithLifecycle()
-    val settingsUIState by viewModel.settingsUIState.collectAsStateWithLifecycle()
-
-    val backStackEntry by navHostController.currentBackStackEntryAsState()
-    val currentRoute by remember(backStackEntry) {
-        derivedStateOf {
-            backStackEntry?.destination?.route?.let { Routes.valueOf(it) } ?: Routes.Home
-        }
-    }
-
+fun SabdaroopaApp(viewModel: SiddharoopaViewModel = hiltViewModel()) {
+    val settingsUIState by viewModel.appPreferencesState.collectAsStateWithLifecycle()
     val userPrefTheme = settingsUIState.currentTheme
     val systemTheme = isSystemInDarkTheme()
-    val isDark = remember(userPrefTheme, systemTheme) {
+    val targetState = remember(userPrefTheme, systemTheme) {
         isDarkTheme(userPrefTheme, systemTheme)
     }
-
-    val onBackPress: () -> Unit = { navHostController.navigateUp() }
-    val snackbarHostState = remember { SnackbarHostState() }
-
-
     AnimatedContent(
-        isDark, transitionSpec = { fadeIn() togetherWith fadeOut() }) { darkTheme ->
-        SabdaroopaTheme(
-            darkTheme = darkTheme
-        ) {
-            Surface {
-                Scaffold(
-                    topBar = {
-                        AppTopBar(
-                            navHostController = navHostController,
-                            currentRoute = currentRoute,
-                            categoryScreenTitle = categoryScreenState.selectedTable,
-                            tableScreenTitle = tableUIState.selectedSabda?.sabda?.word,
-                            onBackPress = onBackPress
+        targetState,
+        transitionSpec = { fadeIn() togetherWith fadeOut() })
+    { darkTheme ->
+        SabdaroopaTheme(darkTheme = darkTheme) { DrawerNavigation() }
+    }
+}
+
+@Composable
+fun DrawerNavigation(
+    modifier: Modifier = Modifier,
+) {
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentNavigation by remember(backStackEntry) {
+        derivedStateOf {
+            backStackEntry?.destination?.route.getNavigationOrDefault(Navigation.Home)
+        }
+    }
+    val currentRoute by remember(backStackEntry) {
+        derivedStateOf {
+            backStackEntry?.destination?.route.getRouteOrDefault(Routes.Main)
+        }
+    }
+    val enabledRoutes = remember {
+        setOf(
+            "${Navigation.Home.name}/${Routes.Main.name}",
+            "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
+        )
+    }
+    val config = LocalConfiguration.current
+    val scope = rememberCoroutineScope()
+    val orientation = config.orientation
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    Surface {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = backStackEntry?.destination?.route in enabledRoutes,
+            drawerContent = {
+                ModalDrawerSheet(
+                    modifier = Modifier
+                        .fillMaxWidth(
+                            fraction = if (orientation == Configuration.ORIENTATION_LANDSCAPE) 0.4f
+                            else 0.8f
                         )
-                    }, snackbarHost = {
-                        SnackbarHost(snackbarHostState)
-                    }, modifier = modifier
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    NavHost(
-                        navController = navHostController,
-                        startDestination = Routes.Home.name,
-                        modifier = modifier
-                            .fillMaxSize()
-                            .padding(it)
-                    ) {
-                        composable(Routes.Home.name) {
-                            HomeScreen(
-                                viewModel = viewModel,
-                                navHostController = navHostController,
-                                homeScreenState = homeUiState,
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    HorizontalDivider()
+                    Column(Modifier.padding(horizontal = 8.dp)) {
+                        Spacer(Modifier.height(16.dp))
+                        Navigation.entries.forEach { navigation ->
+                            NavigationDrawerItem(
+                                label = {
+                                    Text(navigation.name)
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = navigation.icon,
+                                        contentDescription = navigation.name
+                                    )
+                                },
+                                selected = navigation == currentNavigation,
+                                onClick = {
+
+                                }
                             )
-                        }
-                        composable(Routes.Category.name) {
-                            CategoryScreen(
-                                viewModel = viewModel,
-                                navHostController = navHostController,
-                                entireSabdaList = entireSabdaList,
-                                categoryScreenState = categoryScreenState
-                            )
-                        }
-                        composable(Routes.Table.name) {
-                            TableScreen(
-                                tableUIState = tableUIState,
-                                entireSabdaList = entireSabdaList,
-                                viewModel = viewModel,
-                                snackbarHostState = snackbarHostState
-                            )
-                        }
-                        navigation(
-                            route = Navigation.Favorites.name,
-                            startDestination = Routes.FavoritesHome.name
-                        ) {
-                            composable(Routes.FavoritesHome.name) {
-                                FavoritesScreen(
-                                    viewModel = viewModel,
-                                    navHostController = navHostController,
-                                    favoritesUIState = favoritesUIState,
-                                    entireSabdaList = entireSabdaList
-                                )
-                            }
-                        }
-                        navigation(
-                            route = Navigation.Settings.name,
-                            startDestination = Routes.SettingsHome.name
-                        ) {
-                            composable(Routes.SettingsHome.name) {
-                                SettingsScreen(
-                                    settingsUIState = settingsUIState, viewModel = viewModel
-                                )
-                            }
-                        }
-                        navigation(
-                            route = Navigation.Quiz.name, startDestination = Routes.QuizHome.name
-                        ) {
-                            composable(Routes.QuizHome.name) {
-                                QuizHomeScreen(
-                                    viewModel = viewModel,
-                                    quizSectionState = quizUIState,
-                                    navHostController = navHostController
-                                )
-                            }
-                            composable(Routes.QuizQuestion.name) {
-                                QuizQuestionScreen(
-                                    viewModel = viewModel,
-                                    quizSectionState = quizUIState,
-                                    navHostController = navHostController
-                                )
-                            }
-                            composable(Routes.QuizInstruction.name) {
-                                QuizInstructionScreen(
-                                    onBackPress = onBackPress
-                                )
-                            }
-                            composable(Routes.QuizResult.name) {
-                                QuizResultScreen(
-                                    viewModel = viewModel,
-                                    quizSectionState = quizUIState,
-                                    navHostController = navHostController
-                                )
-                            }
-                            composable(Routes.QuizReview.name) {
-                                QuizReviewScreen(
-                                    quizSectionState = quizUIState
-                                )
-                            }
                         }
                     }
+                }
+            },
+            modifier = modifier
+        ) {
+            AppScaffold(
+                onMenuClick = { scope.launch { drawerState.open() } },
+                currentRoute = currentRoute,
+                navController = navController
+            )
+        }
+    }
+}
+
+@Composable
+fun AppScaffold(
+    onMenuClick: () -> Unit,
+    currentRoute: Routes,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    val categoryViewModel: CategoryViewModel = hiltViewModel()
+    val snackbarHostState = remember { SnackbarHostState() }
+    Scaffold(
+        topBar = {
+            AppTopBar(
+                onMenuClick = onMenuClick,
+                currentRoute = currentRoute,
+                navController = navController,
+                categoryViewModel = categoryViewModel
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = Navigation.Home.name,
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            navigation(
+                route = Navigation.Home.name,
+                startDestination = "${Navigation.Home.name}/${Routes.Main.name}"
+            ) {
+                composable(
+                    route = "${Navigation.Home.name}/${Routes.Main.name}"
+                ) {
+                    HomeScreen(
+                        onCardClick = { category, sound ->
+                            val route =
+                                "${Navigation.Home.name}/${Routes.SabdaList.name}/$category/$sound"
+                            navController.navigate(route)
+                        }
+                    )
+                }
+                composable(
+                    route = "${Navigation.Home.name}/${Routes.SabdaList.name}/{ctg}/{snd}",
+                    arguments = listOf(
+                        navArgument("ctg") {
+                            type = NavType.IntType
+                        },
+                        navArgument("snd") {
+                            type = NavType.IntType
+                        }
+                    )
+                ) { backStackEntry ->
+
+                    val categoryIndex =
+                        backStackEntry.arguments?.getInt("ctg")
+                            ?: return@composable
+                    val soundIndex =
+                        backStackEntry.arguments?.getInt("snd")
+                            ?: return@composable
+                    val initialCategory =
+                        Category.entries.getOrElse(categoryIndex) { Category.GENERAL }
+                    val initialSound =
+                        Sound.entries.getOrElse(soundIndex) { Sound.VOWELS }
+
+                    CategoryScreen(
+                        initialCategory = initialCategory,
+                        initialSound = initialSound,
+                        categoryViewModel = categoryViewModel,
+                        onSabdaClick = { id ->
+                            val route =
+                                "${Navigation.Home.name}/${Routes.Table.name}/$id"
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
+                composable(
+                    route = "${Navigation.Home.name}/${Routes.Table.name}/{id}",
+                    arguments = listOf(
+                        navArgument("id") {
+                            type = NavType.IntType
+                        }
+                    )
+                ) { backStackEntry ->
+                    TableScreen(
+                        id = backStackEntry.arguments?.getInt("id"),
+                        snackbarHostState = snackbarHostState
+                    )
+                }
+                composable(
+                    route = "${Navigation.Home.name}/${Routes.Search.name}",
+                    enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
+                    exitTransition = { fadeOut() + scaleOut(targetScale = 1.2f) }
+                ) {
+                    SearchScreen(emptyList())
+                }
+            }
+            navigation(
+                route = Navigation.Favorites.name,
+                startDestination = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
+            ) {
+                composable(
+                    route = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
+                ) {
+//                    FavoritesScreen(
+//                        viewModel = viewModel,
+//                        navHostController = navHostController,
+//                        favoriteUIState = favoriteUIState,
+//                    )
+                }
+            }
+            navigation(
+                route = Navigation.Quiz.name,
+                startDestination = "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
+            ) {
+                composable(
+                    route = "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
+                ) {
+//                    QuizHomeScreen(
+//                        viewModel = viewModel,
+//                        quizSectionState = quizUIState,
+//                        navHostController = navHostController
+//                    )
+                }
+                composable(
+                    route = "${Navigation.Quiz.name}/${Routes.QuizQuestion.name}"
+                ) {
+//                    QuizQuestionScreen(
+//                        viewModel = viewModel,
+//                        quizSectionState = quizUIState,
+//                        navHostController = navHostController
+//                    )
+                }
+                composable(
+                    route = "${Navigation.Quiz.name}/${Routes.QuizResult.name}"
+                ) {
+//                    QuizResultScreen(
+//                        viewModel = viewModel,
+//                        quizSectionState = quizUIState,
+//                        navHostController = navHostController
+//                    )
+                }
+                composable(
+                    route = "${Navigation.Quiz.name}/${Routes.QuizReview.name}"
+                ) {
+//                    QuizReviewScreen(quizSectionState = quizUIState)
+                }
+                composable(
+                    route = "${Navigation.Quiz.name}/${Routes.QuizInstruction.name}"
+                ) {
+//                    QuizInstructionScreen(
+//                        onBackPress = { navController.navigateUp() }
+//                    )
+                }
+            }
+            navigation(
+                route = Navigation.Settings.name,
+                startDestination = "${Navigation.Settings.name}/${Routes.SettingsHome.name}"
+            ) {
+                composable(
+                    route = "${Navigation.Settings.name}/${Routes.SettingsHome.name}"
+                ) {
+//                    SettingsScreen(
+//                        settingsUIState = settingsUIState,
+//                        viewModel = viewModel
+//                    )
                 }
             }
         }
@@ -201,13 +349,14 @@ fun SabdaroopaApp(
 
 @Composable
 fun AppTopBar(
-    navHostController: NavHostController,
+    onMenuClick: () -> Unit,
     currentRoute: Routes,
-    categoryScreenTitle: Table?,
-    tableScreenTitle: String?,
-    onBackPress: () -> Unit,
+    navController: NavHostController,
+    categoryViewModel: CategoryViewModel,
     modifier: Modifier = Modifier
 ) {
+
+    val onBackPress: () -> Unit = { navController.navigateUp() }
 
     AnimatedContent(
         targetState = currentRoute,
@@ -219,27 +368,45 @@ fun AppTopBar(
         modifier = modifier
     ) { route ->
         when (route) {
-            Routes.Home -> HomeTopBar(navHostController)
-            Routes.Category -> {
-                val title = categoryScreenTitle?.let { stringResource(it.skt) }.orEmpty()
-                CategoryScreenTopBar(title = title, onBackPress = onBackPress)
-            }
+            Routes.Main -> HomeTopBar(
+                onMenuClick = onMenuClick,
+                onSearchClick = {
+                    navController.navigate("${Navigation.Home.name}/${Routes.Search.name}")
+                }
+            )
 
-            Routes.Table -> {
-                val title = tableScreenTitle.orEmpty()
-                TableScreenTopBar(title = title, onBackPress = onBackPress)
-            }
-
-            Routes.FavoritesHome -> FavoritesTopBar(onBackPress)
-            Routes.SettingsHome -> SettingsTopBar(onBackPress)
-            Routes.QuizHome -> {
-                QuizTopBar(
+            Routes.Search -> SearchScreenBar(onBackPress = onBackPress)
+            Routes.SabdaList -> {
+                val uiState by categoryViewModel.uiState.collectAsStateWithLifecycle()
+                val title = uiState.filter.selectedCategory?.toPascalCase().orEmpty()
+                CategoryScreenTopBar(
+                    title = title,
                     onBackPress = onBackPress,
-                    onInfoActionClick = {
-                        navHostController.navigate(Routes.QuizInstruction.name)
+                    onSearchClick = {
+                        navController.navigate("${Navigation.Home.name}/${Routes.Search.name}")
                     }
                 )
             }
+
+            Routes.Table -> TableScreenTopBar(onBackPress = onBackPress)
+//            Routes.FavoritesHome -> FavoritesTopBar(
+//                onBackPress = onBackPress,
+//                onTableClick = { id ->
+//                    navController.navigate(Routes.Table.name.plus("/$id")) {
+//                        launchSingleTop = true
+//                    }
+//                },
+//                viewModel = viewModel,
+//                favoriteUIState = favoritesState,
+//            )
+
+            Routes.SettingsHome -> SettingsTopBar(onBackPress)
+            Routes.QuizHome -> QuizTopBar(
+                onBackPress = onBackPress,
+                onInfoActionClick = {
+                    navController.navigate(Routes.QuizInstruction.name)
+                }
+            )
 
             Routes.QuizResult -> QuizResultScreenTopBar()
             Routes.QuizReview -> QuizReviewScreenTopBar(onBackPress)
@@ -248,3 +415,16 @@ fun AppTopBar(
         }
     }
 }
+
+private fun String?.getRouteOrDefault(default: Routes): Routes =
+    this?.let {
+        val value = it.substringAfter("/").substringBefore("/")
+        Routes.entries.firstOrNull { route -> route.name == value } ?: default
+    } ?: default
+
+private fun String?.getNavigationOrDefault(default: Navigation): Navigation =
+    this?.let {
+        val value = it.substringBefore("/")
+        Navigation.entries.firstOrNull { route -> route.name == value } ?: default
+    } ?: default
+
