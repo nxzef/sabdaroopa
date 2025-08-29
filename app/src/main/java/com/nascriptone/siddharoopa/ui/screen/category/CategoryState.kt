@@ -13,7 +13,7 @@ data class CategoryState(
 sealed interface FilterState {
     data class Success(val data: List<Sabda>) : FilterState
     data object Loading : FilterState
-    data object Empty : FilterState
+    data class Error(val message: String) : FilterState
 }
 
 data class Filter(

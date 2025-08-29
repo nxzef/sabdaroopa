@@ -27,8 +27,11 @@ class CategoryViewModel @Inject constructor(repository: AppRepository) : ViewMod
     val uiState: StateFlow<CategoryState> = combine(
         _sabdaList, _filter
     ) { sabdaList, filter ->
-        val filterState = sabdaList.applyFilter(filter).let { data ->
-            if (data.isEmpty()) FilterState.Empty else FilterState.Success(data)
+        val filterState = try {
+            val data = sabdaList.applyFilter(filter)
+            FilterState.Success(data)
+        } catch (e: Exception) {
+            FilterState.Error(e.message ?: "Unknown error occurred")
         }
         CategoryState(filter = filter, filterState = filterState)
     }.distinctUntilChanged().stateIn(
@@ -36,6 +39,32 @@ class CategoryViewModel @Inject constructor(repository: AppRepository) : ViewMod
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = CategoryState()
     )
+
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    val uiState: StateFlow<CategoryState> = combine(
+//        _sabdaList, _filter
+//    ) { sabdaList, filter ->
+//        filter to sabdaList
+//    }.flatMapLatest { (filter, sabdaList) ->
+//        flow {
+//            emit(CategoryState(filter = filter, filterState = FilterState.Loading))
+//
+//            try {
+//                val filteredData = withContext(Dispatchers.Default) {
+//                    sabdaList.applyFilter(filter)
+//                }
+//
+//                emit(CategoryState(filter = filter, filterState = FilterState.Success(filteredData)))
+//            } catch (e: Exception) {
+//                emit(CategoryState(filter = filter, filterState = FilterState.Error(e.message ?: "Unknown error occurred")))
+//            }
+//        }
+//    }.stateIn(
+//        scope = viewModelScope,
+//        started = SharingStarted.WhileSubscribed(5_000),
+//        initialValue = CategoryState()
+//    )
+
 
     fun updateGenderFilter(gender: Gender?) {
         _filter.update {

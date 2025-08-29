@@ -63,12 +63,17 @@ fun CategoryScreen(
     modifier: Modifier = Modifier,
 ) {
     val uiState by categoryViewModel.uiState.collectAsStateWithLifecycle()
+    var initialized by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        val filter = Filter(
-            selectedCategory = initialCategory,
-            selectedSound = initialSound
-        )
-        categoryViewModel.initializeFilter(filter)
+        if (!initialized) {
+            val filter = Filter(
+                selectedCategory = initialCategory,
+                selectedSound = initialSound
+            )
+            categoryViewModel.initializeFilter(filter)
+            initialized = true
+        }
+
     }
 
     Surface {
@@ -91,8 +96,8 @@ fun CategoryScreen(
                     CircularProgressIndicator()
                 }
 
-                is FilterState.Empty -> CurrentState {
-                    Text("Empty...")
+                is FilterState.Error -> CurrentState {
+                    Text(filterState.message)
                 }
             }
         }
@@ -182,22 +187,24 @@ fun CategoryScreenList(
     AnimatedContent(
         targetState = isReady
     ) { ready ->
-        if (ready) LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            state = rememberLazyListState(),
-            modifier = modifier.padding(horizontal = 12.dp)
-        ) {
-            itemsIndexed(filteredData, key = { i, _ -> i }) { _, sabda ->
-                SabdaItem(
-                    sabda = sabda,
-                    onClick = onClick
-                )
+        if (ready) {
+            if (filteredData.isEmpty()) CurrentState { Text("Empty...") }
+            else LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                state = rememberLazyListState(),
+                modifier = modifier.padding(horizontal = 12.dp)
+            ) {
+                itemsIndexed(filteredData, key = { i, _ -> i }) { _, sabda ->
+                    SabdaItem(
+                        sabda = sabda,
+                        onClick = onClick
+                    )
+                }
+                item {
+                    Spacer(Modifier.height(52.dp))
+                }
             }
-            item {
-                Spacer(Modifier.height(52.dp))
-            }
-        }
-        else CurrentState {
+        } else CurrentState {
             CircularProgressIndicator()
         }
     }
