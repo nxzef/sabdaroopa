@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 typealias Declension = Map<CaseName, Map<FormName, String?>>
 
 @Serializable
-enum class CaseName(@StringRes val sktName: Int) {
+enum class CaseName(@StringRes val skt: Int) {
     @SerialName("nominative")
     NOMINATIVE(R.string.nominative),
 
@@ -35,7 +35,7 @@ enum class CaseName(@StringRes val sktName: Int) {
 }
 
 @Serializable
-enum class FormName(@StringRes val sktName: Int) {
+enum class FormName(@StringRes val skt: Int) {
     @SerialName("single")
     SINGLE(R.string.single),
 
@@ -44,6 +44,25 @@ enum class FormName(@StringRes val sktName: Int) {
 
     @SerialName("plural")
     PLURAL(R.string.plural)
+}
+
+@Serializable
+enum class Category(@StringRes val skt: Int, @StringRes val eng: Int) {
+    GENERAL(R.string.general_table, R.string.general_subhead_eng),
+    SPECIFIC(R.string.specific_table, R.string.specific_subhead_eng)
+}
+
+@Serializable
+enum class Sound(@StringRes val skt: Int) {
+    VOWELS(skt = R.string.vowel_skt),
+    CONSONANTS(skt = R.string.consonant_skt),
+}
+
+@Serializable
+enum class Gender(@StringRes val skt: Int) {
+    MASCULINE(skt = R.string.masculine_skt),
+    FEMININE(skt = R.string.feminine_skt),
+    NEUTER(skt = R.string.neuter_skt)
 }
 
 
