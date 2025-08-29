@@ -1,9 +1,7 @@
 package com.nascriptone.siddharoopa
 
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
-import org.junit.Assert.*
-import kotlin.math.abs
 import kotlin.math.absoluteValue
 
 /**
