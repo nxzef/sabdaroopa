@@ -1,0 +1,19 @@
+package com.nascriptone.siddharoopa.data.local.dao
+
+import androidx.room.Dao
+import androidx.room.Query
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface SabdaDao {
+    @Query("SELECT * FROM sabda")
+    fun getAllSabda(): Flow<List<Sabda>>
+
+    @Query("UPDATE sabda SET is_favorite = CASE WHEN is_favorite = 1 THEN 0 ELSE 1 END, favorite_since = CASE WHEN is_favorite = 1 THEN NULL ELSE :timeStamp END WHERE id = :id")
+    suspend fun toggleFavorite(id: Int, timeStamp: Long?)
+
+    @Query("UPDATE sabda SET is_favorite = 0, favorite_since = NULL WHERE id IN (:ids)")
+    suspend fun removeItemsFromFavorite(ids: Set<Int>)
+
+}
