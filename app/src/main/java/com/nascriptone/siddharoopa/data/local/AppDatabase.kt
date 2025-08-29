@@ -9,34 +9,30 @@ import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
-import com.nascriptone.siddharoopa.data.local.converter.Converter
-import com.nascriptone.siddharoopa.data.local.dao.GeneralSabdaDao
-import com.nascriptone.siddharoopa.data.local.dao.RestPropDao
-import com.nascriptone.siddharoopa.data.local.dao.SpecificSabdaDao
-import com.nascriptone.siddharoopa.data.model.entity.GeneralSabda
-import com.nascriptone.siddharoopa.data.model.entity.RestProp
-import com.nascriptone.siddharoopa.data.model.entity.SpecificSabda
+import androidx.sqlite.db.SupportSQLiteDatabase
+import com.nascriptone.siddharoopa.data.local.converter.Converters
+import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
 
 
 @Database(
-    entities = [GeneralSabda::class, SpecificSabda::class, RestProp::class],
+    entities = [Sabda::class],
     version = AppDatabase.LATEST_VERSION,
     autoMigrations = [
         AutoMigration(1, 2),
         AutoMigration(2, 3, AppDatabase.AutoMigration3::class),
-        AutoMigration(3, 4, AppDatabase.AutoMigration4::class)
+        AutoMigration(3, 4, AppDatabase.AutoMigration4::class),
+        AutoMigration(4, 5, AppDatabase.AutoMigration5::class),
     ],
     exportSchema = true
 )
-@TypeConverters(Converter::class)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     companion object {
-        const val LATEST_VERSION = 4
+        const val LATEST_VERSION = 5
     }
 
-    abstract fun generalSabdaDao(): GeneralSabdaDao
-    abstract fun specificSabdaDao(): SpecificSabdaDao
-    abstract fun restPropDao(): RestPropDao
+    abstract fun sabdaDao(): SabdaDao
 
     @RenameTable("favorite_sabda", "rest_prop")
     @RenameColumn("favorite_sabda", "favSabdaId", "favorite")
@@ -48,5 +44,9 @@ abstract class AppDatabase : RoomDatabase() {
     )
     class AutoMigration4 : AutoMigrationSpec
 
+    @DeleteTable("rest_props")
+    @DeleteTable("specific_sabda")
+    @DeleteTable("general_sabda")
+    class AutoMigration5 : AutoMigrationSpec
 
 }
