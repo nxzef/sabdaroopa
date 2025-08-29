@@ -9,7 +9,6 @@ import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.AutoMigrationSpec
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.nascriptone.siddharoopa.data.local.converter.Converters
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
