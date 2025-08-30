@@ -32,6 +32,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
@@ -56,37 +58,53 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun CategoryScreen(
-    initialCategory: Category,
+    category: Category,
     initialSound: Sound,
     onSabdaClick: (Int) -> Unit,
-    categoryViewModel: CategoryViewModel,
     modifier: Modifier = Modifier,
+    categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
     val uiState by categoryViewModel.uiState.collectAsStateWithLifecycle()
-    var initialized by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!initialized) {
-            val filter = Filter(
-                selectedCategory = initialCategory,
-                selectedSound = initialSound
-            )
-            categoryViewModel.initializeFilter(filter)
-            initialized = true
-        }
+    var sound by rememberSaveable { mutableStateOf(initialSound) }
+    var gender by rememberSaveable { mutableStateOf<Gender?>(null) }
 
+    val filter by remember(
+        sound,
+        gender
+    ) {
+        derivedStateOf {
+            Filter(
+                category = category,
+                sound = sound,
+                gender = gender
+            )
+        }
     }
+
+    LaunchedEffect(filter) { categoryViewModel.updateFilter(filter) }
+
+//    LaunchedEffect(filter) {
+//        if (!initialized) {
+//            val filter = Filter(
+//                category = category,
+//                sound = initialSound
+//            )
+//            categoryViewModel.initializeFilter(filter)
+//            initialized = true
+//        }
+//    }
 
     Surface {
         Column(modifier) {
             SoundTab(
-                selectedSound = uiState.filter.selectedSound,
-                onSoundChange = categoryViewModel::updateSoundFilter
+                selectedSound = sound,
+                onSoundChange = { sound = it } //categoryViewModel::updateSoundFilter
             )
             GenderFilterChipRow(
-                selectedGender = uiState.filter.selectedGender,
-                onGenderChange = categoryViewModel::updateGenderFilter
+                selectedGender = gender,
+                onGenderChange = { gender = it } //categoryViewModel::updateGenderFilter
             )
-            when (val filterState = uiState.filterState) {
+            when (val filterState = uiState) {
                 is FilterState.Success -> CategoryScreenList(
                     filteredData = filterState.data,
                     onClick = onSabdaClick
@@ -106,11 +124,10 @@ fun CategoryScreen(
 
 @Composable
 fun SoundTab(
-    selectedSound: Sound?,
+    selectedSound: Sound,
     onSoundChange: (Sound) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (selectedSound == null) return
     SecondaryTabRow(
         selectedTabIndex = selectedSound.ordinal,
         modifier = modifier
