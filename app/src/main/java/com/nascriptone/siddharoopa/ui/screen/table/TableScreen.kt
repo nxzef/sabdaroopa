@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -30,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -54,35 +54,39 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TableScreen(
-    id: Int?,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     tableViewModel: TableViewModel = hiltViewModel()
 ) {
+
     val uiState by tableViewModel.tableUIState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(id) {
-        tableViewModel.updateId(id)
-    }
+    Crossfade(
+        targetState = uiState
+    ) { state ->
+        when (state) {
+            is FindState.Found -> TableScreenContent(
+                sabda = state.sabda,
+                tableViewModel = tableViewModel,
+                snackbarHostState = snackbarHostState,
+                modifier = modifier
+            )
 
-    when (val state = uiState) {
-        is FindState.Success -> TableScreenContent(
-            sabda = state.sabda,
-            tableViewModel = tableViewModel,
-            snackbarHostState = snackbarHostState,
-            modifier = modifier
-        )
+            is FindState.Finding -> CurrentState {
+                CircularProgressIndicator()
+            }
 
-        is FindState.Loading -> CurrentState {
-            CircularProgressIndicator()
+            is FindState.NotFound -> CurrentState {
+                Text("Could not find declension table.")
+            }
+
+            is FindState.Error -> CurrentState {
+                Text(state.message)
+            }
         }
-
-        is FindState.Error -> Text(
-            text = state.message
-        )
     }
-}
 
+}
 
 @Composable
 fun TableScreenContent(
