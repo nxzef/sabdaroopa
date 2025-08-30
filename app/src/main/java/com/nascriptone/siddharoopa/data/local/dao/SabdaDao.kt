@@ -16,4 +16,7 @@ interface SabdaDao {
     @Query("UPDATE sabda SET is_favorite = 0, favorite_since = NULL WHERE id IN (:ids)")
     suspend fun removeItemsFromFavorite(ids: Set<Int>)
 
+    @Query("SELECT * FROM sabda WHERE id = :id")
+    fun findSabdaById(id: Int): Flow<Sabda?>
+
 }
