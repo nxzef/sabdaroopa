@@ -2,6 +2,7 @@ package com.nascriptone.siddharoopa.data.repository
 
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.ui.screen.category.Filter
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -15,4 +16,12 @@ class AppRepository @Inject constructor(
     suspend fun removeItemsFromFavorite(ids: Set<Int>) = sabdaDao.removeItemsFromFavorite(ids)
 
     fun findSabdaById(id: Int): Flow<Sabda?> = sabdaDao.findSabdaById(id)
+
+    fun getFilteredList(filter: Filter): Flow<List<Sabda>> {
+        return sabdaDao.getFilteredList(
+            category = filter.category,
+            sound = filter.sound,
+            gender = filter.gender
+        )
+    }
 }
