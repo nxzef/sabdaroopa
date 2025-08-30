@@ -13,4 +13,6 @@ class AppRepository @Inject constructor(
     suspend fun toggleFavorite(id: Int, timeStamp: Long?) = sabdaDao.toggleFavorite(id, timeStamp)
 
     suspend fun removeItemsFromFavorite(ids: Set<Int>) = sabdaDao.removeItemsFromFavorite(ids)
+
+    fun findSabdaById(id: Int): Flow<Sabda?> = sabdaDao.findSabdaById(id)
 }
