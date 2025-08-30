@@ -258,11 +258,8 @@ fun AppScaffold(
                             type = NavType.IntType
                         }
                     )
-                ) { backStackEntry ->
-                    TableScreen(
-                        id = backStackEntry.arguments?.getInt("id"),
-                        snackbarHostState = snackbarHostState
-                    )
+                ) {
+                    TableScreen(snackbarHostState = snackbarHostState)
                 }
                 composable(
                     route = "${Navigation.Home.name}/${Routes.Search.name}",
