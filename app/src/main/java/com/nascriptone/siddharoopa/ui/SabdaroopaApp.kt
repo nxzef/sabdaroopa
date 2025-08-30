@@ -59,7 +59,6 @@ import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
-import com.nascriptone.siddharoopa.ui.screen.category.CategoryViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
@@ -179,15 +178,14 @@ fun AppScaffold(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val categoryViewModel: CategoryViewModel = hiltViewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         topBar = {
             AppTopBar(
                 onMenuClick = onMenuClick,
+                onBackPress = { navController.navigateUp() },
                 currentRoute = currentRoute,
                 navController = navController,
-                categoryViewModel = categoryViewModel
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -239,9 +237,8 @@ fun AppScaffold(
                         Sound.entries.getOrElse(soundIndex) { Sound.VOWELS }
 
                     CategoryScreen(
-                        initialCategory = initialCategory,
+                        category = initialCategory,
                         initialSound = initialSound,
-                        categoryViewModel = categoryViewModel,
                         onSabdaClick = { id ->
                             val route =
                                 "${Navigation.Home.name}/${Routes.Table.name}/$id"
@@ -347,13 +344,13 @@ fun AppScaffold(
 @Composable
 fun AppTopBar(
     onMenuClick: () -> Unit,
+    onBackPress: () -> Unit,
     currentRoute: Routes,
     navController: NavHostController,
-    categoryViewModel: CategoryViewModel,
     modifier: Modifier = Modifier
 ) {
 
-    val onBackPress: () -> Unit = { navController.navigateUp() }
+    val backStackEntry by navController.currentBackStackEntryAsState()
 
     AnimatedContent(
         targetState = currentRoute,
@@ -374,8 +371,8 @@ fun AppTopBar(
 
             Routes.Search -> SearchScreenBar(onBackPress = onBackPress)
             Routes.SabdaList -> {
-                val uiState by categoryViewModel.uiState.collectAsStateWithLifecycle()
-                val title = uiState.filter.selectedCategory?.toPascalCase().orEmpty()
+                val index = backStackEntry?.arguments?.getInt("ctg") ?: return@AnimatedContent
+                val title = Category.entries[index].toPascalCase()
                 CategoryScreenTopBar(
                     title = title,
                     onBackPress = onBackPress,
