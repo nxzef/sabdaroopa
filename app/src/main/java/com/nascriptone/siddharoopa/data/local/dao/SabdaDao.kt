@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.data.local.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
 import com.nascriptone.siddharoopa.data.model.Category
@@ -23,6 +24,10 @@ interface SabdaDao {
     fun findSabdaById(id: Int): Flow<Sabda?>
 
     @Query("SELECT * FROM sabda WHERE (:category IS NULL OR category = :category) AND (:sound IS NULL OR sound = :sound) AND (:gender IS NULL OR gender = :gender)")
-    fun getFilteredList(category: Category?, sound: Sound?, gender: Gender?): Flow<List<Sabda>>
+    fun getFilteredList(
+        category: Category?,
+        sound: Sound?,
+        gender: Gender?
+    ): PagingSource<Int, Sabda>
 
 }
