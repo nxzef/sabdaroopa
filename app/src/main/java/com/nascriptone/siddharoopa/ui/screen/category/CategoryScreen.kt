@@ -1,8 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.category
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.AnimationConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -46,15 +43,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
-import kotlinx.coroutines.delay
 
 @Composable
 fun CategoryScreen(
@@ -64,7 +62,7 @@ fun CategoryScreen(
     modifier: Modifier = Modifier,
     categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
-    val uiState by categoryViewModel.uiState.collectAsStateWithLifecycle()
+    val filteredData = categoryViewModel.list.collectAsLazyPagingItems()
     var sound by rememberSaveable { mutableStateOf(initialSound) }
     var gender by rememberSaveable { mutableStateOf<Gender?>(null) }
 
@@ -83,41 +81,20 @@ fun CategoryScreen(
 
     LaunchedEffect(filter) { categoryViewModel.updateFilter(filter) }
 
-//    LaunchedEffect(filter) {
-//        if (!initialized) {
-//            val filter = Filter(
-//                category = category,
-//                sound = initialSound
-//            )
-//            categoryViewModel.initializeFilter(filter)
-//            initialized = true
-//        }
-//    }
-
     Surface {
         Column(modifier) {
             SoundTab(
                 selectedSound = sound,
-                onSoundChange = { sound = it } //categoryViewModel::updateSoundFilter
+                onSoundChange = { sound = it }
             )
             GenderFilterChipRow(
                 selectedGender = gender,
-                onGenderChange = { gender = it } //categoryViewModel::updateGenderFilter
+                onGenderChange = { gender = it }
             )
-            when (val filterState = uiState) {
-                is FilterState.Success -> CategoryScreenList(
-                    filteredData = filterState.data,
-                    onClick = onSabdaClick
-                )
-
-                is FilterState.Loading -> CurrentState {
-                    CircularProgressIndicator()
-                }
-
-                is FilterState.Error -> CurrentState {
-                    Text(filterState.message)
-                }
-            }
+            CategoryScreenList(
+                filteredData = filteredData,
+                onClick = onSabdaClick
+            )
         }
     }
 }
@@ -191,38 +168,40 @@ fun GenderFilterChipRow(
 
 @Composable
 fun CategoryScreenList(
-    filteredData: List<Sabda>,
+    filteredData: LazyPagingItems<Sabda>,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isReady by rememberSaveable { mutableStateOf(false) }
-    val defaultDurationMillis = AnimationConstants.DefaultDurationMillis
-    LaunchedEffect(Unit) {
-        delay(defaultDurationMillis.toLong())
-        isReady = true
-    }
-    AnimatedContent(
-        targetState = isReady
-    ) { ready ->
-        if (ready) {
-            if (filteredData.isEmpty()) CurrentState { Text("Empty...") }
-            else LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                state = rememberLazyListState(),
-                modifier = modifier.padding(horizontal = 12.dp)
-            ) {
-                itemsIndexed(filteredData, key = { i, _ -> i }) { _, sabda ->
-                    SabdaItem(
-                        sabda = sabda,
-                        onClick = onClick
-                    )
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        state = rememberLazyListState(),
+        modifier = modifier.padding(horizontal = 12.dp)
+    ) {
+        items(
+            count = filteredData.itemCount,
+            key = filteredData.itemKey { it.id },
+        ) { index: Int ->
+            val sabda: Sabda? = filteredData[index]
+            sabda?.let { sabda ->
+                SabdaItem(
+                    sabda = sabda,
+                    onClick = onClick
+                )
+            }
+        }
+        filteredData.apply {
+            when {
+                loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading -> {
+                    item { CircularProgressIndicator() }
                 }
-                item {
-                    Spacer(Modifier.height(52.dp))
+
+                loadState.refresh is LoadState.Error || loadState.append is LoadState.Error -> {
+                    item { Text("Error loading more") }
                 }
             }
-        } else CurrentState {
-            CircularProgressIndicator()
+        }
+        item {
+            Spacer(Modifier.height(52.dp))
         }
     }
 }
