@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "com.nascriptone.siddharoopa"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 17
         versionName = "1.0"
 
@@ -59,9 +59,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material3.window.size.class1)
     implementation(libs.androidx.material3.adaptive.navigation.suite)
-    // JSON Serialization
     implementation(libs.kotlinx.serialization.json)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,6 +77,7 @@ dependencies {
 
     // Room
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
@@ -101,6 +100,10 @@ dependencies {
     // Material
     implementation(libs.material)
     implementation(libs.androidx.material.icons.extended)
+
+    // Paging
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.paging.runtime)
 
 }
 
