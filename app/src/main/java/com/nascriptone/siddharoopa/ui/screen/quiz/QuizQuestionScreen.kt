@@ -42,7 +42,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -97,7 +96,7 @@ import java.util.Collections
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+//@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuizQuestionScreen(
     quizSectionState: QuizSectionState,
@@ -756,6 +755,7 @@ fun rememberSaveableAnimatable(initialValue: Float): Animatable<Float, Animation
         Animatable(initialValue)
     }
 }
+
 @Composable
 fun ExitDialog(
     visible: Boolean,
