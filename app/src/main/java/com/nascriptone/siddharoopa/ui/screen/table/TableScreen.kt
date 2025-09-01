@@ -1,7 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,7 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,34 +56,17 @@ fun TableScreen(
     modifier: Modifier = Modifier,
     tableViewModel: TableViewModel = hiltViewModel()
 ) {
-
-    val uiState by tableViewModel.tableUIState.collectAsStateWithLifecycle()
-
-    Crossfade(
-        targetState = uiState
-    ) { state ->
-        when (state) {
-            is FindState.Found -> TableScreenContent(
-                sabda = state.sabda,
-                tableViewModel = tableViewModel,
-                snackbarHostState = snackbarHostState,
-                modifier = modifier
-            )
-
-            is FindState.Finding -> CurrentState {
-                CircularProgressIndicator()
-            }
-
-            is FindState.NotFound -> CurrentState {
-                Text("Could not find declension table.")
-            }
-
-            is FindState.Error -> CurrentState {
-                Text(state.message)
-            }
-        }
+    val sabda by tableViewModel.sabda.collectAsStateWithLifecycle()
+    sabda?.let { sabda ->
+        TableScreenContent(
+            sabda = sabda,
+            tableViewModel = tableViewModel,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier
+        )
+    } ?: CurrentState {
+        Text("Could not find declension table.")
     }
-
 }
 
 @Composable
