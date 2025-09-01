@@ -52,6 +52,7 @@ import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 
 @Composable
@@ -192,11 +193,11 @@ fun CategoryScreenList(
         filteredData.apply {
             when {
                 loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading -> {
-                    item { CircularProgressIndicator() }
+                    item { CurrentState(Modifier) { CircularProgressIndicator() } }
                 }
 
                 loadState.refresh is LoadState.Error || loadState.append is LoadState.Error -> {
-                    item { Text("Error loading more") }
+                    item { CurrentState { Text("Error loading more") } }
                 }
             }
         }
