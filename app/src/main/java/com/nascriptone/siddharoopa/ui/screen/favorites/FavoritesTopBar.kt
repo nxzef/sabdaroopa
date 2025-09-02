@@ -40,24 +40,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
-import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesTopBar(
     onBackPress: () -> Unit,
     onTableClick: (Int) -> Unit,
-    viewModel: SiddharoopaViewModel,
-    favoriteUIState: FavoritesState,
+    favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
-    val toggleSelectionMode: () -> Unit = viewModel::toggleSelectionMode
+    val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
+    val toggleSelectionMode: () -> Unit = favoritesViewModel::toggleSelectionMode
     AnimatedContent(
-        targetState = favoriteUIState.isSelectMode,
+        targetState = uiState.isSelectMode,
         transitionSpec = {
             fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 1.2f)
         }
@@ -66,8 +66,7 @@ fun FavoritesTopBar(
             FavoriteActionTopBar(
                 onClose = toggleSelectionMode,
                 onTableClick = onTableClick,
-                viewModel = viewModel,
-                favoritesUIState = favoriteUIState
+                favoritesViewModel = favoritesViewModel
             )
         } else {
             TopAppBar(
@@ -99,12 +98,12 @@ fun FavoritesTopBar(
 fun FavoriteActionTopBar(
     onClose: () -> Unit,
     onTableClick: (Int) -> Unit,
-    viewModel: SiddharoopaViewModel,
-    favoritesUIState: FavoritesState,
-    modifier: Modifier = Modifier
+    favoritesViewModel: FavoritesViewModel,
+    modifier: Modifier = Modifier,
 ) {
+    val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
-    val toggleSelectAll: () -> Unit = viewModel::toggleSelectAll
+    val toggleSelectAll: () -> Unit = favoritesViewModel::toggleSelectAll
 
     BackHandler(onBack = onClose)
 
@@ -130,7 +129,7 @@ fun FavoriteActionTopBar(
                     }
                 }
                 Text(
-                    "${favoritesUIState.selectedIds.size}",
+                    "${uiState.selectedIds.size}",
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -138,14 +137,14 @@ fun FavoriteActionTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
             ) {
-                val isNotEmpty = favoritesUIState.selectedIds.isNotEmpty()
+                val isNotEmpty = uiState.selectedIds.isNotEmpty()
                 AnimatedVisibility(
-                    visible = favoritesUIState.selectedIds.size == 1,
+                    visible = uiState.selectedIds.size == 1,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
                     exit = fadeOut() + scaleOut(targetScale = 1.2f)
                 ) {
                     CustomToolTip("Table") {
-                        IconButton(onClick = { onTableClick(favoritesUIState.selectedIds.first()) }) {
+                        IconButton(onClick = { onTableClick(uiState.selectedIds.first()) }) {
                             val imageVector = Icons.Rounded.TableView
                             Icon(imageVector, imageVector.name)
                         }
@@ -175,7 +174,7 @@ fun FavoriteActionTopBar(
                         }
                     }
                 }
-                AnimatedContent(targetState = favoritesUIState.areAllSelected) { state ->
+                AnimatedContent(targetState = uiState.areAllSelected) { state ->
                     if (state) {
                         CustomToolTip("Deselect All") {
                             IconButton(onClick = toggleSelectAll) {
@@ -197,7 +196,7 @@ fun FavoriteActionTopBar(
         DeleteAllDialog(
             visible = deleteDialogVisible,
             onConfirm = {
-                viewModel.deleteAllItemFromFavorite()
+                favoritesViewModel.deleteAllItemFromFavorite()
                 deleteDialogVisible = false
             },
             onDismissRequest = { deleteDialogVisible = false },

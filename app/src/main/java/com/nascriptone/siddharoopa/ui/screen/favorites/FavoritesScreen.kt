@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -33,12 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,54 +52,46 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
+import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 
 @Composable
 fun FavoritesScreen(
-    viewModel: SiddharoopaViewModel,
     navHostController: NavHostController,
-    favoriteUIState: FavoritesState,
+    favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
-
-    when (val gatherState = favoriteUIState.gatherState) {
-        is GatherState.Success -> FavoritesScreenContent(
-            favoriteList = gatherState.favoriteList,
-            viewModel = viewModel,
-            navHostController = navHostController,
-            favoriteUIState = favoriteUIState,
-            modifier = modifier
-        )
-
-        is GatherState.Empty -> CurrentState {
-            Text("Empty....")
-        }
-
-        is GatherState.Loading -> CurrentState {
-            CircularProgressIndicator()
-        }
-
-        is GatherState.Error -> CurrentState {
-            Text(gatherState.message)
-        }
-    }
+    val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
+    val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
+    FavoritesScreenContent(
+        uiState = uiState,
+        favorites = favorites,
+        navHostController = navHostController,
+        favoritesViewModel = favoritesViewModel,
+        modifier = modifier
+    )
 }
 
 @Composable
 fun FavoritesScreenContent(
-    favoriteList: List<Sabda>,
-    viewModel: SiddharoopaViewModel,
+    uiState: FavoritesState,
+    favorites: LazyPagingItems<Sabda>,
     navHostController: NavHostController,
-    favoriteUIState: FavoritesState,
-    modifier: Modifier = Modifier
+    favoritesViewModel: FavoritesViewModel,
+    modifier: Modifier = Modifier,
 ) {
 
     var currentDrop by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -120,7 +107,7 @@ fun FavoritesScreenContent(
         )
     ) { mutableStateOf(defaultDeleteState) }
 
-    LaunchedEffect(favoriteUIState.isSelectMode) { currentDrop = null }
+    LaunchedEffect(uiState.isSelectMode) { currentDrop = null }
 
     Surface {
         LazyColumn(
@@ -131,38 +118,56 @@ fun FavoritesScreenContent(
                 Spacer(Modifier.height(16.dp))
             }
 
-            items(favoriteList, key = { s -> s.id }) { sabda ->
-                val isInSelected = sabda.id in favoriteUIState.selectedIds
-                val isSelectMode = favoriteUIState.isSelectMode
-                FavoriteCard(
-                    sabda = sabda,
-                    isSelectMode = isSelectMode,
-                    isInSelected = isInSelected,
-                    currentDrop = currentDrop,
-                    onTableClick = { id ->
-                        navHostController.navigate(Routes.Table.name.plus("/$id")) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onQuizClick = {},
-                    onDeleteClick = { id ->
-                        deleteItem = DeleteDialogState(
-                            id = id,
-                            visible = true
-                        )
-                    },
-                    onCardClick = { id ->
-                        if (favoriteUIState.isSelectMode) {
-                            viewModel.toggleSelectedId(id)
-                        } else {
-                            currentDrop = if (currentDrop == id) null else id
-                        }
-                    },
-                    onCardLongClick = viewModel::toggleSelectedId,
-                    modifier = Modifier
-                        .animateContentSize()
-                        .animateItem()
-                )
+            items(
+                count = favorites.itemCount,
+                key = favorites.itemKey { it.id }
+            ) { index ->
+                val sabda: Sabda? = favorites[index]
+                sabda?.let { sabda ->
+                    val isInSelected = sabda.id in uiState.selectedIds
+                    val isSelectMode = uiState.isSelectMode
+                    FavoriteCard(
+                        sabda = sabda,
+                        isSelectMode = isSelectMode,
+                        isInSelected = isInSelected,
+                        currentDrop = currentDrop,
+                        onTableClick = { id ->
+                            navHostController.navigate(Routes.Table.name.plus("/$id")) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onQuizClick = {},
+                        onDeleteClick = { id ->
+                            deleteItem = DeleteDialogState(
+                                id = id,
+                                visible = true
+                            )
+                        },
+                        onCardClick = { id ->
+                            if (uiState.isSelectMode) {
+                                favoritesViewModel.toggleSelectedId(id)
+                            } else {
+                                currentDrop = if (currentDrop == id) null else id
+                            }
+                        },
+                        onCardLongClick = favoritesViewModel::toggleSelectedId,
+                        modifier = Modifier
+                            .animateContentSize()
+                            .animateItem()
+                    )
+                }
+            }
+
+            favorites.apply {
+                when {
+                    loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading -> {
+                        item { CurrentState(Modifier) { CircularProgressIndicator() } }
+                    }
+
+                    loadState.refresh is LoadState.Error || loadState.append is LoadState.Error -> {
+                        item { CurrentState { Text("Error loading more") } }
+                    }
+                }
             }
 
             item {
@@ -176,7 +181,7 @@ fun FavoritesScreenContent(
                 deleteItem = defaultDeleteState
             },
             onConfirm = {
-                viewModel.toggleFavoriteSabda(deleteItem.id!!)
+                favoritesViewModel.toggleFavoriteSabda(deleteItem.id!!)
                 deleteItem = defaultDeleteState
             },
         )
@@ -271,13 +276,8 @@ fun FavoriteCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F),
                 )
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                    tooltip = {
-                        PlainTooltip { Text(if (isDropped) "Drop Up" else "Drop Down") }
-                    },
-                    state = rememberTooltipState()
-                ) {
+
+                CustomToolTip(if (isDropped) "Drop Up" else "Drop Down") {
                     IconButton(
                         enabled = !isSelectMode,
                         onClick = { onCardClick(sabda.id) }
@@ -352,15 +352,7 @@ fun OptionsComponent(
                     blue = 0.3f
                 )
                 else LocalContentColor.current
-                TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
-                    tooltip = {
-                        PlainTooltip {
-                            Text(option.name)
-                        }
-                    },
-                    state = rememberTooltipState()
-                ) {
+                CustomToolTip(option.name) {
                     Icon(
                         imageVector = option.icon,
                         tint = color,

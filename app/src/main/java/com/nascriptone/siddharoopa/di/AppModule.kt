@@ -35,6 +35,7 @@ object AppModule {
     }
 
     @Provides
+    @Singleton
     fun provideSabdaDao(db: AppDatabase): SabdaDao = db.sabdaDao()
 
     @Provides

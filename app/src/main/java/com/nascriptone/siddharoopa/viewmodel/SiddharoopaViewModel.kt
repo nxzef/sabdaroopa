@@ -16,9 +16,6 @@ import com.nascriptone.siddharoopa.data.model.QTemplate
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
-import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesState
-import com.nascriptone.siddharoopa.ui.screen.favorites.GatherState
-import com.nascriptone.siddharoopa.ui.screen.favorites.SelectionTrigger
 import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
 import com.nascriptone.siddharoopa.ui.screen.quiz.Dashboard
 import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
@@ -34,16 +31,11 @@ import com.nascriptone.siddharoopa.ui.screen.settings.AppPreferencesState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,18 +50,18 @@ class SiddharoopaViewModel @Inject constructor(
     private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
-    // Private
-    private val _sabdaList: StateFlow<List<Sabda>> = repository.getAllSabda()
-        .distinctUntilChanged().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+//    // Private
+//    private val _sabdaList: StateFlow<List<Sabda>> = repository.getAllSabda()
+//        .distinctUntilChanged().stateIn(
+//            scope = viewModelScope,
+//            started = SharingStarted.WhileSubscribed(5_000),
+//            initialValue = emptyList()
+//        )
 
     //    private val _filter = MutableStateFlow(Filter())
-    private val _favoriteUIState = MutableStateFlow(FavoritesState())
+//    private val _uiState = MutableStateFlow(FavoritesState())
     private val _quizUIState = MutableStateFlow(QuizSectionState())
-    val quizUIState: StateFlow<QuizSectionState> = _quizUIState.asStateFlow()
+//    val quizUIState: StateFlow<QuizSectionState> = _quizUIState.asStateFlow()
 
 
     // Public
@@ -84,33 +76,33 @@ class SiddharoopaViewModel @Inject constructor(
 //        initialValue = FindState.Loading
 //    )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _gatherState: StateFlow<GatherState<List<Sabda>>> =
-        _sabdaList.mapLatest { sabdaList ->
-            val favoriteList =
-                sabdaList.filter { it.isFavorite }.sortedByDescending { it.favoriteSince }
-            if (favoriteList.isNotEmpty()) GatherState.Success(favoriteList)
-            else GatherState.Empty
-        }.catch {
-            Log.e("GATHER", "Gather Favorite Error", it)
-            emit(GatherState.Error(it.message.orEmpty()))
-        }.distinctUntilChanged().stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = GatherState.Loading
-        )
+//    @OptIn(ExperimentalCoroutinesApi::class)
+//    private val _gatherState: StateFlow<GatherState> =
+//        _sabdaList.mapLatest { sabdaList ->
+//            val favoriteList =
+//                sabdaList.filter { it.isFavorite }.sortedByDescending { it.favoriteSince }
+//            if (favoriteList.isNotEmpty()) GatherState.Success(favoriteList)
+//            else GatherState.Empty
+//        }.catch {
+//            Log.e("GATHER", "Gather Favorite Error", it)
+//            emit(GatherState.Error(it.message.orEmpty()))
+//        }.distinctUntilChanged().stateIn(
+//            scope = viewModelScope,
+//            started = SharingStarted.WhileSubscribed(5_000),
+//            initialValue = GatherState.Loading
+//        )
 
 
-    val favoriteUIState: StateFlow<FavoritesState> = combine(
-        _gatherState,
-        _favoriteUIState
-    ) { gatherState, favoriteUIState ->
-        favoriteUIState.copy(gatherState = gatherState)
-    }.distinctUntilChanged().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = FavoritesState()
-    )
+//    val favoriteUIState: StateFlow<FavoritesState> = combine(
+//        _gatherState,
+//        _favoriteUIState
+//    ) { gatherState, favoriteUIState ->
+//        favoriteUIState.copy(gatherState = gatherState)
+//    }.distinctUntilChanged().stateIn(
+//        scope = viewModelScope,
+//        started = SharingStarted.WhileSubscribed(5_000),
+//        initialValue = FavoritesState()
+//    )
 
     val appPreferencesState: StateFlow<AppPreferencesState> =
         preferencesRepository.currentTheme.map {
@@ -198,51 +190,41 @@ class SiddharoopaViewModel @Inject constructor(
 //        }
 //    }
 
-    fun toggleSelectAll() {
-        val list =
-            (favoriteUIState.value.gatherState as GatherState.Success<List<Sabda>>).favoriteList
-        val ids = list.map { it.id }.toSet()
+//
+//    fun toggleSelectedId(id: Int) {
+//        if (!_uiState.value.isSelectMode) enterSelectionMode(SelectionTrigger.CARD)
+//        _uiState.update { it.copy(selectedIds = it.selectedIds.toggleInSet(id)) }
+//        if (_uiState.value.selectedIds.isEmpty() &&
+//            _uiState.value.selectionTrigger == SelectionTrigger.CARD
+//        ) exitSelectionMode()
+//    }
+//
+//    fun toggleSelectionMode() {
+//        if (_uiState.value.isSelectMode) exitSelectionMode()
+//        else enterSelectionMode(SelectionTrigger.TOOLBAR)
+//    }
+//
+//    private fun enterSelectionMode(trigger: SelectionTrigger) {
+//        _uiState.update {
+//            it.copy(
+//                isSelectMode = true,
+//                selectionTrigger = trigger
+//            )
+//        }
+//    }
+//
+//    private fun exitSelectionMode() {
+//        _uiState.update {
+//            it.copy(
+//                isSelectMode = false,
+//                selectedIds = emptySet(),
+//                selectionTrigger = SelectionTrigger.NONE
+//            )
+//        }
+//    }
 
-        _favoriteUIState.update { state ->
-            val newSelectedIds = if (state.selectedIds.size < ids.size) ids else emptySet()
-            state.copy(selectedIds = newSelectedIds)
-        }
-    }
-
-    fun toggleSelectedId(id: Int) {
-        if (!_favoriteUIState.value.isSelectMode) enterSelectionMode(SelectionTrigger.CARD)
-        _favoriteUIState.update { it.copy(selectedIds = it.selectedIds.toggleInSet(id)) }
-        if (_favoriteUIState.value.selectedIds.isEmpty() &&
-            _favoriteUIState.value.selectionTrigger == SelectionTrigger.CARD
-        ) exitSelectionMode()
-    }
-
-    fun toggleSelectionMode() {
-        if (_favoriteUIState.value.isSelectMode) exitSelectionMode()
-        else enterSelectionMode(SelectionTrigger.TOOLBAR)
-    }
-
-    private fun enterSelectionMode(trigger: SelectionTrigger) {
-        _favoriteUIState.update {
-            it.copy(
-                isSelectMode = true,
-                selectionTrigger = trigger
-            )
-        }
-    }
-
-    private fun exitSelectionMode() {
-        _favoriteUIState.update {
-            it.copy(
-                isSelectMode = false,
-                selectedIds = emptySet(),
-                selectionTrigger = SelectionTrigger.NONE
-            )
-        }
-    }
-
-    private fun <T> Set<T>.toggleInSet(item: T): Set<T> =
-        if (item in this) this - item else this + item
+//    private fun <T> Set<T>.toggleInSet(item: T): Set<T> =
+//        if (item in this) this - item else this + item
 
     fun updateCurrentAnswer(answer: Answer) {
         _quizUIState.update {
@@ -593,9 +575,9 @@ class SiddharoopaViewModel @Inject constructor(
         }
     }
 
-    fun deleteAllItemFromFavorite() {
-        removeItemsFromFavorite(_favoriteUIState.value.selectedIds)
-    }
+//    fun deleteAllItemFromFavorite() {
+//        removeItemsFromFavorite(_uiState.value.selectedIds)
+//    }
 
     private fun removeItemsFromFavorite(ids: Set<Int>) {
         viewModelScope.launch(Dispatchers.IO) {

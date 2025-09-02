@@ -59,6 +59,9 @@ import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
@@ -95,6 +98,10 @@ fun DrawerNavigation(
     modifier: Modifier = Modifier,
 ) {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+    val config = LocalConfiguration.current
+    val orientation = config.orientation
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentNavigation by remember(backStackEntry) {
         derivedStateOf {
@@ -112,10 +119,6 @@ fun DrawerNavigation(
             "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
         )
     }
-    val config = LocalConfiguration.current
-    val scope = rememberCoroutineScope()
-    val orientation = config.orientation
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     Surface {
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -153,7 +156,14 @@ fun DrawerNavigation(
                                 },
                                 selected = navigation == currentNavigation,
                                 onClick = {
-
+                                    scope.launch {
+                                        drawerState.close()
+                                        navController.navigate(navigation.name) {
+                                            popUpTo("${Navigation.Home.name}/${Routes.Main.name}") {
+                                                inclusive = false
+                                            }
+                                        }
+                                    }
                                 }
                             )
                         }
@@ -178,6 +188,7 @@ fun AppScaffold(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val favoritesViewModel: FavoritesViewModel = hiltViewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         topBar = {
@@ -186,6 +197,7 @@ fun AppScaffold(
                 onBackPress = { navController.navigateUp() },
                 currentRoute = currentRoute,
                 navController = navController,
+                favoritesViewModel = favoritesViewModel
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -273,11 +285,10 @@ fun AppScaffold(
                 composable(
                     route = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
                 ) {
-//                    FavoritesScreen(
-//                        viewModel = viewModel,
-//                        navHostController = navHostController,
-//                        favoriteUIState = favoriteUIState,
-//                    )
+                    FavoritesScreen(
+                        navHostController = navController,
+                        favoritesViewModel = favoritesViewModel
+                    )
                 }
             }
             navigation(
@@ -347,11 +358,10 @@ fun AppTopBar(
     onBackPress: () -> Unit,
     currentRoute: Routes,
     navController: NavHostController,
+    favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
-
     val backStackEntry by navController.currentBackStackEntryAsState()
-
     AnimatedContent(
         targetState = currentRoute,
         transitionSpec = {
@@ -383,16 +393,15 @@ fun AppTopBar(
             }
 
             Routes.Table -> TableScreenTopBar(onBackPress = onBackPress)
-//            Routes.FavoritesHome -> FavoritesTopBar(
-//                onBackPress = onBackPress,
-//                onTableClick = { id ->
-//                    navController.navigate(Routes.Table.name.plus("/$id")) {
-//                        launchSingleTop = true
-//                    }
-//                },
-//                viewModel = viewModel,
-//                favoriteUIState = favoritesState,
-//            )
+            Routes.FavoritesHome -> FavoritesTopBar(
+                onBackPress = onBackPress,
+                onTableClick = { id ->
+                    navController.navigate(Routes.Table.name.plus("/$id")) {
+                        launchSingleTop = true
+                    }
+                },
+                favoritesViewModel = favoritesViewModel
+            )
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
             Routes.QuizHome -> QuizTopBar(

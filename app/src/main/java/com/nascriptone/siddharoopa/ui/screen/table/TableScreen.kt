@@ -3,6 +3,7 @@ package com.nascriptone.siddharoopa.ui.screen.table
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,9 +46,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.core.utils.toPascalCase
 import com.nascriptone.siddharoopa.data.model.Declension
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
+import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import kotlinx.coroutines.launch
 
@@ -77,12 +81,12 @@ fun TableScreenContent(
     modifier: Modifier = Modifier
 ) {
 
-    val isItFavorite = sabda.isFavorite
-    val label = if (isItFavorite) stringResource(R.string.remove_favorite_msg)
-    else stringResource(R.string.add_favorite_msg)
-    val message = if (isItFavorite) stringResource(R.string.removed_favorite_msg)
-    else stringResource(R.string.added_favorite_msg)
     val scope = rememberCoroutineScope()
+    val isItFavorite = sabda.isFavorite
+    val favLabel = if (isItFavorite) stringResource(R.string.remove_favorite_msg)
+    else stringResource(R.string.add_favorite_msg)
+    val favMessage = if (isItFavorite) stringResource(R.string.removed_favorite_msg)
+    else stringResource(R.string.added_favorite_msg)
 
     Surface {
         Column(
@@ -105,17 +109,65 @@ fun TableScreenContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             DeclensionTable(sabda.declension)
-            FavoriteView(
-                label = label,
-                isItFavorite = isItFavorite,
-                onClick = {
-                    scope.launch {
-                        tableViewModel.toggleFavoriteSabda(sabda.id)
-                        snackbarHostState.showSnackbar(message)
+            Column(
+                modifier = modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = MaterialTheme.shapes.large
+                    )
+                    .clip(MaterialTheme.shapes.large)
+            ) {
+                OptionView(
+                    icon = {
+                        AnimatedContent(targetState = isItFavorite) { fav ->
+                            CustomToolTip("Favorite") {
+                                if (fav) Icon(
+                                    imageVector = Icons.Rounded.Favorite,
+                                    tint = MaterialTheme.colorScheme.surfaceTint,
+                                    contentDescription = null
+                                ) else Icon(
+                                    imageVector = Icons.Rounded.FavoriteBorder,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    },
+                    label = {
+                        AnimatedContent(targetState = favLabel) { label ->
+                            Text(label)
+                        }
+                    },
+                    onClick = {
+                        scope.launch {
+                            tableViewModel.toggleFavoriteSabda(sabda.id)
+                            snackbarHostState.showSnackbar(favMessage)
+                        }
                     }
-                }
+                )
+                HorizontalDivider()
+                OptionView(
+                    icon = {
+                        CustomToolTip("Quiz") {
+                            Icon(
+                                imageVector = Icons.Rounded.Quiz,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    label = { Text("Take Quiz") },
+                    onClick = {}
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Details",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(vertical = 16.dp)
             )
-            Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
+            DetailView(sabda)
+            Spacer(Modifier.height((TopAppBarDefaults.TopAppBarExpandedHeight) * 2))
         }
     }
 }
@@ -221,41 +273,76 @@ fun DeclensionCell(
 }
 
 @Composable
-fun FavoriteView(
-    label: String,
-    onClick: () -> Unit,
-    isItFavorite: Boolean,
+fun DetailView(
+    sabda: Sabda,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceContainer,
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shape = MaterialTheme.shapes.large
+            )
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick) {
-                AnimatedContent(
-                    targetState = isItFavorite
-                ) { favorite ->
-                    if (favorite) Icon(
-                        Icons.Rounded.Favorite, null,
-                        tint = MaterialTheme.colorScheme.surfaceTint
-                    ) else Icon(
-                        Icons.Rounded.FavoriteBorder, null
-                    )
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            AnimatedContent(
-                targetState = label
-            ) { text -> Text(text) }
+        RowItem("Word", sabda.word)
+        HorizontalDivider()
+        RowItem("Meaning", sabda.meaning)
+        HorizontalDivider()
+        RowItem("Roman (IAST)", sabda.translit)
+        HorizontalDivider()
+        RowItem("End Sound", sabda.anta)
+        HorizontalDivider()
+        RowItem(
+            "Category",
+            "${stringResource(sabda.category.skt)}\t-\t${sabda.category.toPascalCase()}"
+        )
+        HorizontalDivider()
+        RowItem("Gender", "${stringResource(sabda.gender.skt)}\t-\t${sabda.gender.toPascalCase()}")
+        HorizontalDivider()
+        RowItem("Sound", "${stringResource(sabda.sound.skt)}\t-\t${sabda.sound.toPascalCase()}")
+    }
+}
+
+@Composable
+fun RowItem(
+    lead: String,
+    tail: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(Modifier.weight(1f)) {
+            Text(text = lead, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        Box(Modifier.weight(1f)) {
+            Text(text = tail, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun OptionView(
+    icon: @Composable () -> Unit,
+    label: @Composable () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick) { icon.invoke() }
+        Spacer(Modifier.width(12.dp))
+        label.invoke()
     }
 }
 
