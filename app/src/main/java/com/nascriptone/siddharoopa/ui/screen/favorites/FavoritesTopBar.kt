@@ -197,6 +197,7 @@ fun FavoriteActionTopBar(
             visible = deleteDialogVisible,
             onConfirm = {
                 favoritesViewModel.deleteAllItemFromFavorite()
+                favoritesViewModel.toggleSelectionMode()
                 deleteDialogVisible = false
             },
             onDismissRequest = { deleteDialogVisible = false },

@@ -396,7 +396,8 @@ fun AppTopBar(
             Routes.FavoritesHome -> FavoritesTopBar(
                 onBackPress = onBackPress,
                 onTableClick = { id ->
-                    navController.navigate(Routes.Table.name.plus("/$id")) {
+                    val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
+                    navController.navigate(route) {
                         launchSingleTop = true
                     }
                 },

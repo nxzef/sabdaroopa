@@ -65,6 +65,7 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
+import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 
 @Composable
@@ -131,7 +132,8 @@ fun FavoritesScreenContent(
                         isInSelected = isInSelected,
                         currentDrop = currentDrop,
                         onTableClick = { id ->
-                            navHostController.navigate(Routes.Table.name.plus("/$id")) {
+                            val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
+                            navHostController.navigate(route) {
                                 launchSingleTop = true
                             }
                         },
@@ -180,7 +182,9 @@ fun FavoritesScreenContent(
                 deleteItem = defaultDeleteState
             },
             onConfirm = {
-                favoritesViewModel.toggleFavoriteSabda(deleteItem.id!!)
+                deleteItem.id?.let {
+                    favoritesViewModel.toggleFavoriteSabda(it)
+                }
                 deleteItem = defaultDeleteState
             },
         )
