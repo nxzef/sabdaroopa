@@ -94,9 +94,12 @@
     <!-- Quiz Screen -->
 
     <string name="start_your_quiz">Start Your Quiz</string>
-    <string name="all_category">All Category</string>
 
-    <string name="all_question_type">All Question Type</string>
+    <string name="pick_from_table">Pick from Table</string>
+    <string name="pick_from_favorites">Pick from Favorites</string>
+    <string name="pick_from_list">Pick from List</string>
+
+    <string name="all_question_type">All Question Mode</string>
     <string name="multiple_choice_question">Multiple Choice (MCQ)</string>
     <string name="match_the_following">Match the Following</string>
 
