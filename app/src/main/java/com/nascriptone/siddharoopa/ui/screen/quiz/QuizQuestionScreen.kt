@@ -145,7 +145,7 @@ fun QuizQuestionScreenContent(
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
     var enabled by rememberSaveable { mutableStateOf(true) }
     var visible by rememberSaveable { mutableStateOf(false) }
-    val questionRange = quizSectionState.questionRange
+    val questionRange = quizSectionState.range
     val scope = rememberCoroutineScope()
 
 
