@@ -11,9 +11,12 @@ import com.nascriptone.siddharoopa.uscs.SharedFavorites
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -28,6 +31,9 @@ class FavoritesViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
+
+    private val _uiEvents = MutableSharedFlow<String>()
+    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
     private val ids = repository.getFavoriteIds().stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -79,6 +85,12 @@ class FavoritesViewModel @Inject constructor(
     }
 
     private fun enterSelectionMode(trigger: SelectionTrigger) {
+        if (trigger == SelectionTrigger.TOOLBAR && ids.value.isEmpty()) {
+            viewModelScope.launch {
+                _uiEvents.emit("No favorites yet")
+            }
+            return
+        }
         _uiState.update {
             it.copy(
                 isSelectMode = true,
