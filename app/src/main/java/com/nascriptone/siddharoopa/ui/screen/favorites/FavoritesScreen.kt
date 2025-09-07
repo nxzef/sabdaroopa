@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -49,6 +50,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -67,6 +69,7 @@ import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun FavoritesScreen(
@@ -74,8 +77,14 @@ fun FavoritesScreen(
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
+    LaunchedEffect(Unit) {
+        favoritesViewModel.uiEvents.collectLatest {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+        }
+    }
     FavoritesScreenContent(
         uiState = uiState,
         favorites = favorites,
