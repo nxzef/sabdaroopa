@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa
 
+import androidx.compose.ui.platform.LocalConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.math.absoluteValue
