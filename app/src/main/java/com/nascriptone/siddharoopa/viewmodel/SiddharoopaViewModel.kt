@@ -25,7 +25,7 @@ import com.nascriptone.siddharoopa.ui.screen.quiz.MtfStats
 import com.nascriptone.siddharoopa.ui.screen.quiz.Option
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionWithNumber
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuizMode
+import com.nascriptone.siddharoopa.ui.screen.quiz.Mode
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizSectionState
 import com.nascriptone.siddharoopa.ui.screen.settings.AppPreferencesState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
@@ -50,59 +50,9 @@ class SiddharoopaViewModel @Inject constructor(
     private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
-//    // Private
-//    private val _sabdaList: StateFlow<List<Sabda>> = repository.getAllSabda()
-//        .distinctUntilChanged().stateIn(
-//            scope = viewModelScope,
-//            started = SharingStarted.WhileSubscribed(5_000),
-//            initialValue = emptyList()
-//        )
-
-    //    private val _filter = MutableStateFlow(Filter())
-//    private val _uiState = MutableStateFlow(FavoritesState())
     private val _quizUIState = MutableStateFlow(QuizSectionState())
 //    val quizUIState: StateFlow<QuizSectionState> = _quizUIState.asStateFlow()
 
-
-    // Public
-
-//    fun getTableUIState(id: Int?): StateFlow<FindState> = _sabdaList.map { sabdaList ->
-//        sabdaList.find { it.id == id }?.let {
-//            FindState.Success(it)
-//        } ?: FindState.Error("Could not find declension table.")
-//    }.distinctUntilChanged().stateIn(
-//        scope = viewModelScope,
-//        started = SharingStarted.WhileSubscribed(5_000),
-//        initialValue = FindState.Loading
-//    )
-
-//    @OptIn(ExperimentalCoroutinesApi::class)
-//    private val _gatherState: StateFlow<GatherState> =
-//        _sabdaList.mapLatest { sabdaList ->
-//            val favoriteList =
-//                sabdaList.filter { it.isFavorite }.sortedByDescending { it.favoriteSince }
-//            if (favoriteList.isNotEmpty()) GatherState.Success(favoriteList)
-//            else GatherState.Empty
-//        }.catch {
-//            Log.e("GATHER", "Gather Favorite Error", it)
-//            emit(GatherState.Error(it.message.orEmpty()))
-//        }.distinctUntilChanged().stateIn(
-//            scope = viewModelScope,
-//            started = SharingStarted.WhileSubscribed(5_000),
-//            initialValue = GatherState.Loading
-//        )
-
-
-//    val favoriteUIState: StateFlow<FavoritesState> = combine(
-//        _gatherState,
-//        _favoriteUIState
-//    ) { gatherState, favoriteUIState ->
-//        favoriteUIState.copy(gatherState = gatherState)
-//    }.distinctUntilChanged().stateIn(
-//        scope = viewModelScope,
-//        started = SharingStarted.WhileSubscribed(5_000),
-//        initialValue = FavoritesState()
-//    )
 
     val appPreferencesState: StateFlow<AppPreferencesState> =
         preferencesRepository.currentTheme.map {
@@ -112,8 +62,6 @@ class SiddharoopaViewModel @Inject constructor(
             started = SharingStarted.Lazily,
             initialValue = AppPreferencesState()
         )
-
-//    fun updateFilter(filter: Filter) = _filter.update { filter }
 
     fun changeTheme(theme: Theme) {
         viewModelScope.launch {
@@ -559,10 +507,10 @@ class SiddharoopaViewModel @Inject constructor(
         return (randomThree + newItem).shuffled().toSet()
     }
 
-    fun updateQuizQuestionType(type: QuizMode) {
+    fun updateQuizQuestionType(type: Mode) {
         _quizUIState.update {
             it.copy(
-                quizMode = type,
+                mode = type,
             )
         }
     }
@@ -570,7 +518,7 @@ class SiddharoopaViewModel @Inject constructor(
     fun updateQuizQuestionRange(range: Int) {
         _quizUIState.update {
             it.copy(
-                questionRange = range,
+                range = range,
             )
         }
     }
