@@ -64,10 +64,13 @@ import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizViewModel
 import com.nascriptone.siddharoopa.ui.screen.search.SearchScreen
 import com.nascriptone.siddharoopa.ui.screen.search.SearchScreenBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
@@ -158,6 +161,7 @@ fun DrawerNavigation(
                                 onClick = {
                                     scope.launch {
                                         drawerState.close()
+                                    }.invokeOnCompletion {
                                         navController.navigate(navigation.name) {
                                             popUpTo("${Navigation.Home.name}/${Routes.Main.name}") {
                                                 inclusive = false
@@ -274,9 +278,7 @@ fun AppScaffold(
                     route = "${Navigation.Home.name}/${Routes.Search.name}",
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
                     exitTransition = { fadeOut() + scaleOut(targetScale = 1.2f) }
-                ) {
-                    SearchScreen(emptyList())
-                }
+                ) { SearchScreen(emptyList()) }
             }
             navigation(
                 route = Navigation.Favorites.name,
@@ -298,15 +300,19 @@ fun AppScaffold(
                 composable(
                     route = "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
                 ) {
-//                    QuizHomeScreen(
-//                        viewModel = viewModel,
-//                        quizSectionState = quizUIState,
-//                        navHostController = navHostController
-//                    )
+                    val quizViewModel: QuizViewModel = hiltViewModel()
+                    QuizHomeScreen(
+                        onBeginQuiz = {},
+                        onFavoritesClick = {
+                            navController.navigate("${Navigation.Favorites.name}/${Routes.FavoritesHome.name}")
+                        },
+                        quizViewModel = quizViewModel
+                    )
                 }
                 composable(
                     route = "${Navigation.Quiz.name}/${Routes.QuizQuestion.name}"
                 ) {
+//                    val quizViewModel: QuizViewModel = hiltViewModel()
 //                    QuizQuestionScreen(
 //                        viewModel = viewModel,
 //                        quizSectionState = quizUIState,
@@ -316,6 +322,7 @@ fun AppScaffold(
                 composable(
                     route = "${Navigation.Quiz.name}/${Routes.QuizResult.name}"
                 ) {
+//                    val quizViewModel: QuizViewModel = hiltViewModel()
 //                    QuizResultScreen(
 //                        viewModel = viewModel,
 //                        quizSectionState = quizUIState,
@@ -325,14 +332,13 @@ fun AppScaffold(
                 composable(
                     route = "${Navigation.Quiz.name}/${Routes.QuizReview.name}"
                 ) {
+//                    val quizViewModel: QuizViewModel = hiltViewModel()
 //                    QuizReviewScreen(quizSectionState = quizUIState)
                 }
                 composable(
                     route = "${Navigation.Quiz.name}/${Routes.QuizInstruction.name}"
                 ) {
-//                    QuizInstructionScreen(
-//                        onBackPress = { navController.navigateUp() }
-//                    )
+                    QuizInstructionScreen(onBackPress = { navController.navigateUp() })
                 }
             }
             navigation(
@@ -401,6 +407,7 @@ fun AppTopBar(
                         launchSingleTop = true
                     }
                 },
+                prevBackStackEntry = navController.previousBackStackEntry,
                 favoritesViewModel = favoritesViewModel
             )
 
@@ -408,7 +415,8 @@ fun AppTopBar(
             Routes.QuizHome -> QuizTopBar(
                 onBackPress = onBackPress,
                 onInfoActionClick = {
-                    navController.navigate(Routes.QuizInstruction.name)
+                    val route = "${Navigation.Quiz.name}/${Routes.QuizInstruction.name}"
+                    navController.navigate(route)
                 }
             )
 
