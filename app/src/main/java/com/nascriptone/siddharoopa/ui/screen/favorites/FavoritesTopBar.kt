@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,21 +42,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.screen.Navigation
+import com.nascriptone.siddharoopa.ui.screen.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesTopBar(
     onBackPress: () -> Unit,
     onTableClick: (Int) -> Unit,
+    prevBackStackEntry: NavBackStackEntry?,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
+    val fromQuiz =
+        prevBackStackEntry?.destination?.route == "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
     val toggleSelectionMode: () -> Unit = favoritesViewModel::toggleSelectionMode
+    LaunchedEffect(Unit) {
+        if (fromQuiz) toggleSelectionMode() else return@LaunchedEffect
+    }
     AnimatedContent(
         targetState = uiState.isSelectMode,
         transitionSpec = {
@@ -66,6 +76,7 @@ fun FavoritesTopBar(
             FavoriteActionTopBar(
                 onClose = toggleSelectionMode,
                 onTableClick = onTableClick,
+                fromQuiz = fromQuiz,
                 favoritesViewModel = favoritesViewModel
             )
         } else {
@@ -98,6 +109,7 @@ fun FavoritesTopBar(
 fun FavoriteActionTopBar(
     onClose: () -> Unit,
     onTableClick: (Int) -> Unit,
+    fromQuiz: Boolean,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -163,7 +175,7 @@ fun FavoriteActionTopBar(
                     }
                 }
                 AnimatedVisibility(
-                    visible = isNotEmpty,
+                    visible = isNotEmpty && !fromQuiz,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
                     exit = fadeOut() + scaleOut(targetScale = 1.2f)
                 ) {
