@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.repository.AppRepository
@@ -21,8 +20,8 @@ class QuizViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(QuizSectionState())
     val uiState: StateFlow<QuizSectionState> = _uiState.asStateFlow()
 
-    fun updateSource(source: QuestionSource) {
-        _uiState.update { it.copy(source = source) }
+    fun updateSource(sourceWithData: SourceWithData) {
+        _uiState.update { it.copy(sourceWithData = sourceWithData) }
     }
 
     fun updateMode(mode: Mode) {
@@ -34,15 +33,16 @@ class QuizViewModel @Inject constructor(
     }
 
     fun updateFilter(filter: Filter) {
-        Log.d("TRIGGER", "FUN TRIGGERED $filter")
-        _uiState.update {
-//            it.copy(
-//                data = Data.FromFilter(filter)
-//            )
-            if (it.data is Data.FromFilter) {
-                it.copy(data = it.data.copy(filter = filter))
-            } else it
+        _uiState.update { state ->
+            when (val src = state.sourceWithData) {
+                is SourceWithData.FromTable -> state.copy(
+                    sourceWithData = src.copy(filter = filter)
+                )
+
+                else -> state
+            }
         }
     }
+
 
 }
