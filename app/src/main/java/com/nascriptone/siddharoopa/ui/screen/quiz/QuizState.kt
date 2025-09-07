@@ -3,19 +3,49 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
+import com.nascriptone.siddharoopa.data.model.Filter
 
 data class QuizSectionState(
-    val quizMode: QuizMode = QuizMode.All,
-    val questionRange: Int = 10,
+    val sourceWithData: SourceWithData = SourceWithData.FromTable(),
+    val mode: Mode = Mode.All,
+    val range: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
-    val questionOptionList: CreationState<List<QuestionOption>> = CreationState.Loading,
+    val questionOptionList: CreationState = CreationState.Loading,
     val result: ValuationState = ValuationState.Calculate
 )
 
-sealed class CreationState<out T> {
-    object Loading : CreationState<Nothing>()
-    data class Success<out T>(val data: T) : CreationState<T>()
-    data class Error(val message: String) : CreationState<Nothing>()
+sealed interface SourceWithData {
+    val source: Source
+
+    data class FromTable(val filter: Filter = Filter()) : SourceWithData {
+        override val source: Source = Source.FROM_TABLE
+    }
+
+    data class FromFavorites(val data: Set<Int> = emptySet()) : SourceWithData {
+        override val source: Source = Source.FROM_FAVORITES
+    }
+
+    data class FromList(val data: Set<Int> = emptySet()) : SourceWithData {
+        override val source: Source = Source.FROM_LIST
+    }
+}
+
+enum class Source(@StringRes val uiName: Int) {
+    FROM_TABLE(uiName = R.string.pick_from_table),
+    FROM_FAVORITES(uiName = R.string.pick_from_favorites),
+    FROM_LIST(uiName = R.string.pick_from_list)
+}
+
+fun Source.createDefaultData(): SourceWithData = when (this) {
+    Source.FROM_TABLE -> SourceWithData.FromTable()
+    Source.FROM_FAVORITES -> SourceWithData.FromFavorites()
+    Source.FROM_LIST -> SourceWithData.FromList()
+}
+
+sealed interface CreationState {
+    object Loading : CreationState
+    data class Success(val data: List<QuestionOption>) : CreationState
+    data class Error(val message: String) : CreationState
 }
 
 enum class Action {
@@ -23,7 +53,7 @@ enum class Action {
     SUBMIT
 }
 
-enum class QuizMode(@StringRes val uiName: Int) {
+enum class Mode(@StringRes val uiName: Int) {
     All(R.string.all_question_type),
     MCQ(R.string.multiple_choice_question),
     MTF(R.string.match_the_following)
@@ -116,7 +146,14 @@ data class Summary(
     val accuracy: Float
 )
 
-internal inline fun <T> CreationState<T>.requireSuccess(predicate: (T) -> Boolean): T? {
-    val success = this as? CreationState.Success<T> ?: return null
-    return if (predicate(success.data)) success.data else null
+//internal inline fun CreationState.requireSuccess(predicate: (List<QuestionOption>) -> Boolean): List<QuestionOption>? {
+//    val success = this as? CreationState.Success ?: return null
+//    return if (predicate(success.data)) success.data else null
+//}
+
+internal inline fun CreationState.requireSuccess(predicate: (List<QuestionOption>) -> Boolean): List<QuestionOption> {
+    val success = this as? CreationState.Success ?: error("Not in Success state")
+    require(predicate(success.data)) { "Predicate failed" }
+    return success.data
 }
+
