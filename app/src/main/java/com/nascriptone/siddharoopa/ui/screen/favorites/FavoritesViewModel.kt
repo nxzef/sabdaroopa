@@ -71,8 +71,8 @@ class FavoritesViewModel @Inject constructor(
 
     fun deleteAllItemFromFavorite() = removeItemsFromFavorite(_uiState.value.selectedIds)
 
-    fun toggleSelectionMode() {
-        if (_uiState.value.isSelectMode) exitSelectionMode()
+    fun toggleSelectionMode(saveData: Boolean = false) {
+        if (_uiState.value.isSelectMode) exitSelectionMode(saveData)
         else enterSelectionMode(SelectionTrigger.TOOLBAR)
     }
 
@@ -84,7 +84,7 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    private fun enterSelectionMode(trigger: SelectionTrigger) {
+    fun enterSelectionMode(trigger: SelectionTrigger) {
         if (trigger == SelectionTrigger.TOOLBAR && ids.value.isEmpty()) {
             viewModelScope.launch {
                 _uiEvents.emit("No favorites yet")
@@ -99,12 +99,12 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    private fun exitSelectionMode() {
-        sharedFavorites.clearSelectedSet()
+    fun exitSelectionMode(saveData: Boolean = false) {
+        if (!saveData) sharedFavorites.clearSelectedSet()
         _uiState.update {
             it.copy(
                 isSelectMode = false,
-                selectionTrigger = SelectionTrigger.NONE
+                selectionTrigger = SelectionTrigger.EXPLICIT
             )
         }
     }
