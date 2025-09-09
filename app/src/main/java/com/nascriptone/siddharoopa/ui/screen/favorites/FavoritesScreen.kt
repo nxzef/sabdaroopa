@@ -8,6 +8,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -15,6 +17,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -116,7 +119,9 @@ fun FavoritesScreenContent(
         )
     ) { mutableStateOf(defaultDeleteState) }
 
-    LaunchedEffect(uiState.isSelectMode) { currentDrop = null }
+    LaunchedEffect(uiState.isSelectMode) {
+        if (uiState.isSelectMode) currentDrop = null
+    }
 
     Surface {
         LazyColumn(
@@ -214,8 +219,8 @@ fun FavoriteCard(
     onCardLongClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDropped = currentDrop == sabda.id
     val haptic = LocalHapticFeedback.current
+    val isDropped = currentDrop == sabda.id
     val cardOptions: List<CardOption> = remember {
         listOf(
             CardOption(
@@ -289,22 +294,12 @@ fun FavoriteCard(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7F),
                 )
 
-                CustomToolTip(if (isDropped) "Drop Up" else "Drop Down") {
-                    IconButton(
-                        enabled = !isSelectMode,
-                        onClick = { onCardClick(sabda.id) }
-                    ) {
-                        val rotate by animateFloatAsState(
-                            targetValue = if (isDropped) 180f else 0f,
-                            animationSpec = tween(200)
-                        )
-                        Icon(
-                            imageVector = Icons.Rounded.KeyboardArrowDown,
-                            contentDescription = null,
-                            modifier = Modifier.rotate(rotate)
-                        )
-                    }
-                }
+                AnimatedLiver(
+                    isSelectMode = isSelectMode,
+                    isDropped = isDropped,
+                    onTableClick = { onTableClick(sabda.id) },
+                    onCardClick = { onCardClick(sabda.id) }
+                )
             }
         }
         AnimatedVisibility(
@@ -323,6 +318,51 @@ fun FavoriteCard(
                 cardOptions = cardOptions,
                 modifier = Modifier
             )
+        }
+    }
+}
+
+@Composable
+fun AnimatedLiver(
+    isSelectMode: Boolean,
+    isDropped: Boolean,
+    onTableClick: () -> Unit,
+    onCardClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
+        AnimatedVisibility(
+            visible = isSelectMode,
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 0.8f)
+        ) {
+            CustomToolTip("Table") {
+                IconButton(onClick = onTableClick) {
+                    Icon(
+                        imageVector = Icons.Rounded.TableView,
+                        contentDescription = null
+                    )
+                }
+            }
+        }
+        AnimatedVisibility(
+            visible = !isSelectMode,
+            enter = fadeIn() + scaleIn(initialScale = 0.8f),
+            exit = fadeOut() + scaleOut(targetScale = 0.8f)
+        ) {
+            CustomToolTip(if (isDropped) "Drop Up" else "Drop Down") {
+                IconButton(onClick = onCardClick) {
+                    val rotate by animateFloatAsState(
+                        targetValue = if (isDropped) 180f else 0f,
+                        animationSpec = tween(200)
+                    )
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null,
+                        modifier = Modifier.rotate(rotate)
+                    )
+                }
+            }
         }
     }
 }
