@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.Deselect
 import androidx.compose.material.icons.rounded.Mode
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material.icons.rounded.TableView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,29 +41,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavBackStackEntry
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
-import com.nascriptone.siddharoopa.ui.screen.Navigation
-import com.nascriptone.siddharoopa.ui.screen.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesTopBar(
+    fromQuiz: Boolean,
     onBackPress: () -> Unit,
-    onTableClick: (Int) -> Unit,
-    prevBackStackEntry: NavBackStackEntry?,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    val fromQuiz =
-        prevBackStackEntry?.destination?.route == "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
     val toggleSelectionMode: () -> Unit = favoritesViewModel::toggleSelectionMode
-    LaunchedEffect(Unit) {
-        if (fromQuiz) toggleSelectionMode() else return@LaunchedEffect
+    LaunchedEffect(fromQuiz) {
+        if (fromQuiz) favoritesViewModel.enterSelectionMode(SelectionTrigger.EXPLICIT)
+        else return@LaunchedEffect
     }
     AnimatedContent(
         targetState = uiState.isSelectMode,
@@ -74,8 +68,10 @@ fun FavoritesTopBar(
     ) { isSelectMode ->
         if (isSelectMode) {
             FavoriteActionTopBar(
-                onClose = toggleSelectionMode,
-                onTableClick = onTableClick,
+                onClose = {
+                    if (fromQuiz) onBackPress()
+                    toggleSelectionMode()
+                },
                 fromQuiz = fromQuiz,
                 favoritesViewModel = favoritesViewModel
             )
@@ -108,7 +104,6 @@ fun FavoritesTopBar(
 @Composable
 fun FavoriteActionTopBar(
     onClose: () -> Unit,
-    onTableClick: (Int) -> Unit,
     fromQuiz: Boolean,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
@@ -150,18 +145,6 @@ fun FavoriteActionTopBar(
                 modifier = Modifier
             ) {
                 val isNotEmpty = uiState.selectedIds.isNotEmpty()
-                AnimatedVisibility(
-                    visible = uiState.selectedIds.size == 1,
-                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                    exit = fadeOut() + scaleOut(targetScale = 1.2f)
-                ) {
-                    CustomToolTip("Table") {
-                        IconButton(onClick = { onTableClick(uiState.selectedIds.first()) }) {
-                            val imageVector = Icons.Rounded.TableView
-                            Icon(imageVector, imageVector.name)
-                        }
-                    }
-                }
                 AnimatedVisibility(
                     visible = isNotEmpty,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
