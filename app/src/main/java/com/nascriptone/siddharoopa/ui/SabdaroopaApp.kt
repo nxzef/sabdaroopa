@@ -399,17 +399,16 @@ fun AppTopBar(
             }
 
             Routes.Table -> TableScreenTopBar(onBackPress = onBackPress)
-            Routes.FavoritesHome -> FavoritesTopBar(
-                onBackPress = onBackPress,
-                onTableClick = { id ->
-                    val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
-                    navController.navigate(route) {
-                        launchSingleTop = true
-                    }
-                },
-                prevBackStackEntry = navController.previousBackStackEntry,
-                favoritesViewModel = favoritesViewModel
-            )
+            Routes.FavoritesHome -> {
+                val previousBackStackEntry = navController.previousBackStackEntry
+                val fromQuiz =
+                    previousBackStackEntry?.destination?.route == "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
+                FavoritesTopBar(
+                    fromQuiz = fromQuiz,
+                    onBackPress = onBackPress,
+                    favoritesViewModel = favoritesViewModel
+                )
+            }
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
             Routes.QuizHome -> QuizTopBar(
