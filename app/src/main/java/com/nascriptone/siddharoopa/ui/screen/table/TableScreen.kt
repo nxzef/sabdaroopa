@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TableScreen(
+    onQuizClick: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     tableViewModel: TableViewModel = hiltViewModel()
@@ -64,6 +65,7 @@ fun TableScreen(
     sabda?.let { sabda ->
         TableScreenContent(
             sabda = sabda,
+            onQuizClick = onQuizClick,
             tableViewModel = tableViewModel,
             snackbarHostState = snackbarHostState,
             modifier = modifier
@@ -76,6 +78,7 @@ fun TableScreen(
 @Composable
 fun TableScreenContent(
     sabda: Sabda,
+    onQuizClick: (Int) -> Unit,
     tableViewModel: TableViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
@@ -155,7 +158,7 @@ fun TableScreenContent(
                         }
                     },
                     label = { Text("Take Quiz") },
-                    onClick = {}
+                    onClick = { onQuizClick(sabda.id) }
                 )
             }
             Spacer(Modifier.height(16.dp))
@@ -224,7 +227,7 @@ fun DeclensionTable(
                 DeclensionCell(
                     value = cellValue,
                     isPredefined = true,
-                    modifier = Modifier.weight(1F)
+                    modifier = Modifier.weight(1f)
                 )
                 VerticalDivider()
                 val formEntries = case.value.entries.toList()
