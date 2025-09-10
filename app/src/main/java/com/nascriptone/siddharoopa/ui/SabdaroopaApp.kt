@@ -272,7 +272,10 @@ fun AppScaffold(
                         }
                     )
                 ) {
-                    TableScreen(snackbarHostState = snackbarHostState)
+                    TableScreen(
+                        onQuizClick = { id -> },
+                        snackbarHostState = snackbarHostState
+                    )
                 }
                 composable(
                     route = "${Navigation.Home.name}/${Routes.Search.name}",
