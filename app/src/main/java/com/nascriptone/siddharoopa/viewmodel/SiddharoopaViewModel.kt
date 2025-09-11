@@ -50,7 +50,7 @@ class SiddharoopaViewModel @Inject constructor(
     private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
-    private val _quizUIState = MutableStateFlow(QuizSectionState())
+//    private val _quizUIState = MutableStateFlow(QuizSectionState())
 //    val quizUIState: StateFlow<QuizSectionState> = _quizUIState.asStateFlow()
 
 
@@ -175,11 +175,11 @@ class SiddharoopaViewModel @Inject constructor(
 //        if (item in this) this - item else this + item
 
     fun updateCurrentAnswer(answer: Answer) {
-        _quizUIState.update {
-            it.copy(
-                currentAnswer = answer
-            )
-        }
+//        _quizUIState.update {
+//            it.copy(
+//                currentAnswer = answer
+//            )
+//        }
     }
 
 //    fun createQuizQuestions() {
@@ -508,19 +508,19 @@ class SiddharoopaViewModel @Inject constructor(
     }
 
     fun updateQuizQuestionType(type: Mode) {
-        _quizUIState.update {
-            it.copy(
-                mode = type,
-            )
-        }
+//        _quizUIState.update {
+//            it.copy(
+//                mode = type,
+//            )
+//        }
     }
 
     fun updateQuizQuestionRange(range: Int) {
-        _quizUIState.update {
-            it.copy(
-                range = range,
-            )
-        }
+//        _quizUIState.update {
+//            it.copy(
+//                range = range,
+//            )
+//        }
     }
 
 //    fun deleteAllItemFromFavorite() {
