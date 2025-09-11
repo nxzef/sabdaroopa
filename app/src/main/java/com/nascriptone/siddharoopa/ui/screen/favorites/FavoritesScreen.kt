@@ -57,7 +57,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -77,8 +79,9 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun FavoritesScreen(
     navHostController: NavHostController,
-    favoritesViewModel: FavoritesViewModel,
-    modifier: Modifier = Modifier
+    backStackEntry: NavBackStackEntry,
+    modifier: Modifier = Modifier,
+    favoritesViewModel: FavoritesViewModel = hiltViewModel(backStackEntry)
 ) {
     val context = LocalContext.current
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
@@ -108,16 +111,11 @@ fun FavoritesScreenContent(
 
     var currentDrop by rememberSaveable { mutableStateOf<Int?>(null) }
     val defaultDeleteState = remember { DeleteDialogState(null, false) }
-    var deleteItem by rememberSaveable(
-        stateSaver = listSaver(
-            save = {
-                listOf(it.id, it.visible)
-            },
-            restore = {
-                DeleteDialogState(it[0] as Int?, it[1] as Boolean)
-            }
-        )
-    ) { mutableStateOf(defaultDeleteState) }
+    var deleteItem by rememberSaveable(stateSaver = listSaver(save = {
+        listOf(it.id, it.visible)
+    }, restore = {
+        DeleteDialogState(it[0] as Int?, it[1] as Boolean)
+    })) { mutableStateOf(defaultDeleteState) }
 
     LaunchedEffect(uiState.isSelectMode) {
         if (uiState.isSelectMode) currentDrop = null
@@ -133,9 +131,7 @@ fun FavoritesScreenContent(
             }
 
             items(
-                count = favorites.itemCount,
-                key = favorites.itemKey { it.id }
-            ) { index ->
+                count = favorites.itemCount, key = favorites.itemKey { it.id }) { index ->
                 val sabda: Sabda? = favorites[index]
                 sabda?.let { sabda ->
                     val isInSelected = sabda.id in uiState.selectedIds
@@ -154,8 +150,7 @@ fun FavoritesScreenContent(
                         onQuizClick = {},
                         onDeleteClick = { id ->
                             deleteItem = DeleteDialogState(
-                                id = id,
-                                visible = true
+                                id = id, visible = true
                             )
                         },
                         onCardClick = { id ->
@@ -226,14 +221,11 @@ fun FavoriteCard(
             CardOption(
                 name = "Table",
                 icon = Icons.Rounded.TableView,
-            ),
-            CardOption(
+            ), CardOption(
                 name = "Quiz",
                 icon = Icons.Rounded.Quiz,
-            ),
-            CardOption(
-                name = "Delete",
-                icon = Icons.Rounded.Delete
+            ), CardOption(
+                name = "Delete", icon = Icons.Rounded.Delete
             )
         )
     }
@@ -245,10 +237,8 @@ fun FavoriteCard(
                 if (isInSelected) {
                     Modifier.border(
                         border = BorderStroke(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.tertiary
-                        ),
-                        shape = MaterialTheme.shapes.large
+                            width = 2.dp, color = MaterialTheme.colorScheme.tertiary
+                        ), shape = MaterialTheme.shapes.large
                     )
                 } else Modifier
             )
@@ -257,21 +247,15 @@ fun FavoriteCard(
                 shape = MaterialTheme.shapes.large
             )
             .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
-                onClick = { onCardClick(sabda.id) },
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onCardLongClick(sabda.id)
-                }
-            )
+            .combinedClickable(onClick = { onCardClick(sabda.id) }, onLongClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onCardLongClick(sabda.id)
+            })
             .then(modifier)
     ) {
         Column(
             modifier = Modifier.padding(
-                start = 16.dp,
-                top = 16.dp,
-                end = 8.dp,
-                bottom = 8.dp
+                start = 16.dp, top = 16.dp, end = 8.dp, bottom = 8.dp
             )
         ) {
             Text(
@@ -298,16 +282,13 @@ fun FavoriteCard(
                     isSelectMode = isSelectMode,
                     isDropped = isDropped,
                     onTableClick = { onTableClick(sabda.id) },
-                    onCardClick = { onCardClick(sabda.id) }
-                )
+                    onCardClick = { onCardClick(sabda.id) })
             }
         }
         AnimatedVisibility(
-            visible = isDropped,
-            enter = fadeIn() + expandVertically(
+            visible = isDropped, enter = fadeIn() + expandVertically(
                 animationSpec = tween(60)
-            ),
-            exit = fadeOut() + shrinkVertically(
+            ), exit = fadeOut() + shrinkVertically(
                 animationSpec = tween(60)
             )
         ) {
@@ -339,8 +320,7 @@ fun AnimatedLiver(
             CustomToolTip("Table") {
                 IconButton(onClick = onTableClick) {
                     Icon(
-                        imageVector = Icons.Rounded.TableView,
-                        contentDescription = null
+                        imageVector = Icons.Rounded.TableView, contentDescription = null
                     )
                 }
             }
@@ -353,8 +333,7 @@ fun AnimatedLiver(
             CustomToolTip(if (isDropped) "Drop Up" else "Drop Down") {
                 IconButton(onClick = onCardClick) {
                     val rotate by animateFloatAsState(
-                        targetValue = if (isDropped) 180f else 0f,
-                        animationSpec = tween(200)
+                        targetValue = if (isDropped) 180f else 0f, animationSpec = tween(200)
                     )
                     Icon(
                         imageVector = Icons.Rounded.KeyboardArrowDown,
@@ -378,10 +357,7 @@ fun OptionsComponent(
 ) {
     Row(
         modifier = modifier.padding(
-            start = 16.dp,
-            top = 0.dp,
-            end = 16.dp,
-            bottom = 16.dp
+            start = 16.dp, top = 0.dp, end = 16.dp, bottom = 16.dp
         )
     ) {
         cardOptions.forEachIndexed { index, option ->
@@ -400,8 +376,7 @@ fun OptionsComponent(
                     .padding(8.dp)
             ) {
                 val color: Color = if (index == 2) Color.Red.copy(
-                    green = 0.3f,
-                    blue = 0.3f
+                    green = 0.3f, blue = 0.3f
                 )
                 else LocalContentColor.current
                 CustomToolTip(option.name) {
@@ -413,9 +388,7 @@ fun OptionsComponent(
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = option.name,
-                    color = color,
-                    style = MaterialTheme.typography.labelMedium
+                    text = option.name, color = color, style = MaterialTheme.typography.labelMedium
                 )
             }
         }
@@ -449,6 +422,5 @@ data class CardOption(
 )
 
 data class DeleteDialogState(
-    val id: Int? = null,
-    val visible: Boolean = false
+    val id: Int? = null, val visible: Boolean = false
 )
