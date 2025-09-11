@@ -3,7 +3,7 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.uscs.SourceWithData
+import com.nascriptone.siddharoopa.domain.SourceWithData
 
 data class QuizSectionState(
     val sourceWithData: SourceWithData = SourceWithData.FromTable(),
