@@ -3,11 +3,11 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -24,7 +24,7 @@ fun QuizTopBar(
     modifier: Modifier = Modifier
 ) {
     val title = stringResource(R.string.start_your_quiz)
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
             Text(title)
         },
@@ -48,7 +48,7 @@ fun QuizResultScreenTopBar(
     modifier: Modifier = Modifier
 ) {
     val title = stringResource(R.string.quiz_result_title)
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
             Text(title)
         },
@@ -62,7 +62,7 @@ fun QuizReviewScreenTopBar(
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
             Text("Review")
         },
@@ -81,7 +81,7 @@ fun QuizInstructionScreenTopBar(
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
             Text("Quiz Instructions")
         },
