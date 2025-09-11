@@ -63,8 +63,8 @@ import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
-import com.nascriptone.siddharoopa.uscs.Source
-import com.nascriptone.siddharoopa.uscs.SourceWithData
+import com.nascriptone.siddharoopa.domain.Source
+import com.nascriptone.siddharoopa.domain.SourceWithData
 import kotlin.math.roundToInt
 
 @Composable
