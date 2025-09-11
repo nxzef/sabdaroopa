@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui
 
 import android.content.res.Configuration
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -51,8 +52,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.core.utils.isDarkTheme
-import com.nascriptone.siddharoopa.core.utils.toPascalCase
 import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.ui.screen.Navigation
@@ -61,7 +60,6 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
-import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
@@ -77,6 +75,8 @@ import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
+import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
+import com.nascriptone.siddharoopa.utils.isDarkTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.launch
 
@@ -99,8 +99,8 @@ fun SabdaroopaApp(viewModel: SiddharoopaViewModel = hiltViewModel()) {
 @Composable
 fun DrawerNavigation(
     modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController()
 ) {
-    val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val config = LocalConfiguration.current
     val orientation = config.orientation
@@ -111,17 +111,13 @@ fun DrawerNavigation(
             backStackEntry?.destination?.route.getNavigationOrDefault(Navigation.Home)
         }
     }
-    val currentRoute by remember(backStackEntry) {
-        derivedStateOf {
-            backStackEntry?.destination?.route.getRouteOrDefault(Routes.Main)
-        }
-    }
     val enabledRoutes = remember {
         setOf(
             "${Navigation.Home.name}/${Routes.Main.name}",
-            "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
+            "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}?fq={fq}"
         )
     }
+    Log.d("Routes", "${backStackEntry?.destination?.route}")
     Surface {
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -178,7 +174,6 @@ fun DrawerNavigation(
         ) {
             AppScaffold(
                 onMenuClick = { scope.launch { drawerState.open() } },
-                currentRoute = currentRoute,
                 navController = navController
             )
         }
@@ -188,20 +183,16 @@ fun DrawerNavigation(
 @Composable
 fun AppScaffold(
     onMenuClick: () -> Unit,
-    currentRoute: Routes,
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val favoritesViewModel: FavoritesViewModel = hiltViewModel()
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
         topBar = {
             AppTopBar(
                 onMenuClick = onMenuClick,
                 onBackPress = { navController.navigateUp() },
-                currentRoute = currentRoute,
-                navController = navController,
-                favoritesViewModel = favoritesViewModel
+                navController = navController
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -288,11 +279,17 @@ fun AppScaffold(
                 startDestination = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
             ) {
                 composable(
-                    route = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}"
-                ) {
+                    route = "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}?fq={fq}",
+                    arguments = listOf(
+                        navArgument("fq") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
+                    )
+                ) { backStackEntry ->
                     FavoritesScreen(
                         navHostController = navController,
-                        favoritesViewModel = favoritesViewModel
+                        backStackEntry = backStackEntry
                     )
                 }
             }
@@ -307,7 +304,9 @@ fun AppScaffold(
                     QuizHomeScreen(
                         onBeginQuiz = {},
                         onFavoritesClick = {
-                            navController.navigate("${Navigation.Favorites.name}/${Routes.FavoritesHome.name}")
+                            val route =
+                                "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}?fq=true"
+                            navController.navigate(route)
                         },
                         quizViewModel = quizViewModel
                     )
@@ -365,12 +364,15 @@ fun AppScaffold(
 fun AppTopBar(
     onMenuClick: () -> Unit,
     onBackPress: () -> Unit,
-    currentRoute: Routes,
     navController: NavHostController,
-    favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute by remember(backStackEntry) {
+        derivedStateOf {
+            backStackEntry?.destination?.route.getRouteOrDefault(Routes.Main)
+        }
+    }
     AnimatedContent(
         targetState = currentRoute,
         transitionSpec = {
@@ -402,16 +404,7 @@ fun AppTopBar(
             }
 
             Routes.Table -> TableScreenTopBar(onBackPress = onBackPress)
-            Routes.FavoritesHome -> {
-                val previousBackStackEntry = navController.previousBackStackEntry
-                val fromQuiz =
-                    previousBackStackEntry?.destination?.route == "${Navigation.Quiz.name}/${Routes.QuizHome.name}"
-                FavoritesTopBar(
-                    fromQuiz = fromQuiz,
-                    onBackPress = onBackPress,
-                    favoritesViewModel = favoritesViewModel
-                )
-            }
+            Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
             Routes.QuizHome -> QuizTopBar(
@@ -432,7 +425,9 @@ fun AppTopBar(
 
 private fun String?.getRouteOrDefault(default: Routes): Routes =
     this?.let {
-        val value = it.substringAfter("/").substringBefore("/")
+        val value = it.substringAfter("/")
+            .substringBefore("/")
+            .split("?")[0]
         Routes.entries.firstOrNull { route -> route.name == value } ?: default
     } ?: default
 
