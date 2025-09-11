@@ -41,22 +41,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.utils.extensions.getViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesTopBar(
-    fromQuiz: Boolean,
-    onBackPress: () -> Unit,
-    favoritesViewModel: FavoritesViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navHostController: NavHostController,
+    favoritesViewModel: FavoritesViewModel = navHostController.getViewModel()
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(fromQuiz) {
-        if (fromQuiz) favoritesViewModel.toggleSelectionMode()
+    val onBackPress: () -> Unit = navHostController::navigateUp
+    val fqt = false
+    LaunchedEffect(fqt) {
+        if (fqt) favoritesViewModel.toggleSelectionMode()
         else return@LaunchedEffect
     }
     AnimatedContent(
@@ -68,10 +71,10 @@ fun FavoritesTopBar(
         if (isSelectMode) {
             FavoriteActionTopBar(
                 onClose = {
-                    if (fromQuiz) onBackPress()
+                    if (fqt) onBackPress()
                     favoritesViewModel.toggleSelectionMode()
                 },
-                fromQuiz = fromQuiz,
+                fromQuiz = fqt,
                 favoritesViewModel = favoritesViewModel
             )
         } else {
