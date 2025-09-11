@@ -1,4 +1,4 @@
-package com.nascriptone.siddharoopa.uscs
+package com.nascriptone.siddharoopa.domain
 
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
