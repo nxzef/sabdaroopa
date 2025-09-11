@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -25,11 +26,14 @@ import javax.inject.Inject
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
     private val repository: AppRepository,
-//    private val sharedDataDomain: SharedDataDomain
+//    private val sharedDataDomain: SharedDataDomain,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    val favorites: Flow<PagingData<Sabda>> =
+        repository.getFavoriteList().flow.cachedIn(viewModelScope)
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
-
     private val _uiEvents = MutableSharedFlow<String>()
     val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
     private val ids = repository.getFavoriteIds().stateIn(
@@ -37,12 +41,10 @@ class FavoritesViewModel @Inject constructor(
         started = SharingStarted.Eagerly,
         initialValue = emptySet()
     )
-
-    val favorites: Flow<PagingData<Sabda>> =
-        repository.getFavoriteList().flow.cachedIn(viewModelScope)
-
+    private val fromQuiz: Boolean = savedStateHandle.get<Boolean>("fq") ?: false
 
     init {
+        Log.d("FROM_QUIZ", "$fromQuiz")
         viewModelScope.launch {
             ids.collect { ids ->
                 _uiState.update { it.copy(totalIDs = ids) }
