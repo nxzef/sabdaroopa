@@ -3,7 +3,7 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Filter
+import com.nascriptone.siddharoopa.uscs.SourceWithData
 
 data class QuizSectionState(
     val sourceWithData: SourceWithData = SourceWithData.FromTable(),
@@ -13,34 +13,6 @@ data class QuizSectionState(
     val questionOptionList: CreationState = CreationState.Loading,
     val result: ValuationState = ValuationState.Calculate
 )
-
-sealed interface SourceWithData {
-    val source: Source
-
-    data class FromTable(val filter: Filter = Filter()) : SourceWithData {
-        override val source: Source = Source.FROM_TABLE
-    }
-
-    data class FromFavorites(val data: Set<Int> = emptySet()) : SourceWithData {
-        override val source: Source = Source.FROM_FAVORITES
-    }
-
-    data class FromList(val data: Set<Int> = emptySet()) : SourceWithData {
-        override val source: Source = Source.FROM_LIST
-    }
-}
-
-enum class Source(@StringRes val uiName: Int) {
-    FROM_TABLE(uiName = R.string.pick_from_table),
-    FROM_FAVORITES(uiName = R.string.pick_from_favorites),
-    FROM_LIST(uiName = R.string.pick_from_list)
-}
-
-fun Source.createDefaultData(): SourceWithData = when (this) {
-    Source.FROM_TABLE -> SourceWithData.FromTable()
-    Source.FROM_FAVORITES -> SourceWithData.FromFavorites()
-    Source.FROM_LIST -> SourceWithData.FromList()
-}
 
 sealed interface CreationState {
     object Loading : CreationState
