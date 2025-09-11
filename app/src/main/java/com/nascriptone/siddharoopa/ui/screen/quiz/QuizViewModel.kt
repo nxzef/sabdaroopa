@@ -1,28 +1,40 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.repository.AppRepository
-import com.nascriptone.siddharoopa.uscs.SharedFavorites
+import com.nascriptone.siddharoopa.uscs.SharedDataDomain
+import com.nascriptone.siddharoopa.uscs.Source
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val sharedFavorites: SharedFavorites
+    private val sharedDataDomain: SharedDataDomain,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QuizSectionState())
     val uiState: StateFlow<QuizSectionState> = _uiState.asStateFlow()
 
-    fun updateSource(sourceWithData: SourceWithData) {
-        _uiState.update { it.copy(sourceWithData = sourceWithData) }
+    init {
+        viewModelScope.launch {
+            sharedDataDomain.sourceWithData.collect { sourceWithData ->
+                _uiState.update {
+                    it.copy(sourceWithData = sourceWithData)
+                }
+            }
+        }
     }
+
+    fun updateSource(source: Source) = sharedDataDomain.updateSourceWithData(source)
 
     fun updateMode(mode: Mode) {
         _uiState.update { it.copy(mode = mode) }
@@ -32,17 +44,11 @@ class QuizViewModel @Inject constructor(
         _uiState.update { it.copy(range = range) }
     }
 
-    fun updateFilter(filter: Filter) {
-        _uiState.update { state ->
-            when (val src = state.sourceWithData) {
-                is SourceWithData.FromTable -> state.copy(
-                    sourceWithData = src.copy(filter = filter)
-                )
+    fun updateFilter(filter: Filter) = sharedDataDomain.updateFilter(filter)
 
-                else -> state
-            }
-        }
+    override fun onCleared() {
+        super.onCleared()
+        sharedDataDomain.resetSource()
+        Log.d("QuizViewModel", "SharedDataDomain state reset on ViewModel clear")
     }
-
-
 }
