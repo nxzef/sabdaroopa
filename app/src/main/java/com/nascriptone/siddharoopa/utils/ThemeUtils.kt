@@ -1,4 +1,4 @@
-package com.nascriptone.siddharoopa.core.utils
+package com.nascriptone.siddharoopa.utils
 
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 
