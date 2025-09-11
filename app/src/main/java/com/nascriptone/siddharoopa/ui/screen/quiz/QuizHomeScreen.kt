@@ -63,6 +63,8 @@ import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.uscs.Source
+import com.nascriptone.siddharoopa.uscs.SourceWithData
 import kotlin.math.roundToInt
 
 @Composable
@@ -88,7 +90,7 @@ fun QuizHomeScreen(
                     QuizChooseOption(
                         name = stringResource(source.uiName),
                         selected = source == uiState.sourceWithData.source,
-                        onClick = { quizViewModel.updateSource(sourceWithData = source.createDefaultData()) })
+                        onClick = { quizViewModel.updateSource(source = source) })
                     if (source.ordinal < Source.entries.lastIndex) HorizontalDivider()
                 }
             }
