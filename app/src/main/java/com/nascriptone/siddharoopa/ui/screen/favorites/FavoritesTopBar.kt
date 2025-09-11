@@ -55,9 +55,8 @@ fun FavoritesTopBar(
     modifier: Modifier = Modifier
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    val toggleSelectionMode: () -> Unit = favoritesViewModel::toggleSelectionMode
     LaunchedEffect(fromQuiz) {
-        if (fromQuiz) favoritesViewModel.enterSelectionMode(SelectionTrigger.EXPLICIT)
+        if (fromQuiz) favoritesViewModel.toggleSelectionMode()
         else return@LaunchedEffect
     }
     AnimatedContent(
@@ -70,7 +69,7 @@ fun FavoritesTopBar(
             FavoriteActionTopBar(
                 onClose = {
                     if (fromQuiz) onBackPress()
-                    toggleSelectionMode()
+                    favoritesViewModel.toggleSelectionMode()
                 },
                 fromQuiz = fromQuiz,
                 favoritesViewModel = favoritesViewModel
@@ -89,7 +88,9 @@ fun FavoritesTopBar(
                 },
                 actions = {
                     CustomToolTip("Select") {
-                        IconButton(onClick = toggleSelectionMode) {
+                        IconButton(onClick = {
+                            favoritesViewModel.toggleSelectionMode(selectionTrigger = SelectionTrigger.TOOLBAR)
+                        }) {
                             Icon(Icons.Rounded.Mode, null)
                         }
                     }
@@ -110,7 +111,7 @@ fun FavoriteActionTopBar(
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
-    val toggleSelectAll: () -> Unit = favoritesViewModel::toggleSelectAll
+    val toggleSelectAll: () -> Unit = favoritesViewModel::toggleFavoriteSelectAll
 
     BackHandler(onBack = onClose)
 
