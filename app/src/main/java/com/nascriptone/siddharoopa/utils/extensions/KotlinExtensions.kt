@@ -1,4 +1,4 @@
-package com.nascriptone.siddharoopa.core.utils
+package com.nascriptone.siddharoopa.utils.extensions
 
 fun Enum<*>.toPascalCase(): String {
     return name
