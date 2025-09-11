@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.repository.AppRepository
-import com.nascriptone.siddharoopa.uscs.SharedDataDomain
-import com.nascriptone.siddharoopa.uscs.Source
+import com.nascriptone.siddharoopa.domain.SharedDataDomain
+import com.nascriptone.siddharoopa.domain.Source
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
