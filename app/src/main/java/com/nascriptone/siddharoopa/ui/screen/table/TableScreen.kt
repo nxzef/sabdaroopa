@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.core.utils.toPascalCase
+import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.data.model.Declension
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
