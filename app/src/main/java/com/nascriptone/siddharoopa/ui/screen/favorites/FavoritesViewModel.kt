@@ -11,14 +11,9 @@ import com.nascriptone.siddharoopa.data.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,27 +29,25 @@ class FavoritesViewModel @Inject constructor(
         repository.getFavoriteList().flow.cachedIn(viewModelScope)
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
-    private val _uiEvents = MutableSharedFlow<String>()
-    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
-    private val ids = repository.getFavoriteIds().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptySet()
-    )
-    private val fromQuiz: Boolean = savedStateHandle.get<Boolean>("fq") ?: false
+    private val fromQuiz: Boolean = savedStateHandle["fq"] ?: false
+    private var ht: Boolean = false
 
     init {
-        Log.d("FROM_QUIZ", "$fromQuiz")
+        _uiState.update { it.copy(fromQuiz = fromQuiz) }
         viewModelScope.launch {
-            ids.collect { ids ->
-                _uiState.update { it.copy(totalIDs = ids) }
+            repository.getFavoriteIds().collect { totalIds ->
+                _uiState.update { it.copy(totalIds = totalIds) }
+                if (fromQuiz && !ht) {
+                    toggleSelectionMode()
+                    ht = true
+                }
             }
         }
     }
 
     fun toggleFavoriteSelectAll() = _uiState.update {
         it.copy(
-            selectedIds = if (it.selectedIds.size < ids.value.size) ids.value
+            selectedIds = if (it.selectedIds.size < it.totalIds.size) it.totalIds
             else emptySet()
         )
     }
@@ -86,10 +79,7 @@ class FavoritesViewModel @Inject constructor(
     }
 
     private fun enterSelectionMode(trigger: SelectionTrigger) {
-        if (ids.value.isEmpty()) {
-            viewModelScope.launch { _uiEvents.emit("No favorites yet") }
-            return
-        }
+        if (_uiState.value.totalIds.isEmpty()) return
         _uiState.update {
             it.copy(
                 isSelectMode = true,
