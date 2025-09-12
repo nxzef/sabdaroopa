@@ -1,13 +1,14 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
+import com.nascriptone.siddharoopa.domain.SharedDataDomain
+import com.nascriptone.siddharoopa.domain.SourceWithData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -21,28 +22,27 @@ import javax.inject.Inject
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
     private val repository: AppRepository,
-//    private val sharedDataDomain: SharedDataDomain,
-    savedStateHandle: SavedStateHandle
+    private val sharedDataDomain: SharedDataDomain,
 ) : ViewModel() {
 
     val favorites: Flow<PagingData<Sabda>> =
         repository.getFavoriteList().flow.cachedIn(viewModelScope)
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
-    private val fromQuiz: Boolean = savedStateHandle["fq"] ?: false
-    private var ht: Boolean = false
 
     init {
-        _uiState.update { it.copy(fromQuiz = fromQuiz) }
         viewModelScope.launch {
             repository.getFavoriteIds().collect { totalIds ->
                 _uiState.update { it.copy(totalIds = totalIds) }
-                if (fromQuiz && !ht) {
-                    toggleSelectionMode()
-                    ht = true
-                }
+                handleFavoritesSource()
             }
         }
+    }
+
+    fun updateSourceWithData() {
+        val data = _uiState.value.selectedIds
+        val sourceWithData = SourceWithData.FromFavorites(data)
+        sharedDataDomain.updateSourceWithData(sourceWithData)
     }
 
     fun toggleFavoriteSelectAll() = _uiState.update {
@@ -53,21 +53,16 @@ class FavoritesViewModel @Inject constructor(
     }
 
     fun toggleSelectedId(id: Int) {
-        if (!_uiState.value.isSelectMode) enterSelectionMode(SelectionTrigger.CARD)
+        if (!_uiState.value.isSelectMode) enterSelectionMode(Trigger.CARD)
         updateFavoriteSelectedSet(id)
-        if (_uiState.value.selectedIds.isEmpty() &&
-            _uiState.value.selectionTrigger == SelectionTrigger.CARD
-        ) exitSelectionMode()
+        if (_uiState.value.selectedIds.isEmpty() && _uiState.value.trigger == Trigger.CARD) exitSelectionMode()
     }
 
     fun deleteAllItemFromFavorite() = removeItemsFromFavorite(_uiState.value.selectedIds)
 
-    fun toggleSelectionMode(
-        selectionTrigger: SelectionTrigger = SelectionTrigger.EXPLICIT,
-        saveData: Boolean = false
-    ) {
-        if (_uiState.value.isSelectMode) exitSelectionMode(saveData)
-        else enterSelectionMode(trigger = selectionTrigger)
+    fun toggleSelectionMode(trigger: Trigger = Trigger.NONE) {
+        if (_uiState.value.isSelectMode) exitSelectionMode()
+        else enterSelectionMode(trigger = trigger)
     }
 
     fun toggleFavoriteSabda(id: Int) {
@@ -78,19 +73,29 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    private fun enterSelectionMode(trigger: SelectionTrigger) {
+    private fun handleFavoritesSource() {
+        val sourceData = sharedDataDomain.sourceWithData.value
+        if (sourceData is SourceWithData.FromFavorites && _uiState.value.trigger == Trigger.NONE) {
+            toggleSelectionMode(Trigger.AUTO)
+            _uiState.update { it.copy(selectedIds = sourceData.data) }
+        }
+    }
+
+    private fun enterSelectionMode(trigger: Trigger) {
         if (_uiState.value.totalIds.isEmpty()) return
         _uiState.update {
             it.copy(
-                isSelectMode = true,
-                selectionTrigger = trigger
+                isSelectMode = true, trigger = trigger
             )
         }
     }
 
-    private fun exitSelectionMode(saveData: Boolean = false) {
-        if (!saveData) clearFavoriteSelectedSet()
-        _uiState.update { it.copy(isSelectMode = false) }
+    private fun exitSelectionMode() {
+        _uiState.update {
+            it.copy(
+                isSelectMode = false, selectedIds = emptySet(), trigger = Trigger.NONE
+            )
+        }
     }
 
     private fun removeItemsFromFavorite(ids: Set<Int>) {
@@ -107,10 +112,5 @@ class FavoritesViewModel @Inject constructor(
         _uiState.update { it.copy(selectedIds = it.selectedIds.toggleInSet(id)) }
     }
 
-    private fun clearFavoriteSelectedSet() {
-        _uiState.update { it.copy(selectedIds = emptySet()) }
-    }
-
-    private fun <T> Set<T>.toggleInSet(id: T): Set<T> =
-        if (id in this) this - id else this + id
+    private fun <T> Set<T>.toggleInSet(id: T): Set<T> = if (id in this) this - id else this + id
 }
