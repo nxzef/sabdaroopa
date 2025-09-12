@@ -62,9 +62,9 @@ import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
-import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.domain.Source
 import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import kotlin.math.roundToInt
 
 @Composable
@@ -90,7 +90,7 @@ fun QuizHomeScreen(
                     QuizChooseOption(
                         name = stringResource(source.uiName),
                         selected = source == uiState.sourceWithData.source,
-                        onClick = { quizViewModel.updateSource(source = source) })
+                        onClick = { quizViewModel.switchSource(source = source) })
                     if (source.ordinal < Source.entries.lastIndex) HorizontalDivider()
                 }
             }
@@ -108,9 +108,7 @@ fun QuizHomeScreen(
                         name = stringResource(mode.uiName),
                         selected = mode == uiState.mode,
                         onClick = { quizViewModel.updateMode(mode) })
-                    if (mode.ordinal < Mode.entries.lastIndex) {
-                        HorizontalDivider()
-                    }
+                    if (mode.ordinal < Mode.entries.lastIndex) HorizontalDivider()
                 }
             }
             StepSlider(
@@ -179,9 +177,7 @@ fun DataView(
             when (data) {
                 is SourceWithData.FromTable -> {
                     val chips = listOfNotNull(
-                        data.filter.category?.skt,
-                        data.filter.sound?.skt,
-                        data.filter.gender?.skt
+                        data.filter.category?.skt, data.filter.sound?.skt, data.filter.gender?.skt
                     )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -214,8 +210,7 @@ fun DataView(
         onFilterChange = onFilterChange,
         onDismissRequest = {
             bottomSheetVisible = false
-        }
-    )
+        })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -245,8 +240,7 @@ fun TableModalBottomSheet(
     LaunchedEffect(newFilter) { onFilterChange(newFilter) }
 
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = bottomSheetState
+        onDismissRequest = onDismissRequest, sheetState = bottomSheetState
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -260,8 +254,7 @@ fun TableModalBottomSheet(
                     category = null
                     sound = null
                     gender = null
-                },
-                modifier = Modifier.align(Alignment.End)
+                }, modifier = Modifier.align(Alignment.End)
             ) {
                 CustomToolTip("Reset") { Icon(Icons.Rounded.Refresh, null) }
             }
