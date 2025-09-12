@@ -288,7 +288,12 @@ fun AppScaffold(
                     )
                 ) { backStackEntry ->
                     FavoritesScreen(
-                        navHostController = navController,
+                        onTableClick = { id ->
+                            val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                            }
+                        },
                         backStackEntry = backStackEntry
                     )
                 }
