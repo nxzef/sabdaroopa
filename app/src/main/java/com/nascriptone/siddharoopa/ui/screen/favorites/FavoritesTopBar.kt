@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,17 +50,12 @@ import com.nascriptone.siddharoopa.utils.extensions.getViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesTopBar(
-    modifier: Modifier = Modifier,
     navHostController: NavHostController,
+    modifier: Modifier = Modifier,
     favoritesViewModel: FavoritesViewModel = navHostController.getViewModel()
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     val onBackPress: () -> Unit = navHostController::navigateUp
-    val fqt = false
-    LaunchedEffect(fqt) {
-        if (fqt) favoritesViewModel.toggleSelectionMode()
-        else return@LaunchedEffect
-    }
     AnimatedContent(
         targetState = uiState.isSelectMode,
         transitionSpec = {
@@ -71,10 +65,9 @@ fun FavoritesTopBar(
         if (isSelectMode) {
             FavoriteActionTopBar(
                 onClose = {
-                    if (fqt) onBackPress()
+                    if (uiState.fromQuiz) onBackPress()
                     favoritesViewModel.toggleSelectionMode()
                 },
-                fromQuiz = fqt,
                 favoritesViewModel = favoritesViewModel
             )
         } else {
@@ -90,11 +83,13 @@ fun FavoritesTopBar(
                     }
                 },
                 actions = {
-                    CustomToolTip("Select") {
-                        IconButton(onClick = {
-                            favoritesViewModel.toggleSelectionMode(selectionTrigger = SelectionTrigger.TOOLBAR)
-                        }) {
-                            Icon(Icons.Rounded.Mode, null)
+                    if (uiState.totalIds.isNotEmpty()) {
+                        CustomToolTip("Select") {
+                            IconButton(onClick = {
+                                favoritesViewModel.toggleSelectionMode(selectionTrigger = SelectionTrigger.TOOLBAR)
+                            }) {
+                                Icon(Icons.Rounded.Mode, null)
+                            }
                         }
                     }
                 },
@@ -108,7 +103,6 @@ fun FavoritesTopBar(
 @Composable
 fun FavoriteActionTopBar(
     onClose: () -> Unit,
-    fromQuiz: Boolean,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -162,7 +156,7 @@ fun FavoriteActionTopBar(
                     }
                 }
                 AnimatedVisibility(
-                    visible = isNotEmpty && !fromQuiz,
+                    visible = isNotEmpty && !uiState.fromQuiz,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
                     exit = fadeOut() + scaleOut(targetScale = 1.2f)
                 ) {
