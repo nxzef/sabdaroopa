@@ -15,8 +15,10 @@ class SharedDataDomain @Inject constructor() {
     private val _sourceWithData = MutableStateFlow<SourceWithData>(SourceWithData.FromTable())
     val sourceWithData: StateFlow<SourceWithData> = _sourceWithData.asStateFlow()
 
-    // Quiz Section
-    fun updateSourceWithData(source: Source) = _sourceWithData.update { source.createSourceData() }
+    fun updateSourceWithData(sourceWithData: SourceWithData) =
+        _sourceWithData.update { sourceWithData }
+
+    fun switchSource(source: Source) = _sourceWithData.update { source.createSourceData() }
 
     fun updateFilter(filter: Filter) = _sourceWithData.update { state ->
         when (state) {
@@ -45,9 +47,9 @@ sealed interface SourceWithData {
 }
 
 enum class Source(@StringRes val uiName: Int) {
-    FROM_TABLE(uiName = R.string.pick_from_table),
-    FROM_FAVORITES(uiName = R.string.pick_from_favorites),
-    FROM_LIST(uiName = R.string.pick_from_list)
+    FROM_TABLE(uiName = R.string.pick_from_table), FROM_FAVORITES(uiName = R.string.pick_from_favorites), FROM_LIST(
+        uiName = R.string.pick_from_list
+    )
 }
 
 fun Source.createSourceData(): SourceWithData = when (this) {
