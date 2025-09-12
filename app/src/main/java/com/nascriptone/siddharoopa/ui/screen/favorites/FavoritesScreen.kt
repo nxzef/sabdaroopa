@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -53,14 +52,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -72,29 +69,20 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
-import com.nascriptone.siddharoopa.ui.screen.Navigation
-import com.nascriptone.siddharoopa.ui.screen.Routes
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun FavoritesScreen(
-    navHostController: NavHostController,
+    onTableClick: (Int) -> Unit,
     backStackEntry: NavBackStackEntry,
     modifier: Modifier = Modifier,
     favoritesViewModel: FavoritesViewModel = hiltViewModel(backStackEntry)
 ) {
-    val context = LocalContext.current
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
-    LaunchedEffect(Unit) {
-        favoritesViewModel.uiEvents.collectLatest {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-        }
-    }
     FavoritesScreenContent(
         uiState = uiState,
         favorites = favorites,
-        navHostController = navHostController,
+        onTableClick = onTableClick,
         favoritesViewModel = favoritesViewModel,
         modifier = modifier
     )
@@ -104,7 +92,7 @@ fun FavoritesScreen(
 fun FavoritesScreenContent(
     uiState: FavoritesState,
     favorites: LazyPagingItems<Sabda>,
-    navHostController: NavHostController,
+    onTableClick: (Int) -> Unit,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -141,12 +129,7 @@ fun FavoritesScreenContent(
                         isSelectMode = isSelectMode,
                         isInSelected = isInSelected,
                         currentDrop = currentDrop,
-                        onTableClick = { id ->
-                            val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
-                            navHostController.navigate(route) {
-                                launchSingleTop = true
-                            }
-                        },
+                        onTableClick = onTableClick,
                         onQuizClick = {},
                         onDeleteClick = { id ->
                             deleteItem = DeleteDialogState(
