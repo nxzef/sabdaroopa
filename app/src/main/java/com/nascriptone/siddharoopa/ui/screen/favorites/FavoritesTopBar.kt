@@ -55,45 +55,42 @@ fun FavoritesTopBar(
     favoritesViewModel: FavoritesViewModel = navHostController.getViewModel()
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    val onBackPress: () -> Unit = navHostController::navigateUp
+    val navigateUp: () -> Unit = navHostController::navigateUp
     AnimatedContent(
-        targetState = uiState.isSelectMode,
-        transitionSpec = {
+        targetState = uiState.isSelectMode, transitionSpec = {
             fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 1.2f)
-        }
-    ) { isSelectMode ->
+        }) { isSelectMode ->
         if (isSelectMode) {
             FavoriteActionTopBar(
                 onClose = {
-                    if (uiState.fromQuiz) onBackPress()
-                    favoritesViewModel.toggleSelectionMode()
-                },
-                favoritesViewModel = favoritesViewModel
+                if (uiState.trigger == Trigger.AUTO) navigateUp()
+                else favoritesViewModel.toggleSelectionMode()
+            }, onTakeQuizClick = {
+                favoritesViewModel.updateSourceWithData()
+                navigateUp()
+            }, favoritesViewModel = favoritesViewModel
             )
         } else {
             TopAppBar(
                 title = {
-                    Text("Favorites")
-                },
-                navigationIcon = {
-                    CustomToolTip("Back") {
-                        IconButton(onClick = onBackPress) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                Text("Favorites")
+            }, navigationIcon = {
+                CustomToolTip("Back") {
+                    IconButton(onClick = navigateUp) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                    }
+                }
+            }, actions = {
+                if (uiState.totalIds.isNotEmpty()) {
+                    CustomToolTip("Select") {
+                        IconButton(onClick = {
+                            favoritesViewModel.toggleSelectionMode(trigger = Trigger.TOOLBAR)
+                        }) {
+                            Icon(Icons.Rounded.Mode, null)
                         }
                     }
-                },
-                actions = {
-                    if (uiState.totalIds.isNotEmpty()) {
-                        CustomToolTip("Select") {
-                            IconButton(onClick = {
-                                favoritesViewModel.toggleSelectionMode(selectionTrigger = SelectionTrigger.TOOLBAR)
-                            }) {
-                                Icon(Icons.Rounded.Mode, null)
-                            }
-                        }
-                    }
-                },
-                modifier = modifier
+                }
+            }, modifier = modifier
             )
         }
     }
@@ -103,12 +100,12 @@ fun FavoritesTopBar(
 @Composable
 fun FavoriteActionTopBar(
     onClose: () -> Unit,
+    onTakeQuizClick: () -> Unit,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
-    val toggleSelectAll: () -> Unit = favoritesViewModel::toggleFavoriteSelectAll
 
     BackHandler(onBack = onClose)
 
@@ -134,13 +131,11 @@ fun FavoriteActionTopBar(
                     }
                 }
                 Text(
-                    "${uiState.selectedIds.size}",
-                    style = MaterialTheme.typography.titleLarge
+                    "${uiState.selectedIds.size}", style = MaterialTheme.typography.titleLarge
                 )
             }
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
+                verticalAlignment = Alignment.CenterVertically, modifier = Modifier
             ) {
                 val isNotEmpty = uiState.selectedIds.isNotEmpty()
                 AnimatedVisibility(
@@ -149,14 +144,14 @@ fun FavoriteActionTopBar(
                     exit = fadeOut() + scaleOut(targetScale = 1.2f)
                 ) {
                     CustomToolTip("Quiz") {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = onTakeQuizClick) {
                             val imageVector = Icons.Rounded.Quiz
                             Icon(imageVector, imageVector.name)
                         }
                     }
                 }
                 AnimatedVisibility(
-                    visible = isNotEmpty && !uiState.fromQuiz,
+                    visible = isNotEmpty && uiState.trigger != Trigger.AUTO,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
                     exit = fadeOut() + scaleOut(targetScale = 1.2f)
                 ) {
@@ -167,20 +162,27 @@ fun FavoriteActionTopBar(
                         }
                     }
                 }
-                AnimatedContent(targetState = uiState.areAllSelected) { state ->
-                    if (state) {
-                        CustomToolTip("Deselect All") {
-                            IconButton(onClick = toggleSelectAll) {
-                                val imageVector = Icons.Rounded.Deselect
-                                Icon(imageVector, imageVector.name)
-                            }
+                AnimatedVisibility(
+                    visible = uiState.areAllSelected,
+                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                    exit = fadeOut() + scaleOut(targetScale = 1.2f)
+                ) {
+                    CustomToolTip("Deselect All") {
+                        IconButton(onClick = favoritesViewModel::toggleFavoriteSelectAll) {
+                            val imageVector = Icons.Rounded.Deselect
+                            Icon(imageVector, imageVector.name)
                         }
-                    } else {
-                        CustomToolTip("Select All") {
-                            IconButton(onClick = toggleSelectAll) {
-                                val imageVector = Icons.Rounded.SelectAll
-                                Icon(imageVector, imageVector.name)
-                            }
+                    }
+                }
+                AnimatedVisibility(
+                    visible = !uiState.areAllSelected,
+                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                    exit = fadeOut() + scaleOut(targetScale = 1.2f)
+                ) {
+                    CustomToolTip("Select All") {
+                        IconButton(onClick = favoritesViewModel::toggleFavoriteSelectAll) {
+                            val imageVector = Icons.Rounded.SelectAll
+                            Icon(imageVector, imageVector.name)
                         }
                     }
                 }
