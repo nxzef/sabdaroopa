@@ -34,7 +34,7 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    fun updateSource(source: Source) = sharedDataDomain.updateSourceWithData(source)
+    fun switchSource(source: Source) = sharedDataDomain.switchSource(source)
 
     fun updateMode(mode: Mode) {
         _uiState.update { it.copy(mode = mode) }
