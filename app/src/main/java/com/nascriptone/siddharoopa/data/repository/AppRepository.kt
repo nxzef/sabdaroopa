@@ -3,8 +3,8 @@ package com.nascriptone.siddharoopa.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
-import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.ui.state.Filter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -46,4 +46,6 @@ class AppRepository @Inject constructor(
             }
         )
     }
+
+    suspend fun getWords(ids: Set<Int>): Set<String> = sabdaDao.getWords(ids).toSet()
 }

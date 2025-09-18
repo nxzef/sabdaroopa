@@ -1,7 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,28 +53,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Filter
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.domain.Source
 import com.nascriptone.siddharoopa.domain.SourceWithData
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.state.Filter
 import kotlin.math.roundToInt
 
 @Composable
 fun QuizHomeScreen(
     onBeginQuiz: () -> Unit,
-    onFavoritesClick: () -> Unit,
+    onFromListClick: () -> Unit,
+    onFromFavoritesClick: () -> Unit,
     quizViewModel: QuizViewModel,
     modifier: Modifier = Modifier
 ) {
     val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
+    var sheetVisible by rememberSaveable { mutableStateOf(false) }
+    val filter = when (val sourceWithData = uiState.sourceWithData) {
+        is SourceWithData.FromTable -> sourceWithData.filter
+        else -> Filter()
+    }
 
     Surface {
         Column(
@@ -90,15 +100,26 @@ fun QuizHomeScreen(
                     QuizChooseOption(
                         name = stringResource(source.uiName),
                         selected = source == uiState.sourceWithData.source,
-                        onClick = { quizViewModel.switchSource(source = source) })
+                        onClick = {
+                            quizViewModel.switchSource(
+                                sourceWithData = source.createSourceData()
+                            )
+                        }
+                    ) { startSpace ->
+                        DataView(
+                            startSpace = startSpace,
+                            sourceWithData = uiState.sourceWithData,
+                            onClick = {
+                                when (source) {
+                                    Source.FROM_TABLE -> sheetVisible = !sheetVisible
+                                    Source.FROM_FAVORITES -> onFromFavoritesClick()
+                                    Source.FROM_LIST -> onFromListClick()
+                                }
+                            })
+                    }
                     if (source.ordinal < Source.entries.lastIndex) HorizontalDivider()
                 }
             }
-            DataView(
-                sourceWithData = uiState.sourceWithData,
-                onFavoritesClick = onFavoritesClick,
-                onFilterChange = quizViewModel::updateFilter
-            )
             Spacer(Modifier.height(12.dp))
             QuizChooseOptionView(
                 title = "Choose Mode"
@@ -122,95 +143,100 @@ fun QuizHomeScreen(
             }
             Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
+        TableModalBottomSheet(
+            visible = sheetVisible,
+            filter = filter,
+            onFilterChange = quizViewModel::updateFilter,
+            onDismissRequest = { sheetVisible = !sheetVisible })
     }
 }
 
 @Composable
 fun DataView(
+    startSpace: Dp,
     sourceWithData: SourceWithData,
-    onFavoritesClick: () -> Unit,
-    onFilterChange: (Filter) -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var bottomSheetVisible by rememberSaveable { mutableStateOf(false) }
-    val filter = when (sourceWithData) {
-        is SourceWithData.FromTable -> sourceWithData.filter
-        else -> Filter()
-    }
-    Column(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = MaterialTheme.shapes.large
+            .clickable(
+                enabled = sourceWithData.source != Source.FROM_TABLE, onClick = onClick
             )
-            .clip(MaterialTheme.shapes.large)
-    ) {
-        AnimatedContent(targetState = sourceWithData.source) { source ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 12.dp)
-            ) {
-                Text(
-                    text = stringResource(source.uiName),
-                    style = MaterialTheme.typography.bodyMedium
+            .then(
+                if (sourceWithData.source != Source.FROM_TABLE) Modifier.padding(
+                    start = startSpace, end = 16.dp
                 )
-                when (source) {
-                    Source.FROM_TABLE -> IconButton(onClick = { bottomSheetVisible = true }) {
-                        Icon(imageVector = Icons.Rounded.FilterList, contentDescription = null)
+                else Modifier.padding(
+                    start = startSpace, end = 16.dp, bottom = 16.dp
+                )
+            )
+    ) {
+        when (sourceWithData) {
+            is SourceWithData.FromTable -> {
+                val filter = sourceWithData.filter
+                val chips = remember(filter) {
+                    listOfNotNull(
+                        filter.category?.skt, filter.sound?.skt, filter.gender?.skt
+                    )
+                }
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (chips.isEmpty()) AppliedChip(
+                        label = "Default", onClick = onClick, default = true
+                    )
+                    else chips.forEach { resId ->
+                        AppliedChip(
+                            label = stringResource(resId), onClick = onClick
+                        )
                     }
-
-                    Source.FROM_FAVORITES -> IconButton(onClick = onFavoritesClick) {
-                        Icon(imageVector = Icons.Rounded.ChevronRight, contentDescription = null)
-                    }
-
-                    Source.FROM_LIST -> IconButton(onClick = {}) {
-                        Icon(imageVector = Icons.Rounded.Add, contentDescription = null)
+                    IconButton(onClick = onClick) {
+                        Icon(Icons.Rounded.FilterList, null)
                     }
                 }
             }
-        }
-        AnimatedContent(targetState = sourceWithData) { data ->
-            when (data) {
-                is SourceWithData.FromTable -> {
-                    val chips = listOfNotNull(
-                        data.filter.category?.skt, data.filter.sound?.skt, data.filter.gender?.skt
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(
-                            start = 12.dp, end = 12.dp, bottom = 12.dp
-                        )
+
+            else -> {
+                val data = sourceWithData.data
+                if (data.isEmpty()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 24.dp)
                     ) {
-                        if (chips.isEmpty()) AppliedChip(
-                            label = "Default",
-                            onClick = { bottomSheetVisible = true },
-                            default = true
+                        Icon(Icons.Rounded.Add, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Add Items", style = MaterialTheme.typography.bodyMedium
                         )
-                        else chips.forEach { resId ->
-                            AppliedChip(
-                                label = stringResource(resId),
-                                onClick = { bottomSheetVisible = true })
+                    }
+                } else {
+                    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                        Text(
+                            text = "${data.size} ${if (data.size == 1) "Item" else "Items"} Added",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = sourceWithData.display,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(Icons.Rounded.ChevronRight, null)
                         }
                     }
                 }
-
-                is SourceWithData.FromFavorites -> {}
-                is SourceWithData.FromList -> {}
             }
         }
     }
-    TableModalBottomSheet(
-        visible = bottomSheetVisible,
-        filter = filter,
-        onFilterChange = onFilterChange,
-        onDismissRequest = {
-            bottomSheetVisible = false
-        })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -427,25 +453,39 @@ fun QuizChooseOption(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    dataView: @Composable ((startSpace: Dp) -> Unit)? = null,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+
+    val density = LocalDensity.current
+    var radioButtonWidthPx by remember { mutableIntStateOf(0) }
+    val startSpace = with(density) {
+        radioButtonWidthPx.toDp() + 12.dp
+    }
+
+    Column(
         modifier = modifier
-            .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(4.dp)
+            .animateContentSize()
     ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = name,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = onClick,
+                modifier = Modifier.onSizeChanged { radioButtonWidthPx = it.width })
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = name,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        if (selected && dataView != null) dataView.invoke(startSpace)
     }
 }
 

@@ -34,4 +34,7 @@ interface SabdaDao {
         gender: Gender?
     ): PagingSource<Int, Sabda>
 
+    @Query("SELECT word FROM sabda WHERE id IN (:ids)")
+    suspend fun getWords(ids: Set<Int>): List<String>
+
 }

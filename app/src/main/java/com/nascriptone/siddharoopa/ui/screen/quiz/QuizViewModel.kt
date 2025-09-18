@@ -3,10 +3,10 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nascriptone.siddharoopa.data.model.Filter
+import com.nascriptone.siddharoopa.ui.state.Filter
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.domain.SharedDataDomain
-import com.nascriptone.siddharoopa.domain.Source
+import com.nascriptone.siddharoopa.domain.SourceWithData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +34,8 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    fun switchSource(source: Source) = sharedDataDomain.switchSource(source)
+    fun switchSource(sourceWithData: SourceWithData) =
+        sharedDataDomain.updateSourceWithData(sourceWithData)
 
     fun updateMode(mode: Mode) {
         _uiState.update { it.copy(mode = mode) }

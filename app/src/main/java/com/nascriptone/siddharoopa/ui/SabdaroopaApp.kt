@@ -1,7 +1,6 @@
 package com.nascriptone.siddharoopa.ui
 
 import android.content.res.Configuration
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -60,6 +59,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
@@ -75,13 +75,17 @@ import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
+import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.utils.isDarkTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SabdaroopaApp(viewModel: SiddharoopaViewModel = hiltViewModel()) {
+fun SabdaroopaApp(
+    mainViewModel: MainViewModel = hiltViewModel(),
+    viewModel: SiddharoopaViewModel = hiltViewModel()
+) {
     val settingsUIState by viewModel.appPreferencesState.collectAsStateWithLifecycle()
     val userPrefTheme = settingsUIState.currentTheme
     val systemTheme = isSystemInDarkTheme()
@@ -90,14 +94,21 @@ fun SabdaroopaApp(viewModel: SiddharoopaViewModel = hiltViewModel()) {
     }
     AnimatedContent(
         targetState, transitionSpec = { fadeIn() togetherWith fadeOut() }) { darkTheme ->
-        SabdaroopaTheme(darkTheme = darkTheme) { DrawerNavigation() }
+        SabdaroopaTheme(darkTheme = darkTheme) {
+            DrawerNavigation(
+                mainViewModel = mainViewModel
+            )
+        }
     }
 }
 
 @Composable
 fun DrawerNavigation(
-    modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()
+    mainViewModel: MainViewModel,
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController()
 ) {
+    val isInFocused by mainViewModel.controllerUseCase.isInFocused.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val config = LocalConfiguration.current
     val orientation = config.orientation
@@ -110,15 +121,14 @@ fun DrawerNavigation(
     }
     val enabledRoutes = remember {
         setOf(
-            "${Navigation.Home.name}/${Routes.Main.name}",
-            "${Navigation.Favorites.name}/${Routes.FavoritesHome.name}?fq={fq}"
+            Routes.Main.withRoot,
+            Routes.FavoritesHome.withRoot
         )
     }
-    Log.d("Routes", "${backStackEntry?.destination?.route}")
     Surface {
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = backStackEntry?.destination?.route in enabledRoutes,
+            gesturesEnabled = backStackEntry?.destination?.route in enabledRoutes && !isInFocused,
             drawerContent = {
                 ModalDrawerSheet(
                     modifier = Modifier
@@ -153,6 +163,7 @@ fun DrawerNavigation(
                                 }.invokeOnCompletion {
                                     navController.navigate(navigation.name) {
                                         popUpTo(Routes.Main.withRoot) { inclusive = false }
+                                        launchSingleTop = true
                                     }
                                 }
                             })
@@ -190,13 +201,17 @@ fun AppScaffold(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            navigation(route = Navigation.Home.name, startDestination = Routes.Main.withRoot) {
+            navigation(
+                route = Navigation.Home.name,
+                startDestination = Routes.Main.withRoot
+            ) {
                 composable(route = Routes.Main.withRoot) {
                     HomeScreen(
                         onCardClick = { category, sound ->
                             val route = "${Routes.SabdaList.withRoot}/$category/$sound"
                             navController.navigate(route)
-                        })
+                        }
+                    )
                 }
                 composable(
                     route = "${Routes.SabdaList.withRoot}/{c}/{s}",
@@ -204,7 +219,8 @@ fun AppScaffold(
                         type = NavType.IntType
                     }, navArgument("s") {
                         type = NavType.IntType
-                    })) { backStackEntry ->
+                    })
+                ) { backStackEntry ->
 
                     val categoryIndex = backStackEntry.arguments?.getInt("c") ?: return@composable
                     val soundIndex = backStackEntry.arguments?.getInt("s") ?: return@composable
@@ -245,13 +261,16 @@ fun AppScaffold(
                 route = Navigation.Favorites.name, startDestination = Routes.FavoritesHome.withRoot
             ) {
                 composable(route = Routes.FavoritesHome.withRoot) { backStackEntry ->
+                    val favoritesViewModel: FavoritesViewModel? =
+                        navController.sharedViewModelOrNull(
+                            Routes.FavoritesHome.withRoot
+                        )
                     FavoritesScreen(
                         onTableClick = { id ->
                             val route = "${Routes.Table.withRoot}/$id"
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                            }
-                        }, backStackEntry = backStackEntry
+                            navController.navigate(route)
+                        },
+                        favoritesViewModel = favoritesViewModel
                     )
                 }
             }
@@ -262,7 +281,10 @@ fun AppScaffold(
                     val quizViewModel: QuizViewModel = hiltViewModel()
                     QuizHomeScreen(
                         onBeginQuiz = {},
-                        onFavoritesClick = { navController.navigate(Navigation.Favorites.name) },
+                        onFromListClick = {},
+                        onFromFavoritesClick = {
+                            navController.navigate(Routes.FavoritesHome.withRoot)
+                        },
                         quizViewModel = quizViewModel
                     )
                 }

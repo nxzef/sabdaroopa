@@ -28,12 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 
 @Composable
 fun CurrentState(
@@ -49,17 +47,6 @@ fun CurrentState(
         )
     }
 }
-
-@Preview
-@Composable
-fun CurrentStatePreview() {
-    SabdaroopaTheme {
-        CurrentState {
-            Text("Hello World!")
-        }
-    }
-}
-
 
 @Composable
 fun getSupportingText(sabda: Sabda): String {

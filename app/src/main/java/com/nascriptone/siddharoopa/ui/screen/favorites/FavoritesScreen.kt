@@ -55,9 +55,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavBackStackEntry
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -73,19 +71,20 @@ import com.nascriptone.siddharoopa.ui.component.getSupportingText
 @Composable
 fun FavoritesScreen(
     onTableClick: (Int) -> Unit,
-    backStackEntry: NavBackStackEntry,
-    modifier: Modifier = Modifier,
-    favoritesViewModel: FavoritesViewModel = hiltViewModel(backStackEntry)
+    favoritesViewModel: FavoritesViewModel?,
+    modifier: Modifier = Modifier
 ) {
-    val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
-    FavoritesScreenContent(
-        uiState = uiState,
-        favorites = favorites,
-        onTableClick = onTableClick,
-        favoritesViewModel = favoritesViewModel,
-        modifier = modifier
-    )
+    favoritesViewModel?.let { favoritesViewModel ->
+        val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
+        val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
+        FavoritesScreenContent(
+            uiState = uiState,
+            favorites = favorites,
+            onTableClick = onTableClick,
+            favoritesViewModel = favoritesViewModel,
+            modifier = modifier
+        )
+    }
 }
 
 @Composable

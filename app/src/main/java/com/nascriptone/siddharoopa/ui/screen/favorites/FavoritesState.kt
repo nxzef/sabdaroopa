@@ -4,7 +4,7 @@ data class FavoritesState(
     val isSelectMode: Boolean = false,
     val trigger: Trigger = Trigger.NONE,
     val selectedIds: Set<Int> = emptySet(),
-    val totalIds: Set<Int> = emptySet()
+    val totalIds: Set<Int> = emptySet(),
 ) {
     val areAllSelected: Boolean
         get() = selectedIds.isNotEmpty() && selectedIds.size == totalIds.size
