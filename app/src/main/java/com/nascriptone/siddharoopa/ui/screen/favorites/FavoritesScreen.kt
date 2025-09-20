@@ -74,7 +74,7 @@ fun FavoritesScreen(
     favoritesViewModel: FavoritesViewModel?,
     modifier: Modifier = Modifier
 ) {
-    favoritesViewModel?.let { favoritesViewModel ->
+    favoritesViewModel?.let {
         val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
         val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
         FavoritesScreenContent(
