@@ -59,7 +59,6 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
-import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
@@ -261,16 +260,12 @@ fun AppScaffold(
                 route = Navigation.Favorites.name, startDestination = Routes.FavoritesHome.withRoot
             ) {
                 composable(route = Routes.FavoritesHome.withRoot) { backStackEntry ->
-                    val favoritesViewModel: FavoritesViewModel? =
-                        navController.sharedViewModelOrNull(
-                            Routes.FavoritesHome.withRoot
-                        )
                     FavoritesScreen(
                         onTableClick = { id ->
                             val route = "${Routes.Table.withRoot}/$id"
                             navController.navigate(route)
                         },
-                        favoritesViewModel = favoritesViewModel
+                        favoritesViewModel = navController.sharedViewModelOrNull(Navigation.Favorites.name)
                     )
                 }
             }
@@ -283,7 +278,12 @@ fun AppScaffold(
                         onBeginQuiz = {},
                         onFromListClick = {},
                         onFromFavoritesClick = {
-                            navController.navigate(Routes.FavoritesHome.withRoot)
+                            navController.navigate(Navigation.Favorites.name) {
+                                popUpTo(Routes.QuizHome.withRoot) {
+                                    inclusive = false
+                                    saveState = true
+                                }
+                            }
                         },
                         quizViewModel = quizViewModel
                     )
@@ -347,25 +347,28 @@ fun AppTopBar(
         when (route) {
             Routes.Main -> HomeTopBar(
                 onMenuClick = onMenuClick,
-                onSearchClick = { navController.navigate(Routes.Search.withRoot) })
+                onSearchClick = { navController.navigate(Routes.Search.withRoot) }
+            )
 
-            Routes.Search -> SearchScreenBar(onBackPress = onBackPress)
+            Routes.Search -> SearchScreenBar(onBackPress)
             Routes.SabdaList -> {
                 val index = backStackEntry?.arguments?.getInt("c") ?: return@AnimatedContent
                 val title = Category.entries[index].toPascalCase()
                 CategoryScreenTopBar(
                     title = title,
                     onBackPress = onBackPress,
-                    onSearchClick = { navController.navigate(Routes.Search.withRoot) })
+                    onSearchClick = { navController.navigate(Routes.Search.withRoot) }
+                )
             }
 
-            Routes.Table -> TableScreenTopBar(onBackPress = onBackPress)
+            Routes.Table -> TableScreenTopBar(onBackPress)
             Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
             Routes.QuizHome -> QuizTopBar(
                 onBackPress = onBackPress,
-                onInfoActionClick = { navController.navigate(Routes.QuizInstruction.withRoot) })
+                onInfoActionClick = { navController.navigate(Routes.QuizInstruction.withRoot) }
+            )
 
             Routes.QuizResult -> QuizResultScreenTopBar()
             Routes.QuizReview -> QuizReviewScreenTopBar(onBackPress)
