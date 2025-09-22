@@ -10,17 +10,14 @@ import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.domain.ControllerUseCase
 import com.nascriptone.siddharoopa.domain.SharedDataDomain
 import com.nascriptone.siddharoopa.domain.SourceWithData
-import com.nascriptone.siddharoopa.ui.state.DataTransState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,6 +33,7 @@ class FavoritesViewModel @Inject constructor(
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
 
     init {
+        Log.d("INIT_LOG", "Initial Log occur from favorite viewModel")
         viewModelScope.launch {
             repository.getFavoriteIds().collect { totalIds ->
                 _uiState.update { it.copy(totalIds = totalIds) }
@@ -72,48 +70,29 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    fun updateSourceWithData(empty: Boolean = false) {
-        viewModelScope.launch {
-            val data = if (empty) emptySet() else _uiState.value.selectedIds
-            updateFavoriteSourceData(data)
-        }
-    }
-
-    fun dismissError() = _uiState.update { it.copy(dataTransState = DataTransState.None) }
-
-    private suspend fun updateFavoriteSourceData(data: Set<Int>) {
-        _uiState.update { it.copy(dataTransState = DataTransState.Loading) }
-        runCatching {
-            withContext(Dispatchers.IO) {
-                delay(1200)
-                val words = repository.getWords(data)
-                val display = words.joinToString(", ")
-                SourceWithData.FromFavorites(
-                    data = data,
-                    display = display
-                )
-            }
-        }.onSuccess { sourceWithData ->
-            sharedDataDomain.updateSourceWithData(sourceWithData)
-            _uiState.update { it.copy(dataTransState = DataTransState.Success) }
-            toggleSelectionMode()
-        }.onFailure { throwable ->
-            Log.d("DATA_TRANS", "Data Transfer Error", throwable)
-            _uiState.update {
-                it.copy(
-                    dataTransState = DataTransState.Error(
-                        message = throwable.message ?: "Unknown Error"
-                    )
-                )
-            }
-        }
-    }
+//    private suspend fun updateFavoriteSourceData(data: Set<Int>) {
+//        runCatching {
+//            withContext(Dispatchers.IO) {
+//                delay(1200)
+//                val words = repository.getWords(data)
+//                val display = words.joinToString(", ")
+//                SourceWithData.FromFavorites(
+//                    data = data,
+//                    display = display
+//                )
+//            }
+//        }.onSuccess { sourceWithData ->
+//            sharedDataDomain.updateSourceWithData(sourceWithData)
+//            toggleSelectionMode()
+//        }.onFailure { throwable ->
+//            Log.d("DATA_TRANS", "Data Transfer Error", throwable)
+//        }
+//    }
 
     private fun handleFavoritesSource() {
         val sourceData = sharedDataDomain.sourceWithData.value
         if (sourceData is SourceWithData.FromFavorites && _uiState.value.trigger == Trigger.NONE) {
             toggleSelectionMode(Trigger.AUTO)
-            _uiState.update { it.copy(selectedIds = sourceData.data) }
         }
     }
 
