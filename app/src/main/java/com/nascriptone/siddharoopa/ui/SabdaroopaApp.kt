@@ -59,6 +59,7 @@ import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
 import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
+import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
 import com.nascriptone.siddharoopa.ui.screen.home.HomeScreen
 import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
@@ -74,7 +75,6 @@ import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
-import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.utils.isDarkTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
@@ -260,29 +260,37 @@ fun AppScaffold(
                 route = Navigation.Favorites.name, startDestination = Routes.FavoritesHome.withRoot
             ) {
                 composable(route = Routes.FavoritesHome.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Favorites.name)
+                    }
+                    val favoritesViewModel: FavoritesViewModel = hiltViewModel(viewModelStoreOwner)
                     FavoritesScreen(
                         onTableClick = { id ->
                             val route = "${Routes.Table.withRoot}/$id"
                             navController.navigate(route)
                         },
-                        favoritesViewModel = navController.sharedViewModelOrNull(Navigation.Favorites.name)
+                        favoritesViewModel = favoritesViewModel
                     )
                 }
             }
             navigation(
                 route = Navigation.Quiz.name, startDestination = Routes.QuizHome.withRoot
             ) {
-                composable(route = Routes.QuizHome.withRoot) {
-                    val quizViewModel: QuizViewModel = hiltViewModel()
+                composable(route = Routes.QuizHome.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Quiz.name)
+                    }
+                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
                     QuizHomeScreen(
                         onBeginQuiz = {},
                         onFromListClick = {},
                         onFromFavoritesClick = {
                             navController.navigate(Navigation.Favorites.name) {
-                                popUpTo(Routes.QuizHome.withRoot) {
-                                    inclusive = false
+                                popUpTo(Navigation.Quiz.name) {
                                     saveState = true
+                                    inclusive = true
                                 }
+                                restoreState = true
                             }
                         },
                         quizViewModel = quizViewModel
@@ -308,8 +316,15 @@ fun AppScaffold(
 //                    val quizViewModel: QuizViewModel = hiltViewModel()
 //                    QuizReviewScreen(quizSectionState = quizUIState)
                 }
-                composable(route = Routes.QuizInstruction.withRoot) {
-                    QuizInstructionScreen(onBackPress = { navController.navigateUp() })
+                composable(route = Routes.QuizInstruction.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Quiz.name)
+                    }
+                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                    QuizInstructionScreen(
+                        onBackPress = { navController.navigateUp() },
+                        quizViewModel = quizViewModel
+                    )
                 }
             }
             navigation(
@@ -387,4 +402,3 @@ private fun String?.getNavigationOrDefault(default: Navigation): Navigation = th
     val value = it.substringBefore("/")
     Navigation.entries.firstOrNull { route -> route.name == value } ?: default
 } ?: default
-
