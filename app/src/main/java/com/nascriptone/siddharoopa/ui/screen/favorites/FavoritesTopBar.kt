@@ -10,14 +10,11 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
@@ -26,26 +23,23 @@ import androidx.compose.material.icons.rounded.Deselect
 import androidx.compose.material.icons.rounded.Mode
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.SelectAll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
@@ -53,8 +47,6 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.screen.Navigation
-import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.ui.state.DataTransState
 import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +59,19 @@ fun FavoritesTopBar(
         navHostController.sharedViewModelOrNull(Navigation.Favorites.name)
     if (favoritesViewModel == null) return
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
-    var visibleCloseDialog by rememberSaveable { mutableStateOf(false) }
+
+    val onTakeQuizClick = remember(navHostController) {
+        {
+            navHostController.navigate(Navigation.Quiz.name) {
+                popUpTo(Navigation.Favorites.name) {
+                    saveState = true
+                    inclusive = true
+                }
+                restoreState = true
+            }
+        }
+    }
+
     AnimatedContent(
         targetState = uiState.isSelectMode, transitionSpec = {
             fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 1.2f)
@@ -75,118 +79,36 @@ fun FavoritesTopBar(
         if (isSelectMode) {
             FavoriteActionTopBar(
                 onClose = {
-                if (uiState.trigger == Trigger.AUTO) {
-                    if (uiState.selectedIds.isEmpty()) {
-                        navHostController.navigateUp()
-                        favoritesViewModel.toggleSelectionMode()
-                    } else visibleCloseDialog = true
-                } else {
-                    favoritesViewModel.toggleSelectionMode()
-                }
-            },
-                onTakeQuizClick = { favoritesViewModel.updateSourceWithData() },
+                    if (uiState.trigger == Trigger.AUTO) onTakeQuizClick()
+                    else favoritesViewModel.toggleSelectionMode()
+                },
+                onTakeQuizClick = onTakeQuizClick,
                 favoritesViewModel = favoritesViewModel
             )
         } else {
             TopAppBar(
                 title = {
-                Text("Favorites")
-            }, navigationIcon = {
-                CustomToolTip("Back") {
-                    IconButton(onClick = navHostController::navigateUp) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
-                    }
-                }
-            }, actions = {
-                if (uiState.totalIds.isNotEmpty()) {
-                    CustomToolTip("Select") {
-                        IconButton(onClick = {
-                            favoritesViewModel.toggleSelectionMode(trigger = Trigger.TOOLBAR)
-                        }) {
-                            Icon(Icons.Rounded.Mode, null)
+                    Text("Favorites")
+                }, navigationIcon = {
+                    CustomToolTip("Back") {
+                        IconButton(onClick = navHostController::navigateUp) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
                         }
                     }
-                }
-            }, modifier = modifier
+                }, actions = {
+                    if (uiState.totalIds.isNotEmpty()) {
+                        CustomToolTip("Select") {
+                            IconButton(onClick = {
+                                favoritesViewModel.toggleSelectionMode(trigger = Trigger.TOOLBAR)
+                            }) {
+                                Icon(Icons.Rounded.Mode, null)
+                            }
+                        }
+                    }
+                }, modifier = modifier
             )
         }
     }
-    when (val dataTransState = uiState.dataTransState) {
-        DataTransState.Loading -> Dialog(
-            onDismissRequest = {}) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = MaterialTheme.shapes.large
-                    )
-                    .padding(20.dp)
-            ) {
-                CircularProgressIndicator()
-                Spacer(Modifier.width(16.dp))
-                Text("Preparing...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        DataTransState.Success -> {
-            navHostController.navigate(Navigation.Quiz.name) {
-                popUpTo(Routes.FavoritesHome.withRoot) {
-                    inclusive = true
-                }
-                restoreState = true
-                launchSingleTop = true
-            }
-        }
-
-        is DataTransState.Error -> Dialog(
-            onDismissRequest = favoritesViewModel::dismissError
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        shape = MaterialTheme.shapes.large
-                    )
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "Error",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    dataTransState.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.width(16.dp))
-                TextButton(
-                    onClick = favoritesViewModel::dismissError,
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("OK")
-                }
-            }
-        }
-
-        DataTransState.None -> {}
-    }
-    CustomDialog(visible = visibleCloseDialog, onDismissRequest = {
-        visibleCloseDialog = false
-    }, head = {
-        CustomDialogHead("Clear All")
-    }, description = {
-        CustomDialogDescription("Do you want to clear all the selected items?")
-    }, showDefaultAction = true, onCancel = {
-        visibleCloseDialog = false
-    }, onConfirm = {
-        visibleCloseDialog = false
-        favoritesViewModel.updateSourceWithData(empty = true)
-    })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
