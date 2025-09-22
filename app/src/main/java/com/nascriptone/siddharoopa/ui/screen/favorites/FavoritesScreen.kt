@@ -110,8 +110,8 @@ fun FavoritesScreenContent(
 
     Surface {
         LazyColumn(
-            modifier = modifier.animateContentSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = modifier.animateContentSize()
         ) {
             item {
                 Spacer(Modifier.height(16.dp))
