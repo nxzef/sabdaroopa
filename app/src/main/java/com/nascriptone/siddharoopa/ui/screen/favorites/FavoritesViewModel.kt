@@ -12,12 +12,14 @@ import com.nascriptone.siddharoopa.domain.SharedDataDomain
 import com.nascriptone.siddharoopa.domain.SourceWithData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,11 +35,13 @@ class FavoritesViewModel @Inject constructor(
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
 
     init {
-        Log.d("INIT_LOG", "Initial Log occur from favorite viewModel")
         viewModelScope.launch {
             repository.getFavoriteIds().collect { totalIds ->
                 _uiState.update { it.copy(totalIds = totalIds) }
-                handleFavoritesSource()
+                val dataSource = sharedDataDomain.sourceWithData.value
+                if (dataSource !is SourceWithData.FromFavorites || totalIds.isEmpty()) return@collect
+                enterSelectionMode(Trigger.INIT)
+                _uiState.update { it.copy(selectedIds = dataSource.data) }
             }
         }
     }
@@ -70,34 +74,38 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-//    private suspend fun updateFavoriteSourceData(data: Set<Int>) {
-//        runCatching {
-//            withContext(Dispatchers.IO) {
-//                delay(1200)
-//                val words = repository.getWords(data)
-//                val display = words.joinToString(", ")
-//                SourceWithData.FromFavorites(
-//                    data = data,
-//                    display = display
-//                )
-//            }
-//        }.onSuccess { sourceWithData ->
-//            sharedDataDomain.updateSourceWithData(sourceWithData)
-//            toggleSelectionMode()
-//        }.onFailure { throwable ->
-//            Log.d("DATA_TRANS", "Data Transfer Error", throwable)
-//        }
-//    }
+    fun transferDialogDismiss() {
+        if (_uiState.value.transferState !is TransferState.Loading) {
+            _uiState.update { it.copy(transferState = null) }
+        }
+    }
 
-    private fun handleFavoritesSource() {
-        val sourceData = sharedDataDomain.sourceWithData.value
-        if (sourceData is SourceWithData.FromFavorites && _uiState.value.trigger == Trigger.NONE) {
-            toggleSelectionMode(Trigger.AUTO)
+    fun onTakeQuizClick() {
+        if (_uiState.value.transferState is TransferState.Loading) return
+        val selectedIds = _uiState.value.selectedIds
+        _uiState.update { it.copy(transferState = TransferState.Loading) }
+        viewModelScope.launch {
+            delay(2000)
+            try {
+                val sourceWithData = withContext(Dispatchers.IO) {
+                    val words = repository.getWords(selectedIds)
+                    val display = words.joinToString(", ")
+                    SourceWithData.FromFavorites(
+                        data = selectedIds, display = display
+                    )
+                }
+                sharedDataDomain.updateSourceWithData(sourceWithData)
+                _uiState.update { it.copy(transferState = TransferState.Success) }
+            } catch (exception: Exception) {
+                val errorMessage = exception.message ?: "An unexpected error occurred"
+                _uiState.update {
+                    it.copy(transferState = TransferState.Error(errorMessage))
+                }
+            }
         }
     }
 
     private fun enterSelectionMode(trigger: Trigger) {
-        if (_uiState.value.totalIds.isEmpty()) return
         _uiState.update {
             it.copy(
                 isSelectMode = true, trigger = trigger
@@ -130,4 +138,12 @@ class FavoritesViewModel @Inject constructor(
     }
 
     private fun <T> Set<T>.toggleInSet(id: T): Set<T> = if (id in this) this - id else this + id
+
+    override fun onCleared() {
+        super.onCleared()
+        Log.d("VIEWMODEL_CLEAR", "Favorite ViewModel Cleared")
+        if (sharedDataDomain.sourceWithData.value is SourceWithData.FromFavorites) {
+            Log.d("VIEWMODEL_CLEAR", "Favorite ViewModel Cleared :::::::: Inside block")
+        }
+    }
 }
