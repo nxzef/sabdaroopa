@@ -2,7 +2,6 @@ package com.nascriptone.siddharoopa.ui.component
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
@@ -69,41 +70,29 @@ fun CustomDialog(
     action: @Composable (() -> Unit)? = null,
 ) {
     if (!visible) return
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-    val dialogWidth = when (configuration.orientation) {
-        Configuration.ORIENTATION_PORTRAIT -> screenWidth * 0.86f
-        else -> minOf(screenWidth * 0.6f, 600.dp)
-    }
     Dialog(onDismissRequest) {
-        Column(
-            modifier = modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.large
-                )
-                .width(dialogWidth)
-                .padding(20.dp)
-        ) {
-            head?.invoke()
-            Spacer(Modifier.height(8.dp))
-            description?.invoke()
-            Spacer(Modifier.height(32.dp))
-            if (showDefaultAction) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = modifier.align(Alignment.End)
-                ) {
-                    TextButton(onClick = onCancel) {
-                        Text("Cancel")
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onConfirm) {
-                        Text("OK")
+        DialogLayout {
+            Column(modifier = modifier.padding(20.dp)) {
+                head?.invoke()
+                Spacer(Modifier.height(8.dp))
+                description?.invoke()
+                Spacer(Modifier.height(32.dp))
+                if (showDefaultAction) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = modifier.align(Alignment.End)
+                    ) {
+                        TextButton(onClick = onCancel) {
+                            Text("Cancel")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onConfirm) {
+                            Text("OK")
+                        }
                     }
                 }
+                action?.invoke()
             }
-            action?.invoke()
         }
     }
 }
@@ -142,6 +131,29 @@ fun CustomToolTip(
         },
         state = rememberTooltipState(),
         modifier = modifier,
+        content = content
+    )
+}
+
+@SuppressLint("ConfigurationScreenWidthHeight")
+@Composable
+fun DialogLayout(
+    modifier: Modifier = Modifier,
+    content: @Composable (() -> Unit)
+) {
+    val cfg = LocalConfiguration.current
+    val sw = cfg.screenWidthDp.dp
+    val width = when (cfg.orientation) {
+        Configuration.ORIENTATION_PORTRAIT -> sw * 0.84f
+        else -> minOf(sw * 0.6f, 600.dp)
+    }
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = AlertDialogDefaults.TonalElevation,
+        modifier = modifier
+            .width(width)
+            .wrapContentHeight(),
         content = content
     )
 }
