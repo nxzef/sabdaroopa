@@ -285,13 +285,7 @@ fun AppScaffold(
                         onBeginQuiz = {},
                         onFromListClick = {},
                         onFromFavoritesClick = {
-                            navController.navigate(Navigation.Favorites.name) {
-                                popUpTo(Navigation.Quiz.name) {
-                                    saveState = true
-                                    inclusive = true
-                                }
-                                restoreState = true
-                            }
+                            navController.navigate(Navigation.Favorites.name)
                         },
                         quizViewModel = quizViewModel
                     )
