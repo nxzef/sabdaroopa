@@ -15,8 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +38,19 @@ class FavoritesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
 
+    val hasSelectionChanged: StateFlow<Boolean> =
+        _uiState.map { it.selectedIds }.distinctUntilChanged().map { selectedIds ->
+                val dataSource = sharedDataDomain.sourceWithData.value
+                when (dataSource) {
+                    is SourceWithData.FromFavorites -> dataSource.hasChanged(selectedIds)
+                    else -> false
+                }
+            }.distinctUntilChanged().stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = false
+            )
+
     init {
         viewModelScope.launch {
             repository.getFavoriteIds().collect { totalIds ->
@@ -41,21 +58,22 @@ class FavoritesViewModel @Inject constructor(
                 val dataSource = sharedDataDomain.sourceWithData.value
                 if (dataSource !is SourceWithData.FromFavorites || totalIds.isEmpty()) return@collect
                 enterSelectionMode(Trigger.INIT)
-                _uiState.update { it.copy(selectedIds = dataSource.data) }
+                updateFavoriteSelectedSet(dataSource.data)
             }
         }
     }
 
-    fun toggleFavoriteSelectAll() = _uiState.update {
-        it.copy(
-            selectedIds = if (it.selectedIds.size < it.totalIds.size) it.totalIds
-            else emptySet()
-        )
+    fun toggleSelectAllFavorites() {
+        val state = _uiState.value
+        val selectedIds =
+            if (state.selectedIds.size < state.totalIds.size) state.totalIds else emptySet()
+        updateFavoriteSelectedSet(selectedIds)
     }
 
     fun toggleSelectedId(id: Int) {
         if (!_uiState.value.isSelectMode) enterSelectionMode(Trigger.CARD)
-        updateFavoriteSelectedSet(id)
+        val selectedIds = _uiState.value.selectedIds.toggleInSet(id)
+        updateFavoriteSelectedSet(selectedIds)
         if (_uiState.value.selectedIds.isEmpty() && _uiState.value.trigger == Trigger.CARD) exitSelectionMode()
     }
 
@@ -133,9 +151,8 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
-    private fun updateFavoriteSelectedSet(id: Int) {
-        _uiState.update { it.copy(selectedIds = it.selectedIds.toggleInSet(id)) }
-    }
+    private fun updateFavoriteSelectedSet(selectedIds: Set<Int>) =
+        _uiState.update { it.copy(selectedIds = selectedIds) }
 
     private fun <T> Set<T>.toggleInSet(id: T): Set<T> = if (id in this) this - id else this + id
 
