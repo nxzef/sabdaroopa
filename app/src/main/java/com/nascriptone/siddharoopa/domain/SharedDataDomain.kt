@@ -42,6 +42,7 @@ sealed interface SourceWithData {
         override val display: String = ""
     ) : SourceWithData {
         override val source: Source = Source.FROM_FAVORITES
+        fun hasChanged(selectedIds: Set<Int>): Boolean = selectedIds != data
     }
 
     data class FromList(
