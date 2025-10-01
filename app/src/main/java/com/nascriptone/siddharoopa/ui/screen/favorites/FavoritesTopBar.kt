@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -76,7 +77,9 @@ fun FavoritesTopBar(
         targetState = uiState.isSelectMode, transitionSpec = {
             fadeIn() + scaleIn(initialScale = 0.8f) togetherWith fadeOut() + scaleOut(targetScale = 1.2f)
         }) { isSelectMode ->
-        if (isSelectMode) FavoriteActionTopBar(favoritesViewModel = favoritesViewModel)
+        if (isSelectMode) FavoriteActionTopBar(
+            navHostController = navHostController, favoritesViewModel = favoritesViewModel
+        )
         else TopAppBar(
             title = {
             Text("Favorites")
@@ -119,14 +122,24 @@ fun FavoritesTopBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteActionTopBar(
+    navHostController: NavHostController,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     val hasSelectionChanged by favoritesViewModel.hasSelectionChanged.collectAsStateWithLifecycle()
     var deleteDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
 
-    BackHandler(onBack = favoritesViewModel::toggleSelectionMode)
+    val onBack: () -> Unit = {
+        if (hasSelectionChanged) showDiscardDialog = true
+        else {
+            if (uiState.trigger == Trigger.INIT) navHostController.navigateUp()
+            favoritesViewModel.toggleSelectionMode()
+        }
+    }
+
+    BackHandler(onBack = onBack)
 
     Surface {
         Row(
@@ -144,7 +157,7 @@ fun FavoriteActionTopBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CustomToolTip("Close") {
-                    IconButton(onClick = favoritesViewModel::toggleSelectionMode) {
+                    IconButton(onClick = onBack) {
                         val imageVector = Icons.Rounded.Close
                         Icon(imageVector, imageVector.name)
                     }
@@ -210,14 +223,20 @@ fun FavoriteActionTopBar(
             }
         }
         DeleteAllDialog(
-            visible = deleteDialogVisible,
-            onConfirm = {
+            visible = deleteDialogVisible, onConfirm = {
                 favoritesViewModel.deleteAllItemFromFavorite()
                 favoritesViewModel.toggleSelectionMode()
                 deleteDialogVisible = false
             },
             onDismissRequest = { deleteDialogVisible = false },
         )
+        DiscardDialog(visible = showDiscardDialog, onConfirm = {
+            favoritesViewModel.onDiscardChanges()
+            showDiscardDialog = false
+            navHostController.navigateUp()
+            favoritesViewModel.toggleSelectionMode()
+        },
+            onDismissRequest = { showDiscardDialog = false })
     }
 }
 
@@ -269,6 +288,40 @@ fun TransferDialog(
             }
         }
     }
+}
+
+@Composable
+fun DiscardDialog(
+    visible: Boolean,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    CustomDialog(
+        visible = visible, onDismissRequest = onDismissRequest, head = {
+        CustomDialogHead("Discard Changes?")
+    }, description = {
+        CustomDialogDescription("You've made changes to your selection. Discard them and go back?")
+    }, action = {
+        Row(
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            TextButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+            Spacer(Modifier.width(8.dp))
+            TextButton(onClick = onConfirm) {
+                Text(
+                    "Discard", color = Color.Red.copy(
+                        green = 0.3f, blue = 0.3f
+                    )
+                )
+            }
+        }
+    }, modifier = modifier
+    )
 }
 
 @Composable
