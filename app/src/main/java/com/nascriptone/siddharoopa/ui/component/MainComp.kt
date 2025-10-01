@@ -76,7 +76,7 @@ fun CustomDialog(
                 head?.invoke()
                 Spacer(Modifier.height(8.dp))
                 description?.invoke()
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(24.dp))
                 if (showDefaultAction) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -99,30 +99,24 @@ fun CustomDialog(
 
 @Composable
 fun CustomDialogHead(
-    text: String,
-    modifier: Modifier = Modifier
+    text: String, modifier: Modifier = Modifier
 ) {
     Text(text, style = MaterialTheme.typography.titleMedium, modifier = modifier)
 }
 
 @Composable
 fun CustomDialogDescription(
-    text: String,
-    modifier: Modifier = Modifier
+    text: String, modifier: Modifier = Modifier
 ) {
     Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier.alpha(0.8f)
+        text = text, style = MaterialTheme.typography.bodyMedium, modifier = modifier.alpha(0.8f)
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomToolTip(
-    text: String,
-    modifier: Modifier = Modifier,
-    content: @Composable (() -> Unit)
+    text: String, modifier: Modifier = Modifier, content: @Composable (() -> Unit)
 ) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Below),
@@ -138,8 +132,7 @@ fun CustomToolTip(
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun DialogLayout(
-    modifier: Modifier = Modifier,
-    content: @Composable (() -> Unit)
+    modifier: Modifier = Modifier, content: @Composable (() -> Unit)
 ) {
     val cfg = LocalConfiguration.current
     val sw = cfg.screenWidthDp.dp
