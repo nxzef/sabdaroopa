@@ -12,7 +12,6 @@ import com.nascriptone.siddharoopa.domain.SharedDataDomain
 import com.nascriptone.siddharoopa.domain.SourceWithData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,16 +39,16 @@ class FavoritesViewModel @Inject constructor(
 
     val hasSelectionChanged: StateFlow<Boolean> =
         _uiState.map { it.selectedIds }.distinctUntilChanged().map { selectedIds ->
-                val dataSource = sharedDataDomain.sourceWithData.value
-                when (dataSource) {
-                    is SourceWithData.FromFavorites -> dataSource.hasChanged(selectedIds)
-                    else -> false
-                }
-            }.distinctUntilChanged().stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = false
-            )
+            val dataSource = sharedDataDomain.sourceWithData.value
+            when (dataSource) {
+                is SourceWithData.FromFavorites -> dataSource.hasChanged(selectedIds)
+                else -> false
+            }
+        }.distinctUntilChanged().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
 
     init {
         viewModelScope.launch {
@@ -92,6 +91,13 @@ class FavoritesViewModel @Inject constructor(
         }
     }
 
+    fun onDiscardChanges() {
+        val sourceWithData = sharedDataDomain.sourceWithData.value
+        if (sourceWithData !is SourceWithData.FromFavorites) return
+        val selectedIds = sourceWithData.data
+        updateFavoriteSelectedSet(selectedIds)
+    }
+
     fun transferDialogDismiss() {
         if (_uiState.value.transferState !is TransferState.Loading) {
             _uiState.update { it.copy(transferState = null) }
@@ -103,7 +109,6 @@ class FavoritesViewModel @Inject constructor(
         val selectedIds = _uiState.value.selectedIds
         _uiState.update { it.copy(transferState = TransferState.Loading) }
         viewModelScope.launch {
-            delay(2000)
             try {
                 val sourceWithData = withContext(Dispatchers.IO) {
                     val words = repository.getWords(selectedIds)
