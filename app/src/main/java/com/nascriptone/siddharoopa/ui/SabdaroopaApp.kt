@@ -68,6 +68,7 @@ import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizQuestionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreenTopBar
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizViewModel
@@ -308,9 +309,13 @@ fun AppScaffold(
                         navHostController = navController
                     )
                 }
-                composable(route = Routes.QuizReview.withRoot) {
-//                    val quizViewModel: QuizViewModel = hiltViewModel()
-//                    QuizReviewScreen(quizSectionState = quizUIState)
+                composable(route = Routes.QuizReview.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Quiz.name)
+                    }
+                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                    val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
+                    QuizReviewScreen(uiState = uiState)
                 }
                 composable(route = Routes.QuizInstruction.withRoot) { backStackEntry ->
                     val viewModelStoreOwner = remember(backStackEntry) {
