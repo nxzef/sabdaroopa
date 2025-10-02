@@ -10,8 +10,8 @@ data class QuizSectionState(
     val mode: Mode = Mode.All,
     val range: Int = 10,
     val currentAnswer: Answer = Answer.Unspecified,
-    val questionOptionList: CreationState = CreationState.Loading,
-    val result: ValuationState = ValuationState.Calculate
+    val creationState: CreationState = CreationState.Loading,
+    val valuationState: ValuationState = ValuationState.Calculate
 )
 
 sealed interface CreationState {
