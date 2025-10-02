@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
@@ -70,7 +69,7 @@ fun QuizResultScreen(
 
     LaunchedEffect(Unit) {
         if (!valuated) {
-//            viewModel.quizValuation()
+            quizViewModel.quizValuation()
             valuated = true
         }
     }
@@ -239,7 +238,10 @@ fun MainDashboard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = dashboard.category?.toPascalCase() ?: "All Categories",
+                    text = when (val mode = dashboard.mode) {
+                        Mode.All -> "All Mode"
+                        else -> mode.name
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier

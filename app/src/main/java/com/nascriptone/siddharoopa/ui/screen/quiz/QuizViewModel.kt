@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nascriptone.siddharoopa.data.local.QuizQuestion
+import com.nascriptone.siddharoopa.data.local.QuizResultMessage
 import com.nascriptone.siddharoopa.data.model.CaseName
 import com.nascriptone.siddharoopa.data.model.Declension
 import com.nascriptone.siddharoopa.data.model.FormName
@@ -25,6 +26,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,6 +50,36 @@ class QuizViewModel @Inject constructor(
         }
     }
 
+    fun quizValuation() {
+        val data = _uiState.value.creationState.requireSuccess {
+            it.isNotEmpty()
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            _uiState.update { it.copy(valuationState = ValuationState.Calculate) }
+            val valuationState = runCatching {
+                val mcqStates =
+                    data.mapNotNull { it.option as? Option.McqOption }.takeIf { it.isNotEmpty() }
+                val mtfStates =
+                    data.mapNotNull { it.option as? Option.MtfOption }.takeIf { it.isNotEmpty() }
+                val mcqStats = mcqStates?.calculateMcqStats()
+                val mtfStats = mtfStates?.calculateMtfStats()
+                val mode = _uiState.value.mode
+                val dashboard = getDashboardData(mcqStats, mtfStats, mode)
+                Result(
+                    mcqStats = mcqStats,
+                    mtfStats = mtfStats,
+                    finalData = data.take(2),
+                    dashboard = dashboard
+                )
+            }.map {
+                ValuationState.Success(result = it)
+            }.getOrElse { e ->
+                Log.d("quizValuation", "Valuation failed", e)
+                ValuationState.Error(message = e.message.orEmpty())
+            }
+            _uiState.update { it.copy(valuationState = valuationState) }
+        }
+    }
 
     fun updateCurrentAnswer(answer: Answer) {
         _uiState.update {
@@ -460,10 +493,88 @@ private data class DeepInfo(
     val templateKey: Map<String, String>, val option: Option
 )
 
+private fun List<Option.McqOption>.calculateMcqStats(): McqStats {
+    val total = size
+    val attended = count { it.mcqGeneratedData.answer != null }
+    val correct = count { it.mcqGeneratedData.answer == it.mcqGeneratedData.trueOption }
+    val wrong = attended - correct
+    val skipped = total - attended
+    val score = correct * 2
+
+    return McqStats(
+        totalQuestions = total,
+        attended = attended,
+        skipped = skipped,
+        correct = correct,
+        wrong = wrong,
+        score = score
+    )
+}
+
+private fun List<Option.MtfOption>.calculateMtfStats(): MtfStats {
+    val totalSet = size
+    val totalPairs = totalSet * 3
+
+    var correct = 0
+    var attended = 0
+
+    forEach { state ->
+        val userAnswers = state.mtfGeneratedData.answer
+        val correctAnswers = state.mtfGeneratedData.trueOption
+
+        if (userAnswers != null) {
+            attended++
+            correct += userAnswers.zip(correctAnswers).count { (a, b) -> a == b }
+        }
+    }
+
+    val wrong = (attended * 3) - correct
+    val skipped = totalSet - attended
+
+    return MtfStats(
+        totalSet = totalSet,
+        totalPairs = totalPairs,
+        attended = attended,
+        skipped = skipped,
+        correct = correct,
+        wrong = wrong,
+        score = correct
+    )
+}
+
+private fun getDashboardData(
+    mcqStats: McqStats?, mtfStats: MtfStats?, mode: Mode
+): Dashboard {
+
+    val score = (mcqStats?.score ?: 0) + (mtfStats?.score ?: 0)
+    val totalPossibleScore = (((mcqStats?.totalQuestions ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
+    val accuracy = getQuizAccuracy(score, totalPossibleScore)
+    val message = getMessage(accuracy)
+
+    return Dashboard(
+        accuracy = accuracy,
+        message = message,
+        mode = mode,
+        score = score,
+        totalPossibleScore = totalPossibleScore
+    )
+}
+
 private const val PATTERN = "\\{(\\w+)\\}"
 private val placeholderRegex = Regex(PATTERN)
 private fun replacePlaceholders(template: String, values: Map<String, String>): String {
     return placeholderRegex.replace(template) { match ->
         values[match.groupValues[1]] ?: match.value
     }
+}
+
+private fun getQuizAccuracy(es: Int, tps: Int): Float {
+    if (tps == 0) return 0f
+    return BigDecimal(es * 100).divide(BigDecimal(tps), 1, RoundingMode.HALF_UP).toFloat()
+}
+
+private fun getMessage(accuracy: Float): Int {
+    val p = 100 / 4
+    val i = (accuracy / p).toInt().coerceAtMost(3)
+    return QuizResultMessage.messageList[i].random()
 }

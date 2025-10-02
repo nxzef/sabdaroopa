@@ -2,7 +2,6 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.annotation.StringRes
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.domain.SourceWithData
 
 data class QuizSectionState(
@@ -87,7 +86,7 @@ data class Result(
 data class Dashboard(
     val accuracy: Float = 0f,
     @StringRes val message: Int = 0,
-    val category: Category? = null,
+    val mode: Mode = Mode.All,
     val score: Int = 0,
     val totalPossibleScore: Int = 0,
 )
@@ -117,13 +116,7 @@ data class Summary(
     val score: Int,
     val accuracy: Float
 )
-
-//internal inline fun CreationState.requireSuccess(predicate: (List<QuestionOption>) -> Boolean): List<QuestionOption>? {
-//    val success = this as? CreationState.Success ?: return null
-//    return if (predicate(success.data)) success.data else null
-//}
-
-internal inline fun CreationState.requireSuccess(predicate: (List<QuestionOption>) -> Boolean): List<QuestionOption> {
+inline fun CreationState.requireSuccess(predicate: (List<QuestionOption>) -> Boolean): List<QuestionOption> {
     val success = this as? CreationState.Success ?: error("Not in Success state")
     require(predicate(success.data)) { "Predicate failed" }
     return success.data

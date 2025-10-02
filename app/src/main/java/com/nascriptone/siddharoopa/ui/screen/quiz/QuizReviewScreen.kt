@@ -1,6 +1,5 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
-import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,13 +12,10 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun QuizReviewScreen(
-    quizSectionState: QuizSectionState,
+    uiState: QuizSectionState,
     modifier: Modifier = Modifier
 ) {
-    val list = quizSectionState.creationState.requireSuccess { it.isNotEmpty() } ?: run {
-        Log.d("quizValuation", "Skipped: question list empty or not in success state")
-        return
-    }
+    val list = uiState.creationState.requireSuccess { it.isNotEmpty() }
     Surface {
         LazyColumn(modifier = modifier) {
             item {
