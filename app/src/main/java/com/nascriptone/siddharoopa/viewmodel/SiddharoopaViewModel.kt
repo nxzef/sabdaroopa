@@ -1,51 +1,24 @@
 package com.nascriptone.siddharoopa.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nascriptone.siddharoopa.data.local.QuizResultMessage
-import com.nascriptone.siddharoopa.data.model.CaseName
-import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Declension
-import com.nascriptone.siddharoopa.data.model.FormName
-import com.nascriptone.siddharoopa.data.model.Gender
-import com.nascriptone.siddharoopa.data.model.MCQ
-import com.nascriptone.siddharoopa.data.model.MTF
-import com.nascriptone.siddharoopa.data.model.Phrase
-import com.nascriptone.siddharoopa.data.model.QTemplate
-import com.nascriptone.siddharoopa.data.model.entity.Sabda
-import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.data.repository.UserPreferencesRepository
-import com.nascriptone.siddharoopa.domain.utils.ResourceProvider
-import com.nascriptone.siddharoopa.ui.screen.quiz.Answer
-import com.nascriptone.siddharoopa.ui.screen.quiz.Dashboard
-import com.nascriptone.siddharoopa.ui.screen.quiz.McqGeneratedData
-import com.nascriptone.siddharoopa.ui.screen.quiz.McqStats
-import com.nascriptone.siddharoopa.ui.screen.quiz.Mode
-import com.nascriptone.siddharoopa.ui.screen.quiz.MtfGeneratedData
-import com.nascriptone.siddharoopa.ui.screen.quiz.MtfStats
-import com.nascriptone.siddharoopa.ui.screen.quiz.Option
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionOption
-import com.nascriptone.siddharoopa.ui.screen.quiz.QuestionWithNumber
 import com.nascriptone.siddharoopa.ui.screen.settings.AppPreferencesState
 import com.nascriptone.siddharoopa.ui.screen.settings.Theme
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.math.RoundingMode
 import javax.inject.Inject
 
 @HiltViewModel
 class SiddharoopaViewModel @Inject constructor(
-    private val repository: AppRepository,
+//    private val repository: AppRepository,
     private val preferencesRepository: UserPreferencesRepository,
-    private val resourceProvider: ResourceProvider
+//    private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
 //    private val _quizUIState = MutableStateFlow(QuizSectionState())
@@ -546,106 +519,58 @@ class SiddharoopaViewModel @Inject constructor(
 
 // viewModel end here!!!%%
 
-private fun List<Option.McqOption>.calculateMcqStats(): McqStats {
-    val total = size
-    val attended = count { it.mcqGeneratedData.answer != null }
-    val correct = count { it.mcqGeneratedData.answer == it.mcqGeneratedData.trueOption }
-    val wrong = attended - correct
-    val skipped = total - attended
-    val score = correct * 2
 
-    return McqStats(
-        totalQuestions = total,
-        attended = attended,
-        skipped = skipped,
-        correct = correct,
-        wrong = wrong,
-        score = score
-    )
-}
-
-private fun List<Option.MtfOption>.calculateMtfStats(): MtfStats {
-    val totalSet = size
-    val totalPairs = totalSet * 3
-
-    var correct = 0
-    var attended = 0
-
-    forEach { state ->
-        val userAnswers = state.mtfGeneratedData.answer
-        val correctAnswers = state.mtfGeneratedData.trueOption
-
-        if (userAnswers != null) {
-            attended++
-            correct += userAnswers.zip(correctAnswers).count { (a, b) -> a == b }
-        }
-    }
-
-    val wrong = (attended * 3) - correct
-    val skipped = totalSet - attended
-
-    return MtfStats(
-        totalSet = totalSet,
-        totalPairs = totalPairs,
-        attended = attended,
-        skipped = skipped,
-        correct = correct,
-        wrong = wrong,
-        score = correct
-    )
-}
-
-private fun getDashboardData(
-    mcqStats: McqStats?, mtfStats: MtfStats?, category: Category?
-): Dashboard {
-
-    val score = (mcqStats?.score ?: 0) + (mtfStats?.score ?: 0)
-    val totalPossibleScore = (((mcqStats?.totalQuestions ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
-    val accuracy = getQuizAccuracy(score, totalPossibleScore)
-    val message = getMessage(accuracy)
-
-    return Dashboard(
-        accuracy = accuracy,
-        message = message,
-        category = category,
-        score = score,
-        totalPossibleScore = totalPossibleScore
-    )
-}
-
-private data class DeepInfo(
-    val templateKey: Map<String, String>, val option: Option
-)
-
-private const val PATTERN = "\\{(\\w+)\\}"
-private val placeholderRegex = Regex(PATTERN)
-private fun replacePlaceholders(template: String, values: Map<String, String>): String {
-    return placeholderRegex.replace(template) { match ->
-        values[match.groupValues[1]] ?: match.value
-    }
-}
-
-private fun <T> List<T>.toQuestionRange(range: Int): List<T> {
-    if (isEmpty()) return emptyList()
-
-    return if (size >= range) {
-        this.shuffled().take(range)
-    } else {
-        val result = this.shuffled().toMutableList()
-        repeat(range - size) {
-            result += this.random()
-        }
-        result
-    }
-}
-
-private fun getQuizAccuracy(es: Int, tps: Int): Float {
-    if (tps == 0) return 0f
-    return BigDecimal(es * 100).divide(BigDecimal(tps), 1, RoundingMode.HALF_UP).toFloat()
-}
-
-private fun getMessage(accuracy: Float): Int {
-    val p = 100 / 4
-    val i = (accuracy / p).toInt().coerceAtMost(3)
-    return QuizResultMessage.messageList[i].random()
-}
+//private fun getDashboardData(
+//    mcqStats: McqStats?, mtfStats: MtfStats?, category: Category?
+//): Dashboard {
+//
+//    val score = (mcqStats?.score ?: 0) + (mtfStats?.score ?: 0)
+//    val totalPossibleScore = (((mcqStats?.totalQuestions ?: 0) * 2) + (mtfStats?.totalPairs ?: 0))
+//    val accuracy = getQuizAccuracy(score, totalPossibleScore)
+//    val message = getMessage(accuracy)
+//
+//    return Dashboard(
+//        accuracy = accuracy,
+//        message = message,
+//        mode = category,
+//        score = score,
+//        totalPossibleScore = totalPossibleScore
+//    )
+//}
+//
+//private data class DeepInfo(
+//    val templateKey: Map<String, String>, val option: Option
+//)
+//
+//private const val PATTERN = "\\{(\\w+)\\}"
+//private val placeholderRegex = Regex(PATTERN)
+//private fun replacePlaceholders(template: String, values: Map<String, String>): String {
+//    return placeholderRegex.replace(template) { match ->
+//        values[match.groupValues[1]] ?: match.value
+//    }
+//}
+//
+//private fun <T> List<T>.toQuestionRange(range: Int): List<T> {
+//    if (isEmpty()) return emptyList()
+//
+//    return if (size >= range) {
+//        this.shuffled().take(range)
+//    } else {
+//        val result = this.shuffled().toMutableList()
+//        repeat(range - size) {
+//            result += this.random()
+//        }
+//        result
+//    }
+//}
+//
+//private fun getQuizAccuracy(es: Int, tps: Int): Float {
+//    if (tps == 0) return 0f
+//    return BigDecimal(es * 100).divide(BigDecimal(tps), 1, RoundingMode.HALF_UP).toFloat()
+//}
+//
+//private fun getMessage(accuracy: Float): Int {
+//    val p = 100 / 4
+//    val i = (accuracy / p).toInt().coerceAtMost(3)
+//    return QuizResultMessage.messageList[i].random()
+//}
