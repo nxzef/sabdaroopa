@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -25,7 +26,9 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +40,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
@@ -61,30 +65,37 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.domain.Source
 import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.component.DialogLayout
+import com.nascriptone.siddharoopa.ui.screen.Navigation
+import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.state.Filter
 import kotlin.math.roundToInt
 
 @Composable
 fun QuizHomeScreen(
-    onBeginQuiz: () -> Unit,
-    onFromListClick: () -> Unit,
-    onFromFavoritesClick: () -> Unit,
     quizViewModel: QuizViewModel,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
     val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
     var sheetVisible by rememberSaveable { mutableStateOf(false) }
+    var showProgress by rememberSaveable { mutableStateOf(false) }
     val filter = when (val sourceWithData = uiState.sourceWithData) {
         is SourceWithData.FromTable -> sourceWithData.filter
         else -> Filter()
     }
+
+    LaunchedEffect(Unit) { }
 
     Surface {
         Column(
@@ -104,16 +115,17 @@ fun QuizHomeScreen(
                             quizViewModel.switchSource(
                                 sourceWithData = source.createSourceData()
                             )
-                        }
-                    ) { startSpace ->
+                        }) { startSpace ->
                         DataView(
                             startSpace = startSpace,
                             sourceWithData = uiState.sourceWithData,
                             onClick = {
                                 when (source) {
                                     Source.FROM_TABLE -> sheetVisible = !sheetVisible
-                                    Source.FROM_FAVORITES -> onFromFavoritesClick()
-                                    Source.FROM_LIST -> onFromListClick()
+                                    Source.FROM_FAVORITES -> {
+                                        navHostController.navigate(Navigation.Favorites.name)
+                                    }
+                                    Source.FROM_LIST -> {}
                                 }
                             })
                     }
@@ -137,10 +149,12 @@ fun QuizHomeScreen(
             )
             Spacer(Modifier.height(28.dp))
             Button(
-                onClick = onBeginQuiz, modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Begin Quiz")
-            }
+                onClick = {
+                    showProgress = true
+                    quizViewModel.createQuizQuestions()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Begin Quiz") }
             Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
         TableModalBottomSheet(
@@ -148,6 +162,64 @@ fun QuizHomeScreen(
             filter = filter,
             onFilterChange = quizViewModel::updateFilter,
             onDismissRequest = { sheetVisible = !sheetVisible })
+        if (showProgress) CreationProgress(
+            creationState = uiState.creationState,
+            onDismissRequest = { showProgress = false },
+            onRetryClick = quizViewModel::createQuizQuestions,
+            onSuccess = {
+                navHostController.navigate(Routes.QuizQuestion.withRoot)
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreationProgress(
+    creationState: CreationState,
+    onDismissRequest: () -> Unit,
+    onRetryClick: () -> Unit,
+    onSuccess: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (creationState is CreationState.Success) LaunchedEffect(Unit) { onSuccess() }
+    else BasicAlertDialog(
+        onDismissRequest = onDismissRequest, modifier = modifier
+    ) {
+        DialogLayout {
+            when (creationState) {
+                is CreationState.Loading -> Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.width(16.dp))
+                    Text("Preparing...")
+                }
+
+                is CreationState.Error -> Column(modifier = Modifier.padding(16.dp)) {
+                    CustomDialogHead("Error")
+                    Spacer(Modifier.height(4.dp))
+                    CustomDialogDescription(creationState.message)
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextButton(onClick = onDismissRequest) {
+                            Text("Cancel")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onRetryClick) {
+                            Text("Retry")
+                        }
+                    }
+                }
+
+                else -> Unit
+            }
+        }
     }
 }
 
@@ -371,57 +443,87 @@ fun AppliedChip(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StepSlider(
-    defaultRange: Int, onValueChangeFinished: (Int) -> Unit, modifier: Modifier = Modifier
+    defaultRange: Int,
+    onValueChangeFinished: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = "Question Range",
+    valueRange: ClosedFloatingPointRange<Float> = 5f..20f,
+    steps: Int = 2,
+    enabled: Boolean = true
 ) {
+    var currentValue by rememberSaveable { mutableIntStateOf(defaultRange) }
 
-    var currentState by rememberSaveable { mutableIntStateOf(defaultRange) }
     val sliderState = rememberSliderState(
-        value = currentState.toFloat(), steps = 2, onValueChangeFinished = {
-            onValueChangeFinished(currentState)
-        }, valueRange = 5F..20F
+        value = currentValue.toFloat(), steps = steps, onValueChangeFinished = {
+            onValueChangeFinished(currentValue)
+        }, valueRange = valueRange
     )
-    LaunchedEffect(sliderState) { currentState = sliderState.value.roundToInt() }
 
-    Column(modifier.padding(vertical = 16.dp)) {
+    LaunchedEffect(sliderState.value) {
+        currentValue = sliderState.value.roundToInt()
+    }
+
+    Column(
+        modifier = modifier.padding(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Text(
-            "Question Range",
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium,
-            style = MaterialTheme.typography.titleMedium
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            }
         )
-        Spacer(Modifier.height(12.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Slider(
-                state = sliderState, thumb = {
+                state = sliderState, enabled = enabled, thumb = {
                     Box(
                         Modifier
-                            .size(24.dp)
-                            .background(
-                                MaterialTheme.colorScheme.primary, CircleShape
-                            )
+                            .size(28.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
                     )
-                },
-
-                modifier = Modifier.weight(1f)
+                }, modifier = Modifier.weight(1f)
             )
-            Spacer(Modifier.width(16.dp))
-            Text(
-                text = "$currentState",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.small
-                    )
-                    .padding(
-                        horizontal = 12.dp, vertical = 8.dp
-                    )
+
+            ValueBadge(
+                value = currentValue, enabled = enabled
             )
         }
     }
 }
 
+@Composable
+private fun ValueBadge(
+    value: Int, enabled: Boolean, modifier: Modifier = Modifier
+) {
+    val backgroundColor: Color = if (enabled) MaterialTheme.colorScheme.surfaceVariant
+    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .background(color = backgroundColor, shape = MaterialTheme.shapes.small)
+            .padding(8.dp)
+            .widthIn(min = 32.dp)
+    ) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+            }
+        )
+    }
+}
 
 @Composable
 fun QuizChooseOptionView(

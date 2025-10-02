@@ -82,13 +82,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,25 +96,16 @@ import java.util.Collections
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
-//@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuizQuestionScreen(
-    quizSectionState: QuizSectionState,
-    viewModel: SiddharoopaViewModel,
+    quizViewModel: QuizViewModel,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
-    var isFetched by rememberSaveable { mutableStateOf(false) }
+    val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        if (!isFetched) {
-//            viewModel.createQuizQuestions()
-            isFetched = true
-        }
-    }
-
-    when (val result = quizSectionState.questionOptionList) {
+    when (val result = uiState.creationState) {
         is CreationState.Loading -> CurrentState {
             CircularProgressIndicator()
         }
@@ -124,9 +115,9 @@ fun QuizQuestionScreen(
         }
 
         is CreationState.Success -> QuizQuestionScreenContent(
-            viewModel = viewModel,
             data = result.data,
-            quizSectionState = quizSectionState,
+            uiState = uiState,
+            quizViewModel = quizViewModel,
             navHostController = navHostController,
             modifier = modifier
         )
@@ -135,9 +126,9 @@ fun QuizQuestionScreen(
 
 @Composable
 fun QuizQuestionScreenContent(
-    viewModel: SiddharoopaViewModel,
     data: List<QuestionOption>,
-    quizSectionState: QuizSectionState,
+    uiState: QuizSectionState,
+    quizViewModel: QuizViewModel,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
@@ -145,20 +136,19 @@ fun QuizQuestionScreenContent(
     var questionIndex by rememberSaveable { mutableIntStateOf(0) }
     var enabled by rememberSaveable { mutableStateOf(true) }
     var visible by rememberSaveable { mutableStateOf(false) }
-    val questionRange = quizSectionState.range
     val scope = rememberCoroutineScope()
 
 
     fun onClick(id: Int, action: Action) {
         scope.launch {
             enabled = false
-//            viewModel.updateAnswer(id, action)
+            quizViewModel.updateAnswer(id, action)
             delay(1000)
             if (questionIndex < data.lastIndex) {
                 questionIndex++
             } else {
-                navHostController.navigate(Routes.QuizResult.name) {
-                    popUpTo(Routes.QuizQuestion.name) { inclusive = true }
+                navHostController.navigate(Routes.QuizResult.withRoot) {
+                    popUpTo(Routes.QuizHome.withRoot) { inclusive = false }
                 }
             }
         }
@@ -168,22 +158,20 @@ fun QuizQuestionScreenContent(
 
     Surface {
         Column(
-            modifier =
-                modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp),
+            modifier = modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "Question ${questionIndex + 1} of $questionRange",
+                "Question ${questionIndex + 1} of ${uiState.range}",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 20.dp)
             )
             Box(
-                modifier = Modifier.weight(1f),
-                propagateMinConstraints = true
+                modifier = Modifier.weight(1f), propagateMinConstraints = true
             ) {
                 data.forEachIndexed { index, questionOption ->
                     QuestionOption(
@@ -191,7 +179,7 @@ fun QuizQuestionScreenContent(
                         enabled = enabled,
                         questionOption = questionOption,
                         onValueChange = { answer ->
-                            viewModel.updateCurrentAnswer(answer)
+                            quizViewModel.updateCurrentAnswer(answer)
                         },
                         onLaunch = { enabled = it },
                     )
@@ -211,7 +199,7 @@ fun QuizQuestionScreenContent(
                 }
                 Spacer(Modifier.width(12.dp))
                 Button(
-                    enabled = quizSectionState.currentAnswer !is Answer.Unspecified,
+                    enabled = uiState.currentAnswer !is Answer.Unspecified,
                     onClick = { onClick(questionIndex, Action.SUBMIT) },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -222,14 +210,10 @@ fun QuizQuestionScreenContent(
                 }
             }
         }
-        ExitDialog(
-            visible = visible,
-            onConfirm = {
-                visible = false
-                navHostController.navigateUp()
-            },
-            onDismissRequest = { visible = false }
-        )
+        ExitDialog(visible = visible, onConfirm = {
+            visible = false
+            navHostController.navigateUp()
+        }, onDismissRequest = { visible = false })
     }
 }
 
@@ -261,16 +245,10 @@ fun QuestionOption(
             Spacer(Modifier.height(40.dp))
             when (val state = questionOption.option) {
                 is Option.McqOption -> StateMcq(
-                    state = state,
-                    enabled = enabled,
-                    onValueChange = { onValueChange(it) }
-                )
+                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
 
                 is Option.MtfOption -> StateMtf(
-                    state = state,
-                    enabled = enabled,
-                    onValueChange = { onValueChange(it) }
-                )
+                    state = state, enabled = enabled, onValueChange = { onValueChange(it) })
             }
         }
     }
@@ -309,9 +287,7 @@ fun StateMcq(
                 .clip(MaterialTheme.shapes.medium)
                 .background(backgroundColor)
                 .selectable(
-                    enabled = highlight,
-                    selected = selected,
-                    onClick = {
+                    enabled = highlight, selected = selected, onClick = {
                         currentAnswer = option
                         onValueChange(
                             Answer.Mcq(option)
@@ -332,8 +308,7 @@ fun StateMcq(
             }
             Spacer(Modifier.width(16.dp))
             OptionText(
-                text = option,
-                enabled = highlight
+                text = option, enabled = highlight
             )
         }
     }
@@ -458,9 +433,7 @@ fun KeyColumn(
             ) {
                 if (key != null) {
                     OptionText(
-                        key,
-                        enabled = enabled,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        key, enabled = enabled, modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             }
@@ -678,33 +651,24 @@ fun DraggableBox(
                 )
             )
             .zIndex(zIndex)
-            .then(
-                if (enabled) Modifier
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = {
-                                isDragging = true
-                                zIndex = 1f
-                            }, onDrag = ::handleDrag, onDragEnd = ::handleDragEnd
-                        )
-                    }
-                else Modifier
-            )
-    ) {
+            .then(if (enabled) Modifier.pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                        zIndex = 1f
+                    }, onDrag = ::handleDrag, onDragEnd = ::handleDragEnd
+                )
+            }
+            else Modifier)) {
         OptionText(
-            text = value,
-            enabled = enabled,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            text = value, enabled = enabled, modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 }
 
 @Composable
 fun OptionIcon(
-    correct: Boolean,
-    wrong: Boolean,
-    modifier: Modifier = Modifier,
-    default: @Composable () -> Unit
+    correct: Boolean, wrong: Boolean, modifier: Modifier = Modifier, default: @Composable () -> Unit
 ) {
     val enterTransition: EnterTransition = fadeIn() + scaleIn()
     val exitTransition: ExitTransition = fadeOut() + scaleOut()
@@ -737,9 +701,7 @@ fun OptionText(
     style: TextStyle = MaterialTheme.typography.titleLarge
 ) {
     Text(
-        text,
-        style = style,
-        modifier = Modifier
+        text, style = style, modifier = Modifier
             .alpha(if (enabled) 1f else 0.4f)
             .then(modifier)
     )
@@ -747,11 +709,7 @@ fun OptionText(
 
 @Composable
 fun rememberSaveableAnimatable(initialValue: Float): Animatable<Float, AnimationVector1D> {
-    return rememberSaveable(
-        saver = Saver(
-            save = { it.value },
-            restore = { Animatable(it) }
-        )) {
+    return rememberSaveable(saver = Saver(save = { it.value }, restore = { Animatable(it) })) {
         Animatable(initialValue)
     }
 }
@@ -773,8 +731,7 @@ fun ExitDialog(
         },
         description = {
             CustomDialogDescription(
-                text = "You haven’t finished the quiz yet.\n" +
-                        "Leaving now will erase all your answers"
+                text = "You haven’t finished the quiz yet.\n" + "Leaving now will erase all your answers"
             )
         },
         showDefaultAction = true,
@@ -793,10 +750,7 @@ data class ColumnParams(
 )
 
 private fun computeAnimateTo(
-    index: Int,
-    logicalPosition: Int,
-    boxHeight: Float,
-    dividerThickness: Float
+    index: Int, logicalPosition: Int, boxHeight: Float, dividerThickness: Float
 ): Float {
     val diff = logicalPosition - index
     val cdg = dividerThickness * diff

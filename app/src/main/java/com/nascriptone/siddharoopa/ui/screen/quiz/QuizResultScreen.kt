@@ -48,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.ui.component.CurrentState
@@ -55,17 +56,16 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlin.math.roundToInt
 
 @Composable
 fun QuizResultScreen(
-    viewModel: SiddharoopaViewModel,
-    quizSectionState: QuizSectionState,
+    quizViewModel: QuizViewModel,
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
 
+    val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
     var valuated by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -74,7 +74,7 @@ fun QuizResultScreen(
             valuated = true
         }
     }
-    when (val data = quizSectionState.result) {
+    when (val data = uiState.valuationState) {
         is ValuationState.Calculate -> CurrentState {
             CircularProgressIndicator()
         }

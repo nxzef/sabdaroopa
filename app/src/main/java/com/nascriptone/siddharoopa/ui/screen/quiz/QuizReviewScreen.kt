@@ -16,7 +16,7 @@ fun QuizReviewScreen(
     quizSectionState: QuizSectionState,
     modifier: Modifier = Modifier
 ) {
-    val list = quizSectionState.questionOptionList.requireSuccess { it.isNotEmpty() } ?: run {
+    val list = quizSectionState.creationState.requireSuccess { it.isNotEmpty() } ?: run {
         Log.d("quizValuation", "Skipped: question list empty or not in success state")
         return
     }
