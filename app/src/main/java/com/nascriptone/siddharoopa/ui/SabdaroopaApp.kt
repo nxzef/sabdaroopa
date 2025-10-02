@@ -65,6 +65,8 @@ import com.nascriptone.siddharoopa.ui.screen.home.HomeTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizHomeScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizInstructionScreenTopBar
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizQuestionScreen
+import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizResultScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
@@ -282,29 +284,29 @@ fun AppScaffold(
                     }
                     val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
                     QuizHomeScreen(
-                        onBeginQuiz = {},
-                        onFromListClick = {},
-                        onFromFavoritesClick = {
-                            navController.navigate(Navigation.Favorites.name)
-                        },
-                        quizViewModel = quizViewModel
+                        quizViewModel = quizViewModel,
+                        navHostController = navController
                     )
                 }
-                composable(route = Routes.QuizQuestion.name) {
-//                    val quizViewModel: QuizViewModel = hiltViewModel()
-//                    QuizQuestionScreen(
-//                        viewModel = viewModel,
-//                        quizSectionState = quizUIState,
-//                        navHostController = navHostController
-//                    )
+                composable(route = Routes.QuizQuestion.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Quiz.name)
+                    }
+                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                    QuizQuestionScreen(
+                        quizViewModel = quizViewModel,
+                        navHostController = navController
+                    )
                 }
-                composable(route = Routes.QuizResult.withRoot) {
-//                    val quizViewModel: QuizViewModel = hiltViewModel()
-//                    QuizResultScreen(
-//                        viewModel = viewModel,
-//                        quizSectionState = quizUIState,
-//                        navHostController = navHostController
-//                    )
+                composable(route = Routes.QuizResult.withRoot) { backStackEntry ->
+                    val viewModelStoreOwner = remember(backStackEntry) {
+                        navController.getBackStackEntry(Navigation.Quiz.name)
+                    }
+                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                    QuizResultScreen(
+                        quizViewModel = quizViewModel,
+                        navHostController = navController
+                    )
                 }
                 composable(route = Routes.QuizReview.withRoot) {
 //                    val quizViewModel: QuizViewModel = hiltViewModel()
