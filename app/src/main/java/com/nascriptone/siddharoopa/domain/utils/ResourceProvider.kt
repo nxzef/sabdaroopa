@@ -1,4 +1,4 @@
-package com.nascriptone.siddharoopa.viewmodel
+package com.nascriptone.siddharoopa.domain.utils
 
 import android.content.Context
 import androidx.annotation.StringRes
