@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SabdaDao {
 
+    @Query("SELECT * FROM sabda")
+    suspend fun getEntireList(): List<Sabda>
     @Query("SELECT * FROM sabda WHERE is_favorite = 1 ORDER BY favorite_since DESC")
     fun getFavoriteList(): PagingSource<Int, Sabda>
 
@@ -36,5 +38,15 @@ interface SabdaDao {
 
     @Query("SELECT word FROM sabda WHERE id IN (:ids)")
     suspend fun getWords(ids: Set<Int>): List<String>
+
+    @Query("SELECT * FROM sabda WHERE (:category IS NULL OR category = :category) AND (:sound IS NULL OR sound = :sound) AND (:gender IS NULL OR gender = :gender)")
+    suspend fun getSabdaListByFilter(
+        category: Category?,
+        sound: Sound?,
+        gender: Gender?
+    ): List<Sabda>
+
+    @Query("SELECT * FROM sabda WHERE id IN (:ids)")
+    suspend fun getSabdaListByIdSet(ids: Set<Int>): List<Sabda>
 
 }
