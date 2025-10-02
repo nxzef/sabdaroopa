@@ -15,6 +15,7 @@ class AppRepository @Inject constructor(
     private val sabdaDao: SabdaDao
 ) {
 
+    suspend fun getEntireList(): List<Sabda> = sabdaDao.getEntireList()
     fun getFavoriteList(): Pager<Int, Sabda> {
         return Pager(
             config = PagingConfig(pageSize = 10),
@@ -48,4 +49,12 @@ class AppRepository @Inject constructor(
     }
 
     suspend fun getWords(ids: Set<Int>): Set<String> = sabdaDao.getWords(ids).toSet()
+
+    suspend fun getSabdaListByFilter(filter: Filter): List<Sabda> = sabdaDao.getSabdaListByFilter(
+        category = filter.category,
+        sound = filter.sound,
+        gender = filter.gender
+    )
+
+    suspend fun getSabdaListByIdSet(ids: Set<Int>): List<Sabda> = sabdaDao.getSabdaListByIdSet(ids)
 }
