@@ -126,7 +126,7 @@ fun ResultScreenMainContent(
             ReviewView(
                 items = result.finalData,
                 onClick = {
-                    navHostController.navigate(Routes.QuizReview.name)
+                    navHostController.navigate(Routes.QuizReview.withRoot)
                 }
             )
             Spacer(Modifier.height(40.dp))
