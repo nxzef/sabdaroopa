@@ -33,8 +33,12 @@ sealed interface SourceWithData {
     val source: Source
     val data: Set<Int> get() =  emptySet()
     val display: String get() = ""
+    fun hasData(): Boolean
     data class FromTable(val filter: Filter = Filter()) : SourceWithData {
         override val source: Source = Source.FROM_TABLE
+        override fun hasData(): Boolean {
+            return filter.category != null || filter.gender != null || filter.sound != null
+        }
     }
 
     data class FromFavorites(
@@ -43,6 +47,7 @@ sealed interface SourceWithData {
     ) : SourceWithData {
         override val source: Source = Source.FROM_FAVORITES
         fun hasChanged(selectedIds: Set<Int>): Boolean = selectedIds != data
+        override fun hasData(): Boolean = data.isNotEmpty()
     }
 
     data class FromList(
@@ -50,6 +55,7 @@ sealed interface SourceWithData {
         override val display: String = ""
     ) : SourceWithData {
         override val source: Source = Source.FROM_LIST
+        override fun hasData(): Boolean = data.isNotEmpty()
     }
 }
 
