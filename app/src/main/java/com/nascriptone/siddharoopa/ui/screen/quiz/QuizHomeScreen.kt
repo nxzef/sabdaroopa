@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -38,6 +39,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
@@ -61,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
@@ -69,7 +72,10 @@ import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.domain.Source
 import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.component.DialogLayout
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.state.Filter
@@ -84,12 +90,20 @@ fun QuizHomeScreen(
     val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
     var sheetVisible by rememberSaveable { mutableStateOf(false) }
     var showProgress by rememberSaveable { mutableStateOf(false) }
+    var showExitDialog by rememberSaveable { mutableStateOf(false) }
     val filter = when (val sourceWithData = uiState.sourceWithData) {
         is SourceWithData.FromTable -> sourceWithData.filter
         else -> Filter()
     }
 
-    LaunchedEffect(Unit) { }
+    BackHandler(onBack = quizViewModel::onQuizHomeBack)
+
+    LaunchedEffect(Unit) {
+        quizViewModel.uiEvents.collect { hasData ->
+            if (hasData) showExitDialog = true
+            else navHostController.navigateUp()
+        }
+    }
 
     Surface {
         Column(
@@ -119,6 +133,7 @@ fun QuizHomeScreen(
                                     Source.FROM_FAVORITES -> {
                                         navHostController.navigate(Navigation.Favorites.name)
                                     }
+
                                     Source.FROM_LIST -> {}
                                 }
                             })
@@ -146,8 +161,7 @@ fun QuizHomeScreen(
                 onClick = {
                     showProgress = true
                     quizViewModel.createQuizQuestions()
-                },
-                modifier = Modifier.fillMaxWidth()
+                }, modifier = Modifier.fillMaxWidth()
             ) { Text("Begin Quiz") }
             Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
@@ -164,8 +178,14 @@ fun QuizHomeScreen(
             onSuccess = {
                 showProgress = false
                 navHostController.navigate(Routes.QuizQuestion.withRoot)
-            }
-        )
+            })
+        HomeExitDialog(
+            visible = showExitDialog,
+            onExit = {
+                showExitDialog = false
+                navHostController.navigateUp()
+            },
+            onDismissRequest = { showExitDialog = false })
     }
 }
 
@@ -534,6 +554,41 @@ fun QuizChooseOption(
             )
         }
         if (selected && dataView != null) dataView.invoke(startSpace)
+    }
+}
+
+@Composable
+fun HomeExitDialog(
+    visible: Boolean,
+    onExit: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    Dialog(onDismissRequest = onDismissRequest) {
+        DialogLayout {
+            Column(modifier = modifier.padding(20.dp)) {
+                CustomDialogHead("Exit Quiz?")
+                Spacer(Modifier.height(4.dp))
+                CustomDialogDescription(
+                    text = "If you exit now, all changes will be lost.\nDo you still want to exit?"
+                )
+                Spacer(Modifier.height(24.dp))
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = onDismissRequest) {
+                        Text("CANCEL")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onExit) {
+                        Text("EXIT")
+                    }
+                }
+            }
+        }
     }
 }
 

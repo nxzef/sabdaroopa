@@ -21,8 +21,11 @@ import com.nascriptone.siddharoopa.domain.utils.ResourceProvider
 import com.nascriptone.siddharoopa.ui.state.Filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -37,6 +40,8 @@ class QuizViewModel @Inject constructor(
     private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
+    private val _uiEvents = MutableSharedFlow<Boolean>()
+    val uiEvents: SharedFlow<Boolean> = _uiEvents.asSharedFlow()
     private val _uiState = MutableStateFlow(QuizSectionState())
     val uiState: StateFlow<QuizSectionState> = _uiState.asStateFlow()
     private var tempStore = emptyList<QuestionOption>()
@@ -124,6 +129,12 @@ class QuizViewModel @Inject constructor(
         }
     }
 
+    fun onQuizHomeBack() {
+        viewModelScope.launch {
+            val currentSource = sharedDataDomain.sourceWithData.value
+            _uiEvents.emit(currentSource.hasData())
+        }
+    }
     fun resetQuestionOption() = _uiState.update {
         it.copy(
             creationState = CreationState.Success(tempStore),
