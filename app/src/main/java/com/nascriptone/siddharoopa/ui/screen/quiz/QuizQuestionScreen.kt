@@ -88,6 +88,7 @@ import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
+import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -147,9 +148,7 @@ fun QuizQuestionScreenContent(
             if (questionIndex < data.lastIndex) {
                 questionIndex++
             } else {
-                navHostController.navigate(Routes.QuizResult.withRoot) {
-                    popUpTo(Routes.QuizHome.withRoot) { inclusive = false }
-                }
+                navHostController.navigate(Routes.QuizResult.withRoot)
             }
         }
     }
@@ -212,7 +211,10 @@ fun QuizQuestionScreenContent(
         }
         ExitDialog(visible = visible, onConfirm = {
             visible = false
-            navHostController.navigateUp()
+            quizViewModel.resetSource()
+            navHostController.navigate(Navigation.Quiz.name) {
+                popUpTo(Navigation.Quiz.name) { inclusive = true }
+            }
         }, onDismissRequest = { visible = false })
     }
 }

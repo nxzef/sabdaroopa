@@ -25,8 +25,10 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,6 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -48,12 +51,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
+import com.nascriptone.siddharoopa.ui.component.DialogLayout
+import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import kotlin.math.roundToInt
 
@@ -66,6 +72,11 @@ fun QuizResultScreen(
 
     val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
     var valuated by rememberSaveable { mutableStateOf(false) }
+    var quitDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var showProgress by rememberSaveable { mutableStateOf(false) }
+    var retryPopup by rememberSaveable { mutableStateOf(false) }
+
+    BackHandler { quitDialogVisible = !quitDialogVisible }
 
     LaunchedEffect(Unit) {
         if (!valuated) {
@@ -84,27 +95,66 @@ fun QuizResultScreen(
 
         is ValuationState.Success -> ResultScreenMainContent(
             result = data.result,
-            navHostController = navHostController,
+            onQuit = { quitDialogVisible = true },
+            onRetry = { retryPopup = true },
+            onReviewClick = { navHostController.navigate(Routes.QuizReview.withRoot) },
             modifier = modifier
         )
     }
+    QuitDialog(visible = quitDialogVisible, onConfirm = {
+        quitDialogVisible = false
+        quizViewModel.resetSource()
+        navHostController.navigate(Navigation.Quiz.name) {
+            popUpTo(Navigation.Quiz.name) { inclusive = true }
+        }
+    }, onDismissRequest = {
+        quitDialogVisible = false
+    })
+    RetryDialog(
+        visible = retryPopup,
+        onSameClick = {
+            retryPopup = false
+            quizViewModel.resetQuestionOption()
+            navHostController.navigate(Routes.QuizQuestion.withRoot) {
+                popUpTo(Routes.QuizQuestion.withRoot) { inclusive = true }
+            }
+        },
+        onNewClick = {
+            retryPopup = false
+            showProgress = true
+            quizViewModel.createQuizQuestions()
+        },
+        onDismissRequest = {
+            retryPopup = false
+        }
+    )
+    CreationProgress(
+        visible = showProgress,
+        creationState = uiState.creationState,
+        onDismissRequest = { showProgress = false },
+        onRetryClick = quizViewModel::createQuizQuestions,
+        onSuccess = {
+            showProgress = false
+            navHostController.navigate(Routes.QuizQuestion.withRoot) {
+                popUpTo(Routes.QuizQuestion.withRoot) { inclusive = true }
+            }
+        }
+    )
 }
 
 @Composable
 fun ResultScreenMainContent(
     result: Result,
-    navHostController: NavHostController,
+    onQuit: () -> Unit,
+    onRetry: () -> Unit,
+    onReviewClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    var visible by rememberSaveable { mutableStateOf(false) }
 
     val dashboard = result.dashboard
     val mcqStats = result.mcqStats
     val mtfStats = result.mtfStats
     val summary = result.summary
-
-    BackHandler { visible = !visible }
 
     Surface {
         Column(
@@ -114,21 +164,11 @@ fun ResultScreenMainContent(
         ) {
             MainDashboard(dashboard)
             Spacer(Modifier.height(12.dp))
-            if (mcqStats != null) {
-                MultipleChoiceQuestion(mcqStats)
-            }
-            if (mtfStats != null) {
-                MatchTheFollowing(mtfStats)
-            }
-            if (summary != null) {
-                FinalSummary(summary)
-            }
+            mcqStats?.let { MultipleChoiceQuestion(mcqStats) }
+            mtfStats?.let { MatchTheFollowing(mtfStats) }
+            summary?.let { FinalSummary(summary) }
             ReviewView(
-                items = result.finalData,
-                onClick = {
-                    navHostController.navigate(Routes.QuizReview.withRoot)
-                }
-            )
+                items = result.finalData, onClick = onReviewClick)
             Spacer(Modifier.height(40.dp))
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -138,50 +178,32 @@ fun ResultScreenMainContent(
                     .fillMaxWidth()
             ) {
                 OutlinedButton(
-                    onClick = { visible = true },
-                    modifier = Modifier.weight(1f)
+                    onClick = onQuit, modifier = Modifier.weight(1f)
                 ) {
                     Text("QUIT")
                 }
                 Spacer(Modifier.width(12.dp))
-                Button(onClick = {
-                    navHostController.navigate(Routes.QuizQuestion.name) {
-                        popUpTo(Routes.QuizResult.name) { inclusive = true }
-                    }
-                }, modifier = Modifier.weight(1f)) {
+                Button(onClick = onRetry, modifier = Modifier.weight(1f)) {
                     Text("RETRY")
                 }
             }
         }
-        QuitDialog(
-            visible = visible,
-            onConfirm = {
-                visible = false
-                navHostController.navigateUp()
-            },
-            onDismissRequest = {
-                visible = false
-            }
-        )
     }
 }
 
 @Composable
 fun MainDashboard(
-    dashboard: Dashboard,
-    modifier: Modifier = Modifier
+    dashboard: Dashboard, modifier: Modifier = Modifier
 ) {
 
     var accuracy by rememberSaveable { mutableFloatStateOf(0f) }
 
     val currentBarProgress by animateFloatAsState(
-        targetValue = accuracy / 100f,
-        animationSpec = tween(2000)
+        targetValue = accuracy / 100f, animationSpec = tween(2000)
     )
 
     val currentProgress by animateIntAsState(
-        targetValue = accuracy.roundToInt(),
-        animationSpec = tween(2000)
+        targetValue = accuracy.roundToInt(), animationSpec = tween(2000)
     )
 
 
@@ -273,14 +295,11 @@ fun FinalSummary(
     )
 
     ModeView(
-        title = "Final Summary",
-        modifier = modifier
+        title = "Final Summary", modifier = modifier
     ) {
         TextWithDivider("Total Questions", res = Res.InInt(summary.totalQuestions), style = style)
         TextWithDivider(
-            "Total Possible Marks",
-            res = Res.InInt(summary.totalPossibleScore),
-            style = style
+            "Total Possible Marks", res = Res.InInt(summary.totalPossibleScore), style = style
         )
         TextWithDivider("Total Score", res = Res.InInt(summary.score), style = style)
         TextWithDivider(
@@ -294,13 +313,11 @@ fun FinalSummary(
 
 @Composable
 fun MultipleChoiceQuestion(
-    mcqStats: McqStats,
-    modifier: Modifier = Modifier
+    mcqStats: McqStats, modifier: Modifier = Modifier
 ) {
     val (totalQuestions, attended, skipped, correct, wrong, score) = mcqStats
     ModeView(
-        title = "Multiple Choice (MCQ)",
-        modifier = modifier
+        title = "Multiple Choice (MCQ)", modifier = modifier
     ) {
         TextWithDivider("Number of Questions", Res.InInt(totalQuestions))
         TextWithDivider("Attended", Res.InInt(attended))
@@ -313,13 +330,11 @@ fun MultipleChoiceQuestion(
 
 @Composable
 fun MatchTheFollowing(
-    mtfStats: MtfStats,
-    modifier: Modifier = Modifier
+    mtfStats: MtfStats, modifier: Modifier = Modifier
 ) {
     val (totalSet, totalPairs, attended, skipped, correct, wrong, score) = mtfStats
     ModeView(
-        title = "Match the Following",
-        modifier = modifier
+        title = "Match the Following", modifier = modifier
     ) {
         TextWithDivider("Number of Sets", Res.InInt(totalSet))
         TextWithDivider("Pairs to Match", Res.InInt(totalPairs))
@@ -334,8 +349,7 @@ fun MatchTheFollowing(
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MessageText(
-    message: String,
-    modifier: Modifier = Modifier
+    message: String, modifier: Modifier = Modifier
 ) {
 
     val config = LocalConfiguration.current
@@ -361,17 +375,12 @@ fun MessageText(
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun ReviewView(
-    items: List<QuestionOption>,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    items: List<QuestionOption>, onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     ModeView(
-        title = "Quiz Review",
-        topLayer = {
+        title = "Quiz Review", topLayer = {
             FadeEndView(onClick)
-        },
-        modifier = modifier
-            .clickable(onClick = onClick)
+        }, modifier = modifier.clickable(onClick = onClick)
     ) {
         items.forEach { item ->
             QuestionAnswerReview(item, items.lastIndex)
@@ -404,8 +413,7 @@ fun ModeView(
                     .fillMaxWidth()
                     .background(
                         color = if (!disableBackgroundColor) MaterialTheme.colorScheme.surfaceContainer
-                        else Color.Unspecified,
-                        shape = MaterialTheme.shapes.large
+                        else Color.Unspecified, shape = MaterialTheme.shapes.large
                     )
                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     .then(modifier)
@@ -417,25 +425,20 @@ fun ModeView(
 
 @Composable
 fun FadeEndView(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .background(
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color.Unspecified,
-                        MaterialTheme.colorScheme.surfaceDim
+                        Color.Unspecified, MaterialTheme.colorScheme.surfaceDim
                     ),
-                ),
-                shape = MaterialTheme.shapes.large.copy(
-                    topStart = CornerSize(0),
-                    topEnd = CornerSize(0)
+                ), shape = MaterialTheme.shapes.large.copy(
+                    topStart = CornerSize(0), topEnd = CornerSize(0)
                 )
             )
-            .padding(16.dp),
-        contentAlignment = Alignment.BottomCenter
+            .padding(16.dp), contentAlignment = Alignment.BottomCenter
     ) {
         Button(onClick) {
             Text("View All")
@@ -474,4 +477,44 @@ fun QuitDialog(
         onCancel = onDismissRequest,
         modifier = modifier
     )
+}
+
+@Composable
+fun RetryDialog(
+    visible: Boolean,
+    onSameClick: () -> Unit,
+    onNewClick: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    Dialog(onDismissRequest = onDismissRequest) {
+        DialogLayout {
+            Column(modifier = modifier.padding(8.dp)) {
+                RetryDialogOption(label = "Same Questions", onClick = onSameClick)
+                HorizontalDivider()
+                RetryDialogOption(label = "New Questions", onClick = onNewClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RetryDialogOption(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+    ) {
+        Text(label)
+        Icon(Icons.Rounded.ChevronRight, null)
+    }
 }

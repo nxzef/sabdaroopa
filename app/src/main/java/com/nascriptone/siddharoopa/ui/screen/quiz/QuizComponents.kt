@@ -14,13 +14,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
+import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
+import com.nascriptone.siddharoopa.ui.component.DialogLayout
 
 
 // Regex Text
@@ -270,6 +278,58 @@ fun MatchTheFollowingReview(
                 }
             }
             if (outerIndex != columns.size - 1) VerticalDivider()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreationProgress(
+    visible: Boolean,
+    creationState: CreationState,
+    onDismissRequest: () -> Unit,
+    onRetryClick: () -> Unit,
+    onSuccess: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    if (creationState is CreationState.Success) LaunchedEffect(Unit) { onSuccess() }
+    else BasicAlertDialog(
+        onDismissRequest = onDismissRequest, modifier = modifier
+    ) {
+        DialogLayout {
+            when (creationState) {
+                is CreationState.Loading -> Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.width(16.dp))
+                    Text("Preparing...")
+                }
+
+                is CreationState.Error -> Column(modifier = Modifier.padding(16.dp)) {
+                    CustomDialogHead("Error")
+                    Spacer(Modifier.height(4.dp))
+                    CustomDialogDescription(creationState.message)
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextButton(onClick = onDismissRequest) {
+                            Text("Cancel")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onRetryClick) {
+                            Text("Retry")
+                        }
+                    }
+                }
+
+                else -> Unit
+            }
         }
     }
 }

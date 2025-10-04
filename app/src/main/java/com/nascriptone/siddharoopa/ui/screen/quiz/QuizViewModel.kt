@@ -39,6 +39,7 @@ class QuizViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(QuizSectionState())
     val uiState: StateFlow<QuizSectionState> = _uiState.asStateFlow()
+    private var tempStore = emptyList<QuestionOption>()
 
     init {
         viewModelScope.launch {
@@ -123,11 +124,19 @@ class QuizViewModel @Inject constructor(
         }
     }
 
+    fun resetQuestionOption() = _uiState.update {
+        it.copy(
+            creationState = CreationState.Success(tempStore),
+            currentAnswer = Answer.Unspecified
+        )
+    }
     fun createQuizQuestions() {
         _uiState.update { it.copy(creationState = CreationState.Loading) }
         viewModelScope.launch(Dispatchers.Default) {
             val result = try {
-                CreationState.Success(data = getData())
+                val data = getData()
+                tempStore = data
+                CreationState.Success(data = data)
             } catch (e: Exception) {
                 Log.d("error", "Question Creation error", e)
                 CreationState.Error(e.message.orEmpty())
@@ -148,6 +157,8 @@ class QuizViewModel @Inject constructor(
     }
 
     fun updateFilter(filter: Filter) = sharedDataDomain.updateFilter(filter)
+
+    fun resetSource() = sharedDataDomain.resetSource()
 
     private suspend fun getData(): List<QuestionOption> {
         val list = repository.getEntireList()

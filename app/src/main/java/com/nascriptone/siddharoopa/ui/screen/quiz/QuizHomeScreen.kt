@@ -26,9 +26,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -40,7 +38,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
@@ -72,10 +69,7 @@ import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.domain.Source
 import com.nascriptone.siddharoopa.domain.SourceWithData
-import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
-import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
-import com.nascriptone.siddharoopa.ui.component.DialogLayout
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.state.Filter
@@ -162,64 +156,16 @@ fun QuizHomeScreen(
             filter = filter,
             onFilterChange = quizViewModel::updateFilter,
             onDismissRequest = { sheetVisible = !sheetVisible })
-        if (showProgress) CreationProgress(
+        CreationProgress(
+            visible = showProgress,
             creationState = uiState.creationState,
             onDismissRequest = { showProgress = false },
             onRetryClick = quizViewModel::createQuizQuestions,
             onSuccess = {
+                showProgress = false
                 navHostController.navigate(Routes.QuizQuestion.withRoot)
             }
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CreationProgress(
-    creationState: CreationState,
-    onDismissRequest: () -> Unit,
-    onRetryClick: () -> Unit,
-    onSuccess: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (creationState is CreationState.Success) LaunchedEffect(Unit) { onSuccess() }
-    else BasicAlertDialog(
-        onDismissRequest = onDismissRequest, modifier = modifier
-    ) {
-        DialogLayout {
-            when (creationState) {
-                is CreationState.Loading -> Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(Modifier.width(16.dp))
-                    Text("Preparing...")
-                }
-
-                is CreationState.Error -> Column(modifier = Modifier.padding(16.dp)) {
-                    CustomDialogHead("Error")
-                    Spacer(Modifier.height(4.dp))
-                    CustomDialogDescription(creationState.message)
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(onClick = onDismissRequest) {
-                            Text("Cancel")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = onRetryClick) {
-                            Text("Retry")
-                        }
-                    }
-                }
-
-                else -> Unit
-            }
-        }
     }
 }
 
