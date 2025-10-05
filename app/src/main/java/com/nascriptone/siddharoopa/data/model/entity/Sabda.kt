@@ -18,9 +18,15 @@ data class Sabda(
     val meaning: String,
     val category: Category,
     val translit: String,
+    @ColumnInfo(name = "translit_normalized")
+    val translitNormalized: String,
     @ColumnInfo(name = "is_favorite", defaultValue = "0")
     val isFavorite: Boolean,
     @ColumnInfo(name = "favorite_since")
     val favoriteSince: Long?,
+    @ColumnInfo(name = "visit_count", defaultValue = "0")
+    val visitCount: Int,
+    @ColumnInfo(name = "last_visited")
+    val lastVisited: Long?,
     val declension: Declension
 )
