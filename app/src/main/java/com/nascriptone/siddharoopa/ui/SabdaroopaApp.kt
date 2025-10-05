@@ -247,16 +247,15 @@ fun AppScaffold(
                     })
                 ) {
                     TableScreen(
-                        onQuizClick = { id -> }, snackbarHostState = snackbarHostState
+                        onQuizClick = { id -> },
+                        snackbarHostState = snackbarHostState
                     )
                 }
                 composable(
                     route = Routes.Search.withRoot,
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
-                    exitTransition = { fadeOut() + scaleOut(targetScale = 1.2f) }) {
-                    SearchScreen(
-                        emptyList()
-                    )
+                    exitTransition = { fadeOut() + scaleOut(targetScale = 0.8f) }) {
+                    SearchScreen()
                 }
             }
             navigation(
@@ -366,7 +365,7 @@ fun AppTopBar(
                 onSearchClick = { navController.navigate(Routes.Search.withRoot) }
             )
 
-            Routes.Search -> SearchScreenBar(onBackPress)
+            Routes.Search -> SearchScreenBar(navHostController = navController)
             Routes.SabdaList -> {
                 val index = backStackEntry?.arguments?.getInt("c") ?: return@AnimatedContent
                 val title = Category.entries[index].toPascalCase()
