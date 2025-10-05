@@ -24,7 +24,7 @@ class AppRepository @Inject constructor(
         return sabdaDao.searchSabda(ftsQuery, exactMatch)
     }
 
-    fun getRecentlyVisited(limit: Int = 20): Flow<List<Sabda>> = sabdaDao.getRecentlyVisited(limit)
+    fun getRecentlyVisited(limit: Int): Flow<List<Sabda>> = sabdaDao.getRecentlyVisited(limit)
     fun getFavoriteList(): Pager<Int, Sabda> {
         return Pager(
             config = PagingConfig(pageSize = 10),
@@ -32,6 +32,10 @@ class AppRepository @Inject constructor(
                 sabdaDao.getFavoriteList()
             }
         )
+    }
+
+    suspend fun trackVisit(sabdaId: Int) {
+        sabdaDao.incrementVisitCount(sabdaId, System.currentTimeMillis())
     }
 
     fun getFavoriteIds(): Flow<Set<Int>> = sabdaDao.getFavoriteIds().map { it.toSet() }

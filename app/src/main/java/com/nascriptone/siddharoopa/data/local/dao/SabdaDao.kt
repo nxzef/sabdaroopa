@@ -49,7 +49,15 @@ interface SabdaDao {
         ORDER BY last_visited DESC, visit_count DESC
         LIMIT :limit
     """)
-    fun getRecentlyVisited(limit: Int = 20): Flow<List<Sabda>>
+    fun getRecentlyVisited(limit: Int): Flow<List<Sabda>>
+
+    @Query("""
+        UPDATE sabda 
+        SET visit_count = visit_count + 1,
+            last_visited = :timestamp
+        WHERE id = :sabdaId
+    """)
+    suspend fun incrementVisitCount(sabdaId: Int, timestamp: Long = System.currentTimeMillis())
 
     @Query("SELECT * FROM sabda WHERE is_favorite = 1 ORDER BY favorite_since DESC")
     fun getFavoriteList(): PagingSource<Int, Sabda>
