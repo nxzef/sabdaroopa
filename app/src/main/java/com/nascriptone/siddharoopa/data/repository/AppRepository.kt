@@ -2,9 +2,11 @@ package com.nascriptone.siddharoopa.data.repository
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.state.Filter
+import com.nascriptone.siddharoopa.utils.helpers.SearchQueryHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -16,6 +18,14 @@ class AppRepository @Inject constructor(
 ) {
 
     suspend fun getEntireList(): List<Sabda> = sabdaDao.getEntireList()
+
+    fun searchSabda(query: String): Flow<List<Sabda>> {
+        val ftsQuery = SearchQueryHelper.prepareFtsQuery(query)
+        val exactMatch = SearchQueryHelper.prepareExactMatch(query)
+        return sabdaDao.searchSabda(ftsQuery, exactMatch)
+    }
+
+    fun getRecentlyVisited(limit: Int = 20): Flow<List<Sabda>> = sabdaDao.getRecentlyVisited(limit)
     fun getFavoriteList(): Pager<Int, Sabda> {
         return Pager(
             config = PagingConfig(pageSize = 10),
