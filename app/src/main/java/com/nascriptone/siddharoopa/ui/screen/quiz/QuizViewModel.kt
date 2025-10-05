@@ -308,12 +308,12 @@ class QuizViewModel @Inject constructor(
 
             }
 
-            MCQ.SIX -> {
-
-                trueOption = ""
-                options = emptySet()
-                templateKey = emptyMap()
-            } // Sixth Question business logic will set after the additional sabda insertion.
+//            MCQ.SIX -> {
+//
+//                trueOption = ""
+//                options = emptySet()
+//                templateKey = emptyMap()
+//            } // Sixth Question business logic will set after the additional sabda insertion.
 
             MCQ.SEVEN -> {
 
@@ -395,11 +395,11 @@ class QuizViewModel @Inject constructor(
 
             }
 
-            MTF.THREE -> {
-
-                trueOption = emptyList()
-                options = emptyMap()
-            } // Third Question business logic will set after the additional data insertion
+//            MTF.THREE -> {
+//
+//                trueOption = emptyList()
+//                options = emptyMap()
+//            } // Third Question business logic will set after the additional data insertion
 
             MTF.FOUR -> {
 

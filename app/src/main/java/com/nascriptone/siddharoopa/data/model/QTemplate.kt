@@ -4,11 +4,11 @@ import androidx.annotation.StringRes
 
 
 enum class MCQ {
-    ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT
+    ONE, TWO, THREE, FOUR, FIVE, SEVEN, EIGHT // Six removed because of a technical issue
 }
 
 enum class MTF {
-    ONE, TWO, THREE, FOUR, FIVE
+    ONE, TWO, FOUR, FIVE // Three removed because of a technical issue
 }
 
 sealed class Phrase {
