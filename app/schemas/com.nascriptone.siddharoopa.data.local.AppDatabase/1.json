@@ -1,0 +1,161 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "e6885410bb2b2d998c4b9460618c316b",
+    "entities": [
+      {
+        "tableName": "sabda",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `anta` TEXT NOT NULL, `word` TEXT NOT NULL, `sound` TEXT NOT NULL, `gender` TEXT NOT NULL, `meaning` TEXT NOT NULL, `category` TEXT NOT NULL, `translit` TEXT NOT NULL, `translit_normalized` TEXT NOT NULL DEFAULT '', `is_favorite` INTEGER NOT NULL DEFAULT 0, `favorite_since` INTEGER, `visit_count` INTEGER NOT NULL DEFAULT 0, `last_visited` INTEGER, `declension` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "anta",
+            "columnName": "anta",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "word",
+            "columnName": "word",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sound",
+            "columnName": "sound",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gender",
+            "columnName": "gender",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meaning",
+            "columnName": "meaning",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translit",
+            "columnName": "translit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translitNormalized",
+            "columnName": "translit_normalized",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "isFavorite",
+            "columnName": "is_favorite",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "favoriteSince",
+            "columnName": "favorite_since",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "visitCount",
+            "columnName": "visit_count",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "lastVisited",
+            "columnName": "last_visited",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "declension",
+            "columnName": "declension",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "sabda_fts",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`word` TEXT NOT NULL, `translit` TEXT NOT NULL, `translit_normalized` TEXT NOT NULL, `meaning` TEXT NOT NULL, content=`sabda`)",
+        "fields": [
+          {
+            "fieldPath": "word",
+            "columnName": "word",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translit",
+            "columnName": "translit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translitNormalized",
+            "columnName": "translit_normalized",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meaning",
+            "columnName": "meaning",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": []
+        },
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "simple",
+          "tokenizerArgs": [],
+          "contentTable": "sabda",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_sabda_fts_BEFORE_UPDATE BEFORE UPDATE ON `sabda` BEGIN DELETE FROM `sabda_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_sabda_fts_BEFORE_DELETE BEFORE DELETE ON `sabda` BEGIN DELETE FROM `sabda_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_sabda_fts_AFTER_UPDATE AFTER UPDATE ON `sabda` BEGIN INSERT INTO `sabda_fts`(`docid`, `word`, `translit`, `translit_normalized`, `meaning`) VALUES (NEW.`rowid`, NEW.`word`, NEW.`translit`, NEW.`translit_normalized`, NEW.`meaning`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_sabda_fts_AFTER_INSERT AFTER INSERT ON `sabda` BEGIN INSERT INTO `sabda_fts`(`docid`, `word`, `translit`, `translit_normalized`, `meaning`) VALUES (NEW.`rowid`, NEW.`word`, NEW.`translit`, NEW.`translit_normalized`, NEW.`meaning`); END"
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6885410bb2b2d998c4b9460618c316b')"
+    ]
+  }
+}
