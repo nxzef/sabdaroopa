@@ -234,7 +234,7 @@ fun AppScaffold(
                         category = initialCategory,
                         initialSound = initialSound,
                         onSabdaClick = { id ->
-                            val route = "${Navigation.Home.name}/${Routes.Table.name}/$id"
+                            val route = "${Routes.Table.withRoot}/$id"
                             navController.navigate(route) {
                                 launchSingleTop = true
                             }
@@ -255,7 +255,12 @@ fun AppScaffold(
                     route = Routes.Search.withRoot,
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
                     exitTransition = { fadeOut() + scaleOut(targetScale = 0.8f) }) {
-                    SearchScreen()
+                    SearchScreen(onItemClick = { id ->
+                        val route = "${Routes.Table.withRoot}/$id"
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                    })
                 }
             }
             navigation(
