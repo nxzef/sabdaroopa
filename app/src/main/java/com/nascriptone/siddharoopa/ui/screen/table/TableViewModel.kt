@@ -30,10 +30,22 @@ class TableViewModel @Inject constructor(
         initialValue = null
     )
 
+    init { trackVisit() }
+
     fun toggleFavoriteSabda(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { repository.toggleFavorite(id, System.currentTimeMillis()) }.getOrElse {
                 Log.d("ERROR", "Toggle Sabda Error", it)
+            }
+        }
+    }
+
+    private fun trackVisit() {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                repository.trackVisit(id)
+            }.getOrElse {
+                Log.d("ERROR", "Track Visit Error", it)
             }
         }
     }
