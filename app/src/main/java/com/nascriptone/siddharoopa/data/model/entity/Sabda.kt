@@ -18,7 +18,7 @@ data class Sabda(
     val meaning: String,
     val category: Category,
     val translit: String,
-    @ColumnInfo(name = "translit_normalized")
+    @ColumnInfo(name = "translit_normalized", defaultValue = "")
     val translitNormalized: String,
     @ColumnInfo(name = "is_favorite", defaultValue = "0")
     val isFavorite: Boolean,
