@@ -21,42 +21,47 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import com.nascriptone.siddharoopa.ui.screen.Routes
+import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreenBar(
-    onBackPress: () -> Unit,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    var value by rememberSaveable { mutableStateOf("") }
+    val searchViewModel: SearchViewModel? =
+        navHostController.sharedViewModelOrNull(Routes.Search.withRoot)
+    if (searchViewModel == null) return
+    val query by searchViewModel.query.collectAsStateWithLifecycle()
     val focusRequester = remember { FocusRequester() }
-//    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
     Surface {
         TextField(
-            value = value,
-            onValueChange = { value = it },
+            value = query,
+            onValueChange = searchViewModel::onQueryChange,
             placeholder = {
                 Text("Search")
             },
             leadingIcon = {
-                IconButton(onClick = onBackPress) {
+                IconButton(onClick = {
+                    navHostController.navigateUp()
+                }) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, "ArrowBack")
                 }
             },
             trailingIcon = {
-                IconButton(onClick = { value = "" }) {
+                IconButton(onClick = searchViewModel::clearSearch) {
                     Icon(Icons.Rounded.Clear, "Clear")
                 }
             },
@@ -77,14 +82,3 @@ fun SearchScreenBar(
         )
     }
 }
-
-//Row(
-//modifier = modifier
-//.fillMaxWidth()
-//.background(MaterialTheme.colorScheme.surfaceContainerHigh)
-//.padding(TopAppBarDefaults.windowInsets.asPaddingValues())
-//.height(TopAppBarDefaults.TopAppBarExpandedHeight),
-//verticalAlignment = Alignment.CenterVertically,
-//) {
-//
-//}
