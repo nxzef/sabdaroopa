@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -27,16 +26,13 @@ class SearchViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val searchResults: StateFlow<List<Sabda>> = query
-        .debounce(300)
-        .distinctUntilChanged()
         .flatMapLatest { query ->
             if (query.isBlank()) {
-                repository.getRecentlyVisited(limit = 20)
+                repository.getRecentlyVisited(limit = 10)
             } else {
                 repository.searchSabda(query)
             }
-        }
-        .stateIn(
+        }.distinctUntilChanged().stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
