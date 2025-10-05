@@ -2,7 +2,6 @@ package com.nascriptone.siddharoopa.data.repository
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.state.Filter
