@@ -8,7 +8,6 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.state.Filter
 import com.nascriptone.siddharoopa.utils.helpers.SearchQueryHelper
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -71,7 +70,10 @@ class AppRepository @Inject constructor(
     fun getFavoriteIds(): Flow<Set<Int>> = sabdaDao.getFavoriteIds().map { it.toSet() }
     suspend fun toggleFavorite(id: Int, timeStamp: Long?) = sabdaDao.toggleFavorite(id, timeStamp)
 
-    suspend fun removeItemsFromFavorite(ids: Set<Int>) = sabdaDao.removeItemsFromFavorite(ids)
+    suspend fun removeItemsFromFavorite(ids: Set<Int>): Int = sabdaDao.removeItemsFromFavorite(ids)
+
+    suspend fun addItemsToFavorite(ids: Set<Int>, timeStamp: Long): Int =
+        sabdaDao.addItemsToFavorite(ids, timeStamp)
 
     fun findSabdaById(id: Int): Flow<Sabda?> = sabdaDao.findSabdaById(id)
 

@@ -109,7 +109,10 @@ interface SabdaDao {
     suspend fun toggleFavorite(id: Int, timeStamp: Long?)
 
     @Query("UPDATE sabda SET is_favorite = 0, favorite_since = NULL WHERE id IN (:ids)")
-    suspend fun removeItemsFromFavorite(ids: Set<Int>)
+    suspend fun removeItemsFromFavorite(ids: Set<Int>): Int
+
+    @Query("UPDATE sabda SET is_favorite = 1, favorite_since = :timeStamp WHERE id IN (:ids) AND is_favorite = 0")
+    suspend fun addItemsToFavorite(ids: Set<Int>, timeStamp: Long): Int
 
     @Query("SELECT * FROM sabda WHERE id = :id")
     fun findSabdaById(id: Int): Flow<Sabda?>

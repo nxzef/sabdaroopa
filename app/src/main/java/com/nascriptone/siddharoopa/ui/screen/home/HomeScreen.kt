@@ -1,6 +1,11 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,20 +38,24 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material.icons.rounded.TableView
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +78,7 @@ import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import com.nascriptone.siddharoopa.ui.state.Filter
 import kotlinx.coroutines.launch
@@ -76,11 +86,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     onItemClick: (Int) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     val sabdaList = homeViewModel.sabda.collectAsLazyPagingItems()
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        homeViewModel.uiEvents.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         val visible =
@@ -95,6 +112,7 @@ fun HomeScreen(
         HomeScreenList(
             sabdaList = sabdaList,
             selectedIds = uiState.selectedIds,
+            isSelectMode = uiState.isSelectMode,
             fabVisible = uiState.selectedIds.isNotEmpty(),
             onItemClick = { id ->
                 if (uiState.isSelectMode) {
@@ -102,6 +120,7 @@ fun HomeScreen(
                 } else onItemClick(id)
             },
             onItemLongClick = homeViewModel::toggleSelectedId,
+            onTableViewClick = onItemClick,
             modifier = modifier
         )
     }
@@ -118,9 +137,11 @@ fun HomeScreen(
 fun HomeScreenList(
     sabdaList: LazyPagingItems<Sabda>,
     selectedIds: Set<Int>,
+    isSelectMode: Boolean,
     fabVisible: Boolean,
     onItemClick: (Int) -> Unit,
     onItemLongClick: (Int) -> Unit,
+    onTableViewClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -130,7 +151,7 @@ fun HomeScreenList(
     ) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item { Spacer(Modifier.height(8.dp)) }
             items(
@@ -142,8 +163,13 @@ fun HomeScreenList(
                     SabdaItem(
                         sabda = sabda,
                         isInSelected = sabda.id in selectedIds,
+                        isSelectMode = isSelectMode,
                         onClick = onItemClick,
-                        onLongClick = onItemLongClick
+                        onLongClick = onItemLongClick,
+                        onTableViewClick = onTableViewClick,
+                        modifier = Modifier
+                            .animateContentSize()
+                            .animateItem()
                     )
                 }
             }
@@ -194,13 +220,13 @@ fun HomeScreenList(
                 )
             }
         }
-        AnimatedVisibility(visible = fabVisible) {
-            FloatingActionButton(
-                onClick = {},
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = (-16).dp, y = (-16).dp)
-            ) {
+        AnimatedVisibility(
+            visible = fabVisible,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = (-16).dp, y = (-16).dp)
+        ) {
+            FloatingActionButton(onClick = {}) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -217,9 +243,11 @@ fun HomeScreenList(
 @Composable
 fun SabdaItem(
     sabda: Sabda,
+    isSelectMode: Boolean,
     isInSelected: Boolean,
     onClick: (Int) -> Unit,
     onLongClick: (Int) -> Unit,
+    onTableViewClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
@@ -247,12 +275,18 @@ fun SabdaItem(
                     onLongClick(sabda.id)
                 }
             )
-            .padding(12.dp)
+            .padding(
+                start = 12.dp,
+                top = 12.dp,
+                end = 4.dp,
+                bottom = 4.dp
+            )
 
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = sabda.word,
@@ -261,7 +295,8 @@ fun SabdaItem(
             if (isInSelected) Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 tint = MaterialTheme.colorScheme.tertiary,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
         Spacer(Modifier.height(8.dp))
@@ -280,20 +315,38 @@ fun SabdaItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = getSupportingText(sabda),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7f)
-            )
-            if (sabda.isFavorite) {
-                Icon(
-                    imageVector = Icons.Rounded.Favorite,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.surfaceTint,
-                    modifier = Modifier.size(12.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (sabda.isFavorite) {
+                    Icon(
+                        imageVector = Icons.Rounded.Favorite,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.surfaceTint,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(
+                    text = getSupportingText(sabda),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7f)
                 )
             }
+
+            AnimatedVisibility(
+                visible = isSelectMode,
+                enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                exit = fadeOut() + scaleOut(targetScale = 0.8f)
+            ) {
+                CustomToolTip("Table") {
+                    IconButton(onClick = { onTableViewClick(sabda.id) }) {
+                        Icon(Icons.Rounded.TableView, null)
+                    }
+                }
+            }
         }
+        if (!isSelectMode) Spacer(Modifier.height(8.dp))
     }
 }
 

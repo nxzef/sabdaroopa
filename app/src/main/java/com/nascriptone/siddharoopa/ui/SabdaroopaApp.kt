@@ -211,12 +211,15 @@ fun AppScaffold(
                 startDestination = Routes.Main.withRoot
             ) {
                 composable(route = Routes.Main.withRoot) {
-                    HomeScreen(onItemClick = { id ->
-                        val route = "${Routes.Table.withRoot}/$id"
-                        navController.navigate(route) {
-                            launchSingleTop = true
-                        }
-                    })
+                    HomeScreen(
+                        onItemClick = { id ->
+                            val route = "${Routes.Table.withRoot}/$id"
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        snackbarHostState = snackbarHostState
+                    )
                 }
                 composable(
                     route = "${Routes.SabdaList.withRoot}/{c}/{s}",
@@ -279,6 +282,7 @@ fun AppScaffold(
                             val route = "${Routes.Table.withRoot}/$id"
                             navController.navigate(route)
                         },
+                        snackbarHostState = snackbarHostState,
                         favoritesViewModel = favoritesViewModel
                     )
                 }

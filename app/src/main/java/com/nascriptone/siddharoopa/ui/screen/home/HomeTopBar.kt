@@ -3,11 +3,8 @@ package com.nascriptone.siddharoopa.ui.screen.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -105,6 +102,7 @@ fun HomeTopBar(
             onQueryChange = homeViewModel::onQueryChange,
             onClearQuery = homeViewModel::onClearQuery,
             onFilterClick = homeViewModel::toggleBottomSheet,
+            onFavoriteClick = homeViewModel::addSelectedItemsToFavorites,
             toggleSelectionSearchFocus = homeViewModel::toggleSearch,
             modifier = modifier
         )
@@ -181,6 +179,7 @@ fun SelectionBar(
     onQueryChange: (String) -> Unit,
     onClearQuery: () -> Unit,
     onFilterClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
     toggleSelectionSearchFocus: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -223,25 +222,18 @@ fun SelectionBar(
                     var isClicked by rememberSaveable { mutableStateOf(false) }
                     CustomToolTip("Favorite") {
                         IconButton(onClick = {
+                            onFavoriteClick()
                             isClicked = true
                         }) {
-                            Crossfade(
-                                targetState = isClicked,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessHigh
-                                )
-                            ) { state ->
-                                if (state) Icon(
-                                    imageVector = Icons.Rounded.Favorite,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                else Icon(
-                                    imageVector = Icons.Rounded.FavoriteBorder,
-                                    contentDescription = null
-                                )
-                            }
+                            if (isClicked) Icon(
+                                imageVector = Icons.Rounded.Favorite,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            else Icon(
+                                imageVector = Icons.Rounded.FavoriteBorder,
+                                contentDescription = null
+                            )
                         }
                     }
                 }

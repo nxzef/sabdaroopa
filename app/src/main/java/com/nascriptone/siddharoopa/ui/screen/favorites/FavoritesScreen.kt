@@ -37,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -74,12 +75,18 @@ import com.nascriptone.siddharoopa.ui.component.getSupportingText
 @Composable
 fun FavoritesScreen(
     onTableClick: (Int) -> Unit,
+    snackbarHostState: SnackbarHostState,
     favoritesViewModel: FavoritesViewModel?,
     modifier: Modifier = Modifier
 ) {
     favoritesViewModel?.let {
         val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
         val favorites = favoritesViewModel.favorites.collectAsLazyPagingItems()
+        LaunchedEffect(Unit) {
+            favoritesViewModel.uiEvents.collect { message ->
+                snackbarHostState.showSnackbar(message)
+            }
+        }
         FavoritesScreenContent(
             uiState = uiState,
             favorites = favorites,
@@ -130,7 +137,7 @@ fun FavoritesScreenContent(
     Surface {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = modifier.animateContentSize()
+            modifier = modifier
         ) {
             item {
                 Spacer(Modifier.height(16.dp))

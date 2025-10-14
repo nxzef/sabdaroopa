@@ -15,9 +15,12 @@ import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -36,6 +39,9 @@ class FavoritesViewModel @Inject constructor(
 
     val favorites: Flow<PagingData<Sabda>> =
         repository.getFavoriteList().flow.cachedIn(viewModelScope)
+
+    private val _uiEvents = MutableSharedFlow<String>()
+    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
     private val _uiState = MutableStateFlow(FavoritesState())
     val uiState: StateFlow<FavoritesState> = _uiState.asStateFlow()
 
@@ -77,7 +83,7 @@ class FavoritesViewModel @Inject constructor(
         if (_uiState.value.selectedIds.isEmpty() && _uiState.value.trigger == Trigger.CARD) exitSelectionMode()
     }
 
-    fun deleteAllItemFromFavorite() = removeItemsFromFavorite(_uiState.value.selectedIds)
+    fun removeSelectedItemFromFavorite() = removeItemsFromFavorite(_uiState.value.selectedIds)
 
     fun toggleSelectionMode(trigger: Trigger = Trigger.NONE) {
         if (_uiState.value.isSelectMode) exitSelectionMode()
@@ -150,9 +156,12 @@ class FavoritesViewModel @Inject constructor(
     private fun removeItemsFromFavorite(ids: Set<Int>) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                repository.removeItemsFromFavorite(ids)
+                val count = repository.removeItemsFromFavorite(ids)
+                val itm = if (count == 1) "item" else "items"
+                _uiEvents.emit("$count $itm removed from favorites")
             }.getOrElse {
-                Log.d("ERROR", "Remove Sabda Error", it)
+                Log.d("ERROR", "Remove Items Error", it)
+                _uiEvents.emit("Failed to remove items from favorites")
             }
         }
     }

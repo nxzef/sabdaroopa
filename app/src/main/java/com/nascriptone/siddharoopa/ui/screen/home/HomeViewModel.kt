@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -12,11 +13,15 @@ import com.nascriptone.siddharoopa.ui.state.Filter
 import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -25,6 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +39,9 @@ class HomeViewModel @Inject constructor(
     private val sharedDataRepo: SharedDataRepo,
     private val controllerUseCase: ControllerUseCase
 ) : ViewModel() {
+
+    private val _uiEvents = MutableSharedFlow<String>()
+    val uiEvents: SharedFlow<String> = _uiEvents.asSharedFlow()
     private val _uiState = MutableStateFlow(HomeState())
     val uiState: StateFlow<HomeState> = _uiState.asStateFlow()
 
@@ -114,6 +123,8 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun addSelectedItemsToFavorites() = addItemsToFavorite(_uiState.value.selectedIds)
+
     fun toggleSelectionMode(trigger: Trigger = Trigger.NONE) {
         if (_uiState.value.isSelectMode) exitSelectionMode()
         else enterSelectionMode(trigger = trigger)
@@ -145,6 +156,19 @@ class HomeViewModel @Inject constructor(
             )
         }
         controllerUseCase.disableFocus()
+    }
+
+    private fun addItemsToFavorite(ids: Set<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val count = repository.addItemsToFavorite(ids, System.currentTimeMillis())
+                val itm = if (count == 1) "item" else "items"
+                _uiEvents.emit("$count $itm added to favorites")
+            }.getOrElse {
+                Log.d("ERROR", "Add items Error", it)
+                _uiEvents.emit("Failed to add items to favorites")
+            }
+        }
     }
 
     private fun updateFavoriteSelectedSet(selectedIds: Set<Int>) =
