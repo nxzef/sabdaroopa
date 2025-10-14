@@ -15,3 +15,7 @@ data class Filter(
     val activeFilterCount: Int
         get() = listOfNotNull(category, sound, gender).size
 }
+
+enum class Trigger {
+    NONE, INIT, CARD, TOOLBAR
+}

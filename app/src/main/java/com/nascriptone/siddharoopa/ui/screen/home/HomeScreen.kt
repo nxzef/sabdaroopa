@@ -1,202 +1,496 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
-import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Quiz
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nascriptone.siddharoopa.R
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.nascriptone.siddharoopa.data.model.Category
+import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
+import com.nascriptone.siddharoopa.data.model.entity.Sabda
+import com.nascriptone.siddharoopa.ui.component.getSupportingText
+import com.nascriptone.siddharoopa.ui.state.Filter
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    onCardClick: (Int, Int) -> Unit,
-    modifier: Modifier = Modifier
+    onItemClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
-    HomeScreenContent(
-        onCardClick = onCardClick,
-        modifier = modifier
+    val sabdaList = homeViewModel.sabda.collectAsLazyPagingItems()
+    val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        val visible =
+            uiState.filter.isActive && !uiState.isSelectMode || uiState.filter.isActive && uiState.isSelectMode && !uiState.isSearchMode
+        AnimatedVisibility(visible = visible) {
+            ActiveFiltersRow(
+                filter = uiState.filter,
+                onClearFilters = homeViewModel::onClearFilter,
+                onFilterClick = homeViewModel::toggleBottomSheet
+            )
+        }
+        HomeScreenList(
+            sabdaList = sabdaList,
+            selectedIds = uiState.selectedIds,
+            fabVisible = uiState.selectedIds.isNotEmpty(),
+            onItemClick = { id ->
+                if (uiState.isSelectMode) {
+                    homeViewModel.toggleSelectedId(id)
+                } else onItemClick(id)
+            },
+            onItemLongClick = homeViewModel::toggleSelectedId,
+            modifier = modifier
+        )
+    }
+    HomeBottomSheet(
+        visible = uiState.bottomSheetVisible,
+        currentFilter = uiState.filter,
+        onDismissRequest = homeViewModel::toggleBottomSheet,
+        onApplyFilter = homeViewModel::updateFilter
     )
 }
 
+
 @Composable
-fun HomeScreenContent(
-    onCardClick: (Int, Int) -> Unit,
+fun HomeScreenList(
+    sabdaList: LazyPagingItems<Sabda>,
+    selectedIds: Set<Int>,
+    fabVisible: Boolean,
+    onItemClick: (Int) -> Unit,
+    onItemLongClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val categoryViews = remember {
-        listOf(
-            TableView(
-                category = Category.GENERAL,
-                option = OptionView(
-                    sound = Sound.entries,
-                    displayWord = DisplayWord(
-                        vowelResId = R.string.general_vowel,
-                        consonantResId = R.string.general_consonant
-                    )
-                )
-            ),
-            TableView(
-                category = Category.SPECIFIC,
-                option = OptionView(
-                    sound = Sound.entries,
-                    displayWord = DisplayWord(
-                        vowelResId = R.string.specific_vowel,
-                        consonantResId = R.string.specific_consonant
-                    )
-                )
-            )
-        )
-    }
-
-    Surface {
-        Column(
-            modifier =
-                modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.ime.exclude(WindowInsets.navigationBars))
+    ) {
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Spacer(Modifier.height(24.dp))
-            categoryViews.forEach { tables ->
-                val categoryName = stringResource(tables.category.eng)
-                val subTitle = stringResource(tables.category.skt)
-                View(
-                    title = categoryName,
-                    sunTitle = subTitle
-                ) {
-                    val option = tables.option
-                    option.sound.forEach { sound ->
-                        val title = stringResource(sound.skt)
-                        val displayWordResId = when (sound) {
-                            Sound.VOWELS -> option.displayWord.vowelResId
-                            Sound.CONSONANTS -> option.displayWord.consonantResId
-                        }
-                        val displayWord = stringResource(displayWordResId)
-                        Option(
-                            title = title,
-                            displayWord = "$displayWord...",
-                            onClick = {
-                                onCardClick(tables.category.ordinal, sound.ordinal)
-                            }
-                        )
+            item { Spacer(Modifier.height(8.dp)) }
+            items(
+                count = sabdaList.itemCount,
+                key = sabdaList.itemKey { it.id },
+            ) { index: Int ->
+                val sabda: Sabda? = sabdaList[index]
+                sabda?.let { sabda ->
+                    SabdaItem(
+                        sabda = sabda,
+                        isInSelected = sabda.id in selectedIds,
+                        onClick = onItemClick,
+                        onLongClick = onItemLongClick
+                    )
+                }
+            }
+
+            if (sabdaList.loadState.append == LoadState.Loading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
             }
-            Spacer(Modifier.height(40.dp))
+            item {
+                Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight + 16.dp))
+            }
+        }
+        if (sabdaList.loadState.refresh is LoadState.Loading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+
+        if (sabdaList.loadState.refresh is LoadState.NotLoading && sabdaList.itemCount == 0) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SearchOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "No results found",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Try different search terms or filters",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        AnimatedVisibility(visible = fabVisible) {
+            FloatingActionButton(
+                onClick = {},
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-16).dp, y = (-16).dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    Icon(Icons.Rounded.Quiz, null)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Take Quiz")
+                }
+            }
         }
     }
 }
 
-
 @Composable
-fun View(
-    title: String,
-    sunTitle: String,
-    modifier: Modifier = Modifier,
-    content: @Composable (ColumnScope.() -> Unit)
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(vertical = 20.dp)
-    ) {
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Text(
-            text = sunTitle,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Spacer(Modifier.height(8.dp))
-        content()
-    }
-}
-
-@Composable
-fun Option(
-    title: String,
-    displayWord: String,
-    onClick: () -> Unit,
+fun SabdaItem(
+    sabda: Sabda,
+    isInSelected: Boolean,
+    onClick: (Int) -> Unit,
+    onLongClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = modifier
-            .padding(vertical = 8.dp)
+            .fillMaxWidth()
+            .then(
+                if (isInSelected) {
+                    Modifier.border(
+                        border = BorderStroke(
+                            width = 2.dp, color = MaterialTheme.colorScheme.tertiary
+                        ), shape = MaterialTheme.shapes.large
+                    )
+                } else Modifier
+            )
             .background(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = MaterialTheme.shapes.large
             )
             .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = onClick)
-            .padding(16.dp)
+            .combinedClickable(
+                onClick = { onClick(sabda.id) },
+                onLongClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick(sabda.id)
+                }
+            )
+            .padding(12.dp)
 
     ) {
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Spacer(Modifier.height(8.dp))
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = MaterialTheme.shapes.medium
-                )
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = displayWord,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(0.7f)
+                text = sabda.word,
+                style = MaterialTheme.typography.headlineSmall,
             )
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = "ChevronRight",
+            if (isInSelected) Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                tint = MaterialTheme.colorScheme.tertiary,
+                contentDescription = null
             )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = sabda.translit)
+            Text("\u2022", modifier = Modifier.padding(horizontal = 8.dp))
+            Text(
+                text = sabda.meaning, color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+        }
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = getSupportingText(sabda),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7f)
+            )
+            if (sabda.isFavorite) {
+                Icon(
+                    imageVector = Icons.Rounded.Favorite,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.surfaceTint,
+                    modifier = Modifier.size(12.dp)
+                )
+            }
         }
     }
 }
 
-data class TableView(
-    val category: Category, val option: OptionView
-)
+@Composable
+fun ActiveFiltersRow(
+    filter: Filter,
+    onClearFilters: () -> Unit,
+    onFilterClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            FilterChip(
+                selected = true,
+                onClick = onClearFilters,
+                label = { Text("Clear all") },
+                leadingIcon = { Icon(Icons.Rounded.Close, contentDescription = null) })
+        }
 
-data class OptionView(
-    val sound: List<Sound>, val displayWord: DisplayWord
-)
+        filter.category?.let { category ->
+            item {
+                FilterChip(
+                    selected = true,
+                    onClick = onFilterClick,
+                    label = { Text(stringResource(category.skt)) },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowDown, contentDescription = null
+                        )
+                    })
+            }
+        }
 
-data class DisplayWord(
-    @StringRes val vowelResId: Int, @StringRes val consonantResId: Int
-)
+        filter.sound?.let { sound ->
+            item {
+                FilterChip(
+                    selected = true,
+                    onClick = onFilterClick,
+                    label = { Text(stringResource(sound.skt)) },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowDown, contentDescription = null
+                        )
+                    })
+            }
+        }
+
+        filter.gender?.let { gender ->
+            item {
+                FilterChip(
+                    selected = true,
+                    onClick = onFilterClick,
+                    label = { Text(stringResource(gender.skt)) },
+                    trailingIcon = {
+                        Icon(
+                            Icons.Rounded.KeyboardArrowDown, contentDescription = null
+                        )
+                    })
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeBottomSheet(
+    visible: Boolean,
+    currentFilter: Filter,
+    onDismissRequest: () -> Unit,
+    onApplyFilter: (Filter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+    val sheetState = rememberModalBottomSheetState(true)
+    var tempFilter by remember { mutableStateOf(currentFilter) }
+    val scope = rememberCoroutineScope()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest, sheetState = sheetState, modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Filter Options", style = MaterialTheme.typography.titleLarge
+            )
+
+            // Category filter
+            FilterSection(
+                title = "Category",
+                options = Category.entries,
+                selectedOption = tempFilter.category,
+                onOptionSelected = { tempFilter = tempFilter.copy(category = it) },
+                onClear = {
+                    tempFilter = tempFilter.copy(category = null)
+                }) { category -> stringResource(category.skt) }
+
+            // Sound filter
+            FilterSection(
+                title = "Sound",
+                options = Sound.entries,
+                selectedOption = tempFilter.sound,
+                onOptionSelected = { tempFilter = tempFilter.copy(sound = it) },
+                onClear = { tempFilter = tempFilter.copy(sound = null) }) { sound ->
+                stringResource(
+                    sound.skt
+                )
+            }
+
+            // Gender filter
+            FilterSection(
+                title = "Gender",
+                options = Gender.entries,
+                selectedOption = tempFilter.gender,
+                onOptionSelected = { tempFilter = tempFilter.copy(gender = it) },
+                onClear = {
+                    tempFilter = tempFilter.copy(gender = null)
+                }) { gender -> stringResource(gender.skt) }
+
+            // Action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            sheetState.hide()
+                            onDismissRequest()
+                        }
+                    }, modifier = Modifier.weight(1f)
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+                        scope.launch {
+                            onApplyFilter(tempFilter)
+                            sheetState.hide()
+                            onDismissRequest()
+                        }
+                    }, modifier = Modifier.weight(1f)
+                ) {
+                    Text("Apply")
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun <T> FilterSection(
+    title: String,
+    options: List<T>,
+    selectedOption: T?,
+    onOptionSelected: (T?) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+    labelMapper: @Composable (T) -> String
+) {
+    Column(
+        modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title, style = MaterialTheme.typography.titleMedium
+            )
+            if (selectedOption != null) {
+                TextButton(onClick = onClear) {
+                    Text("Clear")
+                }
+            }
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(options) { option ->
+                FilterChip(selected = option == selectedOption, onClick = {
+                    onOptionSelected(if (option == selectedOption) null else option)
+                }, label = { Text(labelMapper(option)) })
+            }
+        }
+    }
+}

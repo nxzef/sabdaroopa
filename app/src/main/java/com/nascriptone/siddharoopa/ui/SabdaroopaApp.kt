@@ -176,7 +176,8 @@ fun DrawerNavigation(
             modifier = modifier
         ) {
             AppScaffold(
-                onMenuClick = { scope.launch { drawerState.open() } }, navController = navController
+                onMenuClick = { scope.launch { drawerState.open() } },
+                navController = navController
             )
         }
     }
@@ -184,7 +185,9 @@ fun DrawerNavigation(
 
 @Composable
 fun AppScaffold(
-    onMenuClick: () -> Unit, navController: NavHostController, modifier: Modifier = Modifier
+    onMenuClick: () -> Unit,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
@@ -208,12 +211,12 @@ fun AppScaffold(
                 startDestination = Routes.Main.withRoot
             ) {
                 composable(route = Routes.Main.withRoot) {
-                    HomeScreen(
-                        onCardClick = { category, sound ->
-                            val route = "${Routes.SabdaList.withRoot}/$category/$sound"
-                            navController.navigate(route)
+                    HomeScreen(onItemClick = { id ->
+                        val route = "${Routes.Table.withRoot}/$id"
+                        navController.navigate(route) {
+                            launchSingleTop = true
                         }
-                    )
+                    })
                 }
                 composable(
                     route = "${Routes.SabdaList.withRoot}/{c}/{s}",
@@ -367,7 +370,7 @@ fun AppTopBar(
         when (route) {
             Routes.Main -> HomeTopBar(
                 onMenuClick = onMenuClick,
-                onSearchClick = { navController.navigate(Routes.Search.withRoot) }
+                navHostController = navController
             )
 
             Routes.Search -> SearchScreenBar(navHostController = navController)

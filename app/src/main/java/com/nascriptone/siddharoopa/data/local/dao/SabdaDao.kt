@@ -16,6 +16,46 @@ interface SabdaDao {
     suspend fun getEntireList(): List<Sabda>
 
     @Query("""
+    SELECT *
+    FROM (
+        SELECT * FROM sabda
+        WHERE 
+            (
+                (:query IS NULL OR :query = '')
+                OR (sabda.rowid IN (
+                    SELECT sabda_fts.rowid
+                    FROM sabda_fts
+                    WHERE sabda_fts MATCH :query
+                ))
+            )
+            AND (:category IS NULL OR sabda.category = :category)
+            AND (:sound IS NULL OR sabda.sound = :sound)
+            AND (:gender IS NULL OR sabda.gender = :gender)
+    ) AS combined
+    ORDER BY
+        CASE WHEN visit_count > 0 THEN 0 ELSE 1 END,
+        visit_count DESC,
+        last_visited DESC,
+        CASE
+            WHEN :query IS NULL OR :query = '' THEN 0
+            WHEN word LIKE :exactMatch THEN 1
+            WHEN meaning LIKE :exactMatch THEN 2
+            WHEN translit_normalized LIKE :exactMatch THEN 3
+            WHEN translit LIKE :exactMatch THEN 4
+            ELSE 5
+        END,
+        word ASC
+""")
+    fun getSabdaWithFilters(
+        query: String?,
+        exactMatch: String?,
+        category: Category?,
+        sound: Sound?,
+        gender: Gender?
+    ): PagingSource<Int, Sabda>
+
+
+    @Query("""
     SELECT sabda.* 
     FROM sabda
     JOIN sabda_fts ON sabda.rowid = sabda_fts.rowid
@@ -89,5 +129,8 @@ interface SabdaDao {
 
     @Query("SELECT * FROM sabda WHERE id IN (:ids)")
     suspend fun getSabdaListByIdSet(ids: Set<Int>): List<Sabda>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM sabda WHERE id IN (:ids) AND is_favorite = 0)")
+    fun hasAnyNonFavorite(ids: Set<Int>): Flow<Boolean>
 
 }

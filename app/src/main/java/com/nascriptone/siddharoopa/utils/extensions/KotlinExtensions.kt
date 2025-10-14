@@ -6,3 +6,5 @@ fun Enum<*>.toPascalCase(): String {
         .split("_")
         .joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
 }
+
+fun <T> Set<T>.toggleInSet(id: T): Set<T> = if (id in this) this - id else this + id

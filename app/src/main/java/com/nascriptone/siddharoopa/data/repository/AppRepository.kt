@@ -2,11 +2,13 @@ package com.nascriptone.siddharoopa.data.repository
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.state.Filter
 import com.nascriptone.siddharoopa.utils.helpers.SearchQueryHelper
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,6 +19,34 @@ class AppRepository @Inject constructor(
 ) {
 
     suspend fun getEntireList(): List<Sabda> = sabdaDao.getEntireList()
+
+    fun getSabdaWithFilters(
+        query: String?,
+        filter: Filter
+    ): Flow<PagingData<Sabda>> {
+        val ftsQuery = query?.takeIf { it.isNotBlank() }?.let {
+            SearchQueryHelper.prepareFtsQuery(it)
+        }
+        val exactMatch = query?.takeIf { it.isNotBlank() }?.let {
+            SearchQueryHelper.prepareExactMatch(it)
+        }
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                prefetchDistance = 10,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                sabdaDao.getSabdaWithFilters(
+                    query = ftsQuery,
+                    exactMatch = exactMatch,
+                    category = filter.category,
+                    sound = filter.sound,
+                    gender = filter.gender
+                )
+            }
+        ).flow
+    }
 
     fun searchSabda(query: String): Flow<List<Sabda>> {
         val ftsQuery = SearchQueryHelper.prepareFtsQuery(query)
@@ -70,4 +100,6 @@ class AppRepository @Inject constructor(
     )
 
     suspend fun getSabdaListByIdSet(ids: Set<Int>): List<Sabda> = sabdaDao.getSabdaListByIdSet(ids)
+
+    fun hasAnyNonFavoriteFlow(ids: Set<Int>): Flow<Boolean> = sabdaDao.hasAnyNonFavorite(ids)
 }

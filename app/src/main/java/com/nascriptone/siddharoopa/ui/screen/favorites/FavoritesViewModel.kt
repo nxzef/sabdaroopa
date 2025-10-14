@@ -8,8 +8,10 @@ import androidx.paging.cachedIn
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.domain.ControllerUseCase
-import com.nascriptone.siddharoopa.domain.SharedDataDomain
-import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.domain.DataSource
+import com.nascriptone.siddharoopa.domain.SharedDataRepo
+import com.nascriptone.siddharoopa.ui.state.Trigger
+import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +30,7 @@ import javax.inject.Inject
 @HiltViewModel
 class FavoritesViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val sharedDataDomain: SharedDataDomain,
+    private val sharedDataRepo: SharedDataRepo,
     private val controllerUseCase: ControllerUseCase
 ) : ViewModel() {
 
@@ -39,9 +41,8 @@ class FavoritesViewModel @Inject constructor(
 
     val hasSelectionChanged: StateFlow<Boolean> =
         _uiState.map { it.selectedIds }.distinctUntilChanged().map { selectedIds ->
-            val dataSource = sharedDataDomain.sourceWithData.value
-            when (dataSource) {
-                is SourceWithData.FromFavorites -> dataSource.hasChanged(selectedIds)
+            when (val dataSource = sharedDataRepo.dataSource.value) {
+                is DataSource.Favorites -> dataSource.hasChanged(selectedIds)
                 else -> false
             }
         }.distinctUntilChanged().stateIn(
@@ -54,10 +55,10 @@ class FavoritesViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getFavoriteIds().collect { totalIds ->
                 _uiState.update { it.copy(totalIds = totalIds) }
-                val dataSource = sharedDataDomain.sourceWithData.value
-                if (dataSource !is SourceWithData.FromFavorites || totalIds.isEmpty()) return@collect
+                val dataSource = sharedDataRepo.dataSource.value
+                if (dataSource !is DataSource.Favorites || totalIds.isEmpty()) return@collect
                 enterSelectionMode(Trigger.INIT)
-                updateFavoriteSelectedSet(dataSource.data)
+                updateFavoriteSelectedSet(dataSource.ids)
             }
         }
     }
@@ -92,10 +93,9 @@ class FavoritesViewModel @Inject constructor(
     }
 
     fun onDiscardChanges() {
-        val sourceWithData = sharedDataDomain.sourceWithData.value
-        if (sourceWithData !is SourceWithData.FromFavorites) return
-        val selectedIds = sourceWithData.data
-        updateFavoriteSelectedSet(selectedIds)
+        val sourceWithData = sharedDataRepo.dataSource.value
+        if (sourceWithData !is DataSource.Favorites) return
+        updateFavoriteSelectedSet(sourceWithData.ids)
     }
 
     fun transferDialogDismiss() {
@@ -110,14 +110,15 @@ class FavoritesViewModel @Inject constructor(
         _uiState.update { it.copy(transferState = TransferState.Loading) }
         viewModelScope.launch {
             try {
-                val sourceWithData = withContext(Dispatchers.IO) {
+                val dataSource = withContext(Dispatchers.IO) {
                     val words = repository.getWords(selectedIds)
                     val display = words.joinToString(", ")
-                    SourceWithData.FromFavorites(
-                        data = selectedIds, display = display
+                    DataSource.Favorites(
+                        ids = selectedIds,
+                        display = display
                     )
                 }
-                sharedDataDomain.updateSourceWithData(sourceWithData)
+                sharedDataRepo.updateDataSource(dataSource)
                 _uiState.update { it.copy(transferState = TransferState.Success) }
             } catch (exception: Exception) {
                 val errorMessage = exception.message ?: "An unexpected error occurred"
@@ -159,12 +160,11 @@ class FavoritesViewModel @Inject constructor(
     private fun updateFavoriteSelectedSet(selectedIds: Set<Int>) =
         _uiState.update { it.copy(selectedIds = selectedIds) }
 
-    private fun <T> Set<T>.toggleInSet(id: T): Set<T> = if (id in this) this - id else this + id
 
     override fun onCleared() {
         super.onCleared()
         Log.d("VIEWMODEL_CLEAR", "Favorite ViewModel Cleared")
-        if (sharedDataDomain.sourceWithData.value is SourceWithData.FromFavorites) {
+        if (sharedDataRepo.dataSource.value is DataSource.Favorites) {
             Log.d("VIEWMODEL_CLEAR", "Favorite ViewModel Cleared :::::::: Inside block")
         }
     }

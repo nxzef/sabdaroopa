@@ -1,5 +1,7 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
+import com.nascriptone.siddharoopa.ui.state.Trigger
+
 data class FavoritesState(
     val isSelectMode: Boolean = false,
     val trigger: Trigger = Trigger.NONE,
@@ -9,10 +11,6 @@ data class FavoritesState(
 ) {
     val areAllSelected: Boolean
         get() = selectedIds.isNotEmpty() && selectedIds.size == totalIds.size
-}
-
-enum class Trigger {
-    NONE, INIT, CARD, TOOLBAR
 }
 
 sealed class TransferState {

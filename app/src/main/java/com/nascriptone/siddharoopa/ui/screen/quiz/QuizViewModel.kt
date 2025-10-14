@@ -15,10 +15,10 @@ import com.nascriptone.siddharoopa.data.model.Phrase
 import com.nascriptone.siddharoopa.data.model.QTemplate
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
-import com.nascriptone.siddharoopa.domain.SharedDataDomain
-import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.domain.DataSource
+import com.nascriptone.siddharoopa.domain.SharedDataRepo
+import com.nascriptone.siddharoopa.domain.SourceType
 import com.nascriptone.siddharoopa.domain.utils.ResourceProvider
-import com.nascriptone.siddharoopa.ui.state.Filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,7 +36,7 @@ import javax.inject.Inject
 @HiltViewModel
 class QuizViewModel @Inject constructor(
     private val repository: AppRepository,
-    private val sharedDataDomain: SharedDataDomain,
+    private val sharedDataRepo: SharedDataRepo,
     private val resourceProvider: ResourceProvider
 ) : ViewModel() {
 
@@ -48,9 +48,9 @@ class QuizViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            sharedDataDomain.sourceWithData.collect { sourceWithData ->
+            sharedDataRepo.dataSource.collect { sourceWithData ->
                 _uiState.update {
-                    it.copy(sourceWithData = sourceWithData)
+                    it.copy(dataSource = sourceWithData)
                 }
             }
         }
@@ -131,16 +131,18 @@ class QuizViewModel @Inject constructor(
 
     fun onQuizHomeBack() {
         viewModelScope.launch {
-            val currentSource = sharedDataDomain.sourceWithData.value
-            _uiEvents.emit(currentSource.hasData())
+            val currentSource = sharedDataRepo.dataSource.value
+            _uiEvents.emit(currentSource.hasValidData())
         }
     }
+
     fun resetQuestionOption() = _uiState.update {
         it.copy(
             creationState = CreationState.Success(tempStore),
             currentAnswer = Answer.Unspecified
         )
     }
+
     fun createQuizQuestions() {
         _uiState.update { it.copy(creationState = CreationState.Loading) }
         viewModelScope.launch(Dispatchers.Default) {
@@ -156,8 +158,8 @@ class QuizViewModel @Inject constructor(
         }
     }
 
-    fun switchSource(sourceWithData: SourceWithData) =
-        sharedDataDomain.updateSourceWithData(sourceWithData)
+    fun switchSource(sourceType: SourceType) =
+        sharedDataRepo.updateDataSource(sourceType.createDefault())
 
     fun updateMode(mode: Mode) {
         _uiState.update { it.copy(mode = mode) }
@@ -167,18 +169,19 @@ class QuizViewModel @Inject constructor(
         _uiState.update { it.copy(range = range) }
     }
 
-    fun updateFilter(filter: Filter) = sharedDataDomain.updateFilter(filter)
+//    fun updateFilter(filter: Filter) =
+//        sharedDataDomain.updateSourceWithData(Data.FilterData(filter))
 
-    fun resetSource() = sharedDataDomain.resetSource()
+    fun resetSource() = sharedDataRepo.resetToTable()
 
     private suspend fun getData(): List<QuestionOption> {
         val list = repository.getEntireList()
         val mode = _uiState.value.mode
         val range = _uiState.value.range
         val maxMCQ = (range * 70) / 100
-        val collection = when (val source = sharedDataDomain.sourceWithData.value) {
-            is SourceWithData.FromTable -> repository.getSabdaListByFilter(source.filter)
-            else -> repository.getSabdaListByIdSet(source.data)
+        val collection = when (val source = sharedDataRepo.dataSource.value) {
+            is DataSource.Table -> repository.getSabdaListByFilter(source.filter)
+            else -> repository.getSabdaListByIdSet(source.ids)
         }
         val data = collection.toQuestionRange(range)
         return List(range) { i ->
@@ -506,7 +509,7 @@ class QuizViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        sharedDataDomain.resetSource()
+        sharedDataRepo.resetToTable()
         Log.d("QuizViewModel", "SharedDataDomain state reset on ViewModel clear")
     }
 }

@@ -70,8 +70,8 @@ import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.Category
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
-import com.nascriptone.siddharoopa.domain.Source
-import com.nascriptone.siddharoopa.domain.SourceWithData
+import com.nascriptone.siddharoopa.domain.DataSource
+import com.nascriptone.siddharoopa.domain.SourceType
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
@@ -91,10 +91,10 @@ fun QuizHomeScreen(
     var sheetVisible by rememberSaveable { mutableStateOf(false) }
     var showProgress by rememberSaveable { mutableStateOf(false) }
     var showExitDialog by rememberSaveable { mutableStateOf(false) }
-    val filter = when (val sourceWithData = uiState.sourceWithData) {
-        is SourceWithData.FromTable -> sourceWithData.filter
-        else -> Filter()
-    }
+//    val filter = when (val sourceWithData = uiState.source) {
+//        is SourceWithData.FilterDataSource -> sourceWithData.filter
+//        else -> Filter()
+//    }
 
     BackHandler(onBack = quizViewModel::onQuizHomeBack)
 
@@ -115,30 +115,27 @@ fun QuizHomeScreen(
             QuizChooseOptionView(
                 title = "Question Source"
             ) {
-                Source.entries.forEach { source ->
+                SourceType.entries.forEach { type ->
                     QuizChooseOption(
-                        name = stringResource(source.uiName),
-                        selected = source == uiState.sourceWithData.source,
-                        onClick = {
-                            quizViewModel.switchSource(
-                                sourceWithData = source.createSourceData()
-                            )
-                        }) { startSpace ->
+                        name = stringResource(type.labelResId),
+                        selected = type == uiState.dataSource.type,
+                        onClick = { quizViewModel.switchSource(sourceType = type) }
+                    ) { startSpace ->
                         DataView(
                             startSpace = startSpace,
-                            sourceWithData = uiState.sourceWithData,
+                            dataSource = uiState.dataSource,
                             onClick = {
-                                when (source) {
-                                    Source.FROM_TABLE -> sheetVisible = !sheetVisible
-                                    Source.FROM_FAVORITES -> {
+                                when (type) {
+                                    SourceType.TABLE -> sheetVisible = !sheetVisible
+                                    SourceType.FAVORITES -> {
                                         navHostController.navigate(Navigation.Favorites.name)
                                     }
 
-                                    Source.FROM_LIST -> {}
+                                    SourceType.CUSTOM_LIST -> {}
                                 }
                             })
                     }
-                    if (source.ordinal < Source.entries.lastIndex) HorizontalDivider()
+                    if (type.ordinal < SourceType.entries.lastIndex) HorizontalDivider()
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -165,11 +162,11 @@ fun QuizHomeScreen(
             ) { Text("Begin Quiz") }
             Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
-        TableModalBottomSheet(
-            visible = sheetVisible,
-            filter = filter,
-            onFilterChange = quizViewModel::updateFilter,
-            onDismissRequest = { sheetVisible = !sheetVisible })
+//        TableModalBottomSheet(
+//            visible = sheetVisible,
+//            filter = filter,
+//            onFilterChange = quizViewModel::updateFilter,
+//            onDismissRequest = { sheetVisible = !sheetVisible })
         CreationProgress(
             visible = showProgress,
             creationState = uiState.creationState,
@@ -192,7 +189,7 @@ fun QuizHomeScreen(
 @Composable
 fun DataView(
     startSpace: Dp,
-    sourceWithData: SourceWithData,
+    dataSource: DataSource,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -200,10 +197,11 @@ fun DataView(
         modifier = modifier
             .fillMaxWidth()
             .clickable(
-                enabled = sourceWithData.source != Source.FROM_TABLE, onClick = onClick
+                enabled = dataSource.type != SourceType.TABLE,
+                onClick = onClick
             )
             .then(
-                if (sourceWithData.source != Source.FROM_TABLE) Modifier.padding(
+                if (dataSource.type != SourceType.TABLE) Modifier.padding(
                     start = startSpace, end = 16.dp
                 )
                 else Modifier.padding(
@@ -211,9 +209,9 @@ fun DataView(
                 )
             )
     ) {
-        when (sourceWithData) {
-            is SourceWithData.FromTable -> {
-                val filter = sourceWithData.filter
+        when (dataSource) {
+            is DataSource.Table -> {
+                val filter = dataSource.filter
                 val chips = remember(filter) {
                     listOfNotNull(
                         filter.category?.skt, filter.sound?.skt, filter.gender?.skt
@@ -239,7 +237,7 @@ fun DataView(
             }
 
             else -> {
-                val data = sourceWithData.data
+                val data = dataSource.ids
                 if (data.isEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -260,7 +258,7 @@ fun DataView(
                         )
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                text = sourceWithData.display,
+                                text = dataSource.display,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 2,
@@ -318,7 +316,8 @@ fun TableModalBottomSheet(
                     category = null
                     sound = null
                     gender = null
-                }, modifier = Modifier.align(Alignment.End)
+                },
+                modifier = Modifier.align(Alignment.End)
             ) {
                 CustomToolTip("Reset") { Icon(Icons.Rounded.Refresh, null) }
             }

@@ -37,7 +37,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -61,6 +60,7 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.DialogLayout
 import com.nascriptone.siddharoopa.ui.screen.Navigation
+import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,24 +82,24 @@ fun FavoritesTopBar(
         )
         else TopAppBar(
             title = {
-            Text("Favorites")
-        }, navigationIcon = {
-            CustomToolTip("Back") {
-                IconButton(onClick = navHostController::navigateUp) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
-                }
-            }
-        }, actions = {
-            if (uiState.totalIds.isNotEmpty()) {
-                CustomToolTip("Select") {
-                    IconButton(onClick = {
-                        favoritesViewModel.toggleSelectionMode(trigger = Trigger.TOOLBAR)
-                    }) {
-                        Icon(Icons.Rounded.Mode, null)
+                Text("Favorites")
+            }, navigationIcon = {
+                CustomToolTip("Back") {
+                    IconButton(onClick = navHostController::navigateUp) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
                     }
                 }
-            }
-        }, modifier = modifier
+            }, actions = {
+                if (uiState.totalIds.isNotEmpty()) {
+                    CustomToolTip("Select") {
+                        IconButton(onClick = {
+                            favoritesViewModel.toggleSelectionMode(trigger = Trigger.TOOLBAR)
+                        }) {
+                            Icon(Icons.Rounded.Mode, null)
+                        }
+                    }
+                }
+            }, modifier = modifier
         )
     }
     uiState.transferState?.let { transferState ->
@@ -141,103 +141,99 @@ fun FavoriteActionTopBar(
 
     BackHandler(onBack = onBack)
 
-    Surface {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(TopAppBarDefaults.windowInsets.asPaddingValues())
+            .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .padding(TopAppBarDefaults.windowInsets.asPaddingValues())
-                .height(TopAppBarDefaults.TopAppBarExpandedHeight)
-                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CustomToolTip("Close") {
-                    IconButton(onClick = onBack) {
-                        val imageVector = Icons.Rounded.Close
-                        Icon(imageVector, imageVector.name)
-                    }
+            CustomToolTip("Close") {
+                IconButton(onClick = onBack) {
+                    val imageVector = Icons.Rounded.Close
+                    Icon(imageVector, imageVector.name)
                 }
-                Text("${uiState.selectedIds.size}", style = MaterialTheme.typography.titleLarge)
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = Modifier
+            Text("${uiState.selectedIds.size}", style = MaterialTheme.typography.titleLarge)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val isNotEmpty = uiState.selectedIds.isNotEmpty()
+            AnimatedVisibility(
+                visible = isNotEmpty && uiState.trigger != Trigger.INIT,
+                enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                exit = fadeOut() + scaleOut(targetScale = 0.8f)
             ) {
-                val isNotEmpty = uiState.selectedIds.isNotEmpty()
-                AnimatedVisibility(
-                    visible = isNotEmpty && uiState.trigger != Trigger.INIT,
-                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
-                    exit = fadeOut() + scaleOut(targetScale = 0.8f)
-                ) {
-                    CustomToolTip("Delete") {
-                        IconButton(onClick = { deleteDialogVisible = true }) {
-                            val imageVector = Icons.Rounded.Delete
-                            Icon(imageVector, imageVector.name)
-                        }
-                    }
-                }
-                if (uiState.trigger == Trigger.INIT) CustomToolTip("Update") {
-                    val scale by animateFloatAsState(
-                        targetValue = if (hasSelectionChanged) 1f else 0.9f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                    )
-                    Button(
-                        onClick = favoritesViewModel::onTakeQuizClick,
-                        enabled = hasSelectionChanged,
-                        modifier = Modifier.scale(scale)
-                    ) {
-                        Icon(Icons.Rounded.Update, null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Update")
-                    }
-                } else CustomToolTip("Quiz") {
-                    IconButton(
-                        onClick = favoritesViewModel::onTakeQuizClick, enabled = isNotEmpty
-                    ) {
-                        val imageVector = Icons.Rounded.Quiz
+                CustomToolTip("Delete") {
+                    IconButton(onClick = { deleteDialogVisible = true }) {
+                        val imageVector = Icons.Rounded.Delete
                         Icon(imageVector, imageVector.name)
                     }
                 }
-                AnimatedContent(
-                    targetState = uiState.areAllSelected
-                ) { state ->
-                    if (state) CustomToolTip("Deselect All") {
-                        IconButton(onClick = favoritesViewModel::toggleSelectAllFavorites) {
-                            val imageVector = Icons.Rounded.Deselect
-                            Icon(imageVector, imageVector.name)
-                        }
-                    } else CustomToolTip("Select All") {
-                        IconButton(onClick = favoritesViewModel::toggleSelectAllFavorites) {
-                            val imageVector = Icons.Rounded.SelectAll
-                            Icon(imageVector, imageVector.name)
-                        }
+            }
+            if (uiState.trigger == Trigger.INIT) CustomToolTip("Update") {
+                val scale by animateFloatAsState(
+                    targetValue = if (hasSelectionChanged) 1f else 0.9f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                )
+                Button(
+                    onClick = favoritesViewModel::onTakeQuizClick,
+                    enabled = hasSelectionChanged,
+                    modifier = Modifier.scale(scale)
+                ) {
+                    Icon(Icons.Rounded.Update, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Update")
+                }
+            } else CustomToolTip("Quiz") {
+                IconButton(
+                    onClick = favoritesViewModel::onTakeQuizClick, enabled = isNotEmpty
+                ) {
+                    val imageVector = Icons.Rounded.Quiz
+                    Icon(imageVector, imageVector.name)
+                }
+            }
+            AnimatedContent(
+                targetState = uiState.areAllSelected
+            ) { state ->
+                if (state) CustomToolTip("Deselect All") {
+                    IconButton(onClick = favoritesViewModel::toggleSelectAllFavorites) {
+                        val imageVector = Icons.Rounded.Deselect
+                        Icon(imageVector, imageVector.name)
+                    }
+                } else CustomToolTip("Select All") {
+                    IconButton(onClick = favoritesViewModel::toggleSelectAllFavorites) {
+                        val imageVector = Icons.Rounded.SelectAll
+                        Icon(imageVector, imageVector.name)
                     }
                 }
             }
         }
-        DeleteAllDialog(
-            visible = deleteDialogVisible, onConfirm = {
-                favoritesViewModel.deleteAllItemFromFavorite()
-                favoritesViewModel.toggleSelectionMode()
-                deleteDialogVisible = false
-            },
-            onDismissRequest = { deleteDialogVisible = false },
-        )
-        DiscardDialog(visible = showDiscardDialog, onConfirm = {
-            favoritesViewModel.onDiscardChanges()
-            showDiscardDialog = false
-            navHostController.navigateUp()
-            favoritesViewModel.toggleSelectionMode()
-        },
-            onDismissRequest = { showDiscardDialog = false })
     }
+    DeleteAllDialog(
+        visible = deleteDialogVisible,
+        onConfirm = {
+            favoritesViewModel.deleteAllItemFromFavorite()
+            favoritesViewModel.toggleSelectionMode()
+            deleteDialogVisible = false
+        },
+        onDismissRequest = { deleteDialogVisible = false },
+    )
+    DiscardDialog(visible = showDiscardDialog, onConfirm = {
+        favoritesViewModel.onDiscardChanges()
+        showDiscardDialog = false
+        navHostController.navigateUp()
+        favoritesViewModel.toggleSelectionMode()
+    }, onDismissRequest = { showDiscardDialog = false })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -299,28 +295,28 @@ fun DiscardDialog(
 ) {
     CustomDialog(
         visible = visible, onDismissRequest = onDismissRequest, head = {
-        CustomDialogHead("Discard Changes?")
-    }, description = {
-        CustomDialogDescription("You've made changes to your selection. Discard them and go back?")
-    }, action = {
-        Row(
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier.fillMaxWidth()
-        ) {
-            TextButton(onClick = onDismissRequest) {
-                Text("Cancel")
-            }
-            Spacer(Modifier.width(8.dp))
-            TextButton(onClick = onConfirm) {
-                Text(
-                    "Discard", color = Color.Red.copy(
-                        green = 0.3f, blue = 0.3f
+            CustomDialogHead("Discard Changes?")
+        }, description = {
+            CustomDialogDescription("You've made changes to your selection. Discard them and go back?")
+        }, action = {
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = onDismissRequest) {
+                    Text("Cancel")
+                }
+                Spacer(Modifier.width(8.dp))
+                TextButton(onClick = onConfirm) {
+                    Text(
+                        "Discard", color = Color.Red.copy(
+                            green = 0.3f, blue = 0.3f
+                        )
                     )
-                )
+                }
             }
-        }
-    }, modifier = modifier
+        }, modifier = modifier
     )
 }
 
