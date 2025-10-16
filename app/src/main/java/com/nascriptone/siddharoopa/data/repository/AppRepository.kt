@@ -68,7 +68,10 @@ class AppRepository @Inject constructor(
     }
 
     fun getFavoriteIds(): Flow<Set<Int>> = sabdaDao.getFavoriteIds().map { it.toSet() }
-    suspend fun toggleFavorite(id: Int, timeStamp: Long?) = sabdaDao.toggleFavorite(id, timeStamp)
+    suspend fun toggleFavoriteAndGetState(id: Int, timeStamp: Long?): Int {
+        sabdaDao.toggleFavoriteInternal(id, timeStamp)
+        return sabdaDao.getFavoriteState(id)
+    }
 
     suspend fun removeItemsFromFavorite(ids: Set<Int>): Int = sabdaDao.removeItemsFromFavorite(ids)
 

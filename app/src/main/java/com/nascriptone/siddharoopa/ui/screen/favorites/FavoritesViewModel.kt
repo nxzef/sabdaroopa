@@ -10,6 +10,7 @@ import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.domain.ControllerUseCase
 import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
+import com.nascriptone.siddharoopa.ui.state.TransferState
 import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -92,7 +93,13 @@ class FavoritesViewModel @Inject constructor(
 
     fun toggleFavoriteSabda(id: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { repository.toggleFavorite(id, System.currentTimeMillis()) }.getOrElse {
+            runCatching {
+                val state = repository.toggleFavoriteAndGetState(id, System.currentTimeMillis())
+                val message = if (state == 0) "Removed from favorites"
+                else "Added to favorites"
+                _uiEvents.emit(message)
+            }.getOrElse {
+                _uiEvents.emit(it.message ?: "Unknown Error")
                 Log.d("ERROR", "Toggle Sabda Error", it)
             }
         }
@@ -108,6 +115,13 @@ class FavoritesViewModel @Inject constructor(
         if (_uiState.value.transferState !is TransferState.Loading) {
             _uiState.update { it.copy(transferState = null) }
         }
+    }
+
+    fun onTakeQuizFromCard(id: Int) {
+        viewModelScope.launch {
+            val selectedIds = _uiState.value.selectedIds.toggleInSet(id)
+            updateFavoriteSelectedSet(selectedIds)
+        }.invokeOnCompletion { onTakeQuizClick() }
     }
 
     fun onTakeQuizClick() {

@@ -1,8 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.table
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,16 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -31,13 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,17 +36,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.data.model.Declension
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
-import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
-import kotlinx.coroutines.launch
+import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 
 @Composable
 fun TableScreen(
-    onQuizClick: (Int) -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     tableViewModel: TableViewModel = hiltViewModel()
@@ -65,7 +52,6 @@ fun TableScreen(
     sabda?.let { sabda ->
         TableScreenContent(
             sabda = sabda,
-            onQuizClick = onQuizClick,
             tableViewModel = tableViewModel,
             snackbarHostState = snackbarHostState,
             modifier = modifier
@@ -78,18 +64,16 @@ fun TableScreen(
 @Composable
 fun TableScreenContent(
     sabda: Sabda,
-    onQuizClick: (Int) -> Unit,
     tableViewModel: TableViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
 
-    val scope = rememberCoroutineScope()
-    val isItFavorite = sabda.isFavorite
-    val favLabel = if (isItFavorite) stringResource(R.string.remove_favorite_msg)
-    else stringResource(R.string.add_favorite_msg)
-    val favMessage = if (isItFavorite) stringResource(R.string.removed_favorite_msg)
-    else stringResource(R.string.added_favorite_msg)
+    LaunchedEffect(Unit) {
+        tableViewModel.message.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     Surface {
         Column(
@@ -112,55 +96,6 @@ fun TableScreenContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             DeclensionTable(sabda.declension)
-            Column(
-                modifier = modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        shape = MaterialTheme.shapes.large
-                    )
-                    .clip(MaterialTheme.shapes.large)
-            ) {
-                OptionView(
-                    icon = {
-                        AnimatedContent(targetState = isItFavorite) { fav ->
-                            CustomToolTip("Favorite") {
-                                if (fav) Icon(
-                                    imageVector = Icons.Rounded.Favorite,
-                                    tint = MaterialTheme.colorScheme.surfaceTint,
-                                    contentDescription = null
-                                ) else Icon(
-                                    imageVector = Icons.Rounded.FavoriteBorder,
-                                    contentDescription = null
-                                )
-                            }
-                        }
-                    },
-                    label = {
-                        AnimatedContent(targetState = favLabel) { label ->
-                            Text(label)
-                        }
-                    },
-                    onClick = {
-                        scope.launch {
-                            tableViewModel.toggleFavoriteSabda(sabda.id)
-                            snackbarHostState.showSnackbar(favMessage)
-                        }
-                    }
-                )
-                HorizontalDivider()
-                OptionView(
-                    icon = {
-                        CustomToolTip("Quiz") {
-                            Icon(
-                                imageVector = Icons.Rounded.Quiz,
-                                contentDescription = null
-                            )
-                        }
-                    },
-                    label = { Text("Take Quiz") },
-                    onClick = { onQuizClick(sabda.id) }
-                )
-            }
             Spacer(Modifier.height(16.dp))
             Text(
                 text = "Details",
@@ -326,26 +261,6 @@ fun RowItem(
         Box(Modifier.weight(1f)) {
             Text(text = tail, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
-
-@Composable
-fun OptionView(
-    icon: @Composable () -> Unit,
-    label: @Composable () -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick) { icon.invoke() }
-        Spacer(Modifier.width(12.dp))
-        label.invoke()
     }
 }
 

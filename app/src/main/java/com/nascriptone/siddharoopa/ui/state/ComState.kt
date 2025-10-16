@@ -19,3 +19,9 @@ data class Filter(
 enum class Trigger {
     NONE, INIT, CARD, TOOLBAR
 }
+
+sealed class TransferState {
+    data object Loading : TransferState()
+    data object Success : TransferState()
+    data class Error(val message: String) : TransferState()
+}

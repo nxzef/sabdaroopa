@@ -1,7 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.quiz
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,29 +22,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.FilterList
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,16 +59,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Gender
-import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SourceType
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
-import com.nascriptone.siddharoopa.ui.component.CustomToolTip
 import com.nascriptone.siddharoopa.ui.component.DialogLayout
+import com.nascriptone.siddharoopa.ui.component.FilterBottomSheet
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.state.Filter
@@ -91,10 +80,10 @@ fun QuizHomeScreen(
     var sheetVisible by rememberSaveable { mutableStateOf(false) }
     var showProgress by rememberSaveable { mutableStateOf(false) }
     var showExitDialog by rememberSaveable { mutableStateOf(false) }
-//    val filter = when (val sourceWithData = uiState.source) {
-//        is SourceWithData.FilterDataSource -> sourceWithData.filter
-//        else -> Filter()
-//    }
+    val currentFilter = when (val dataSource = uiState.dataSource) {
+        is DataSource.Table -> dataSource.filter
+        else -> Filter()
+    }
 
     BackHandler(onBack = quizViewModel::onQuizHomeBack)
 
@@ -131,7 +120,9 @@ fun QuizHomeScreen(
                                         navHostController.navigate(Navigation.Favorites.name)
                                     }
 
-                                    SourceType.CUSTOM_LIST -> {}
+                                    SourceType.CUSTOM_LIST -> {
+                                        navHostController.navigate(Navigation.Home.name)
+                                    }
                                 }
                             })
                     }
@@ -162,11 +153,12 @@ fun QuizHomeScreen(
             ) { Text("Begin Quiz") }
             Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight))
         }
-//        TableModalBottomSheet(
-//            visible = sheetVisible,
-//            filter = filter,
-//            onFilterChange = quizViewModel::updateFilter,
-//            onDismissRequest = { sheetVisible = !sheetVisible })
+        FilterBottomSheet(
+            visible = sheetVisible,
+            currentFilter = currentFilter,
+            onDismissRequest = { sheetVisible = false },
+            onApplyFilter = quizViewModel::onApplyFilter
+        )
         CreationProgress(
             visible = showProgress,
             creationState = uiState.creationState,
@@ -270,113 +262,6 @@ fun DataView(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TableModalBottomSheet(
-    visible: Boolean,
-    filter: Filter,
-    onFilterChange: (Filter) -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (!visible) return
-    var category by remember { mutableStateOf(filter.category) }
-    var sound by remember { mutableStateOf(filter.sound) }
-    var gender by remember { mutableStateOf(filter.gender) }
-    val bottomSheetState = rememberModalBottomSheetState(true)
-
-    val newFilter by remember(
-        category, sound, gender
-    ) {
-        derivedStateOf {
-            Filter(
-                category = category, sound = sound, gender = gender
-            )
-        }
-    }
-    LaunchedEffect(newFilter) { onFilterChange(newFilter) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest, sheetState = bottomSheetState
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            modifier = modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-        ) {
-            IconButton(
-                onClick = {
-                    category = null
-                    sound = null
-                    gender = null
-                },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                CustomToolTip("Reset") { Icon(Icons.Rounded.Refresh, null) }
-            }
-            FilterChipRow(
-                label = "Categories",
-                filters = categories,
-                selected = category,
-                onSelectedChanged = { category = it }) { filter ->
-                stringResource(filter?.skt ?: R.string.all_skt)
-            }
-            FilterChipRow(
-                label = "Sounds",
-                filters = sounds,
-                selected = sound,
-                onSelectedChanged = { sound = it }) { filter ->
-                stringResource(filter?.skt ?: R.string.all_skt)
-            }
-            FilterChipRow(
-                label = "Genders",
-                filters = genders,
-                selected = gender,
-                onSelectedChanged = { gender = it }) { filter ->
-                stringResource(filter?.skt ?: R.string.all_skt)
-            }
-            Spacer(Modifier.height(56.dp))
-        }
-    }
-}
-
-@Composable
-fun <T> FilterChipRow(
-    label: String,
-    filters: Set<T?>,
-    selected: T?,
-    onSelectedChanged: (T?) -> Unit,
-    modifier: Modifier = Modifier,
-    labelMapper: @Composable (T?) -> String
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            filters.forEach { filter ->
-                val selected = selected == filter
-                FilterChip(
-                    selected = selected,
-                    onClick = { onSelectedChanged(filter) },
-                    label = { Text(labelMapper(filter)) },
-                    leadingIcon = {
-                        AnimatedVisibility(selected) {
-                            Icon(Icons.Rounded.Check, null)
-                        }
-                    },
-                )
             }
         }
     }
@@ -590,7 +475,3 @@ fun HomeExitDialog(
         }
     }
 }
-
-val categories = setOf(null) + Category.entries
-val sounds = setOf(null) + Sound.entries
-val genders = setOf(null) + Gender.entries

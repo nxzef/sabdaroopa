@@ -8,8 +8,11 @@ import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,9 +23,14 @@ class TableViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+
+    private val _message = MutableSharedFlow<String>()
+    val message: SharedFlow<String> = _message.asSharedFlow()
     private val id: Int = checkNotNull(savedStateHandle["id"]) {
         "Missing id in SavedStateHandle"
     }
+
+    private val fromSelectionMode: Boolean = savedStateHandle["sm"] ?: false
 
     val sabda: StateFlow<Sabda?> = repository.findSabdaById(id).stateIn(
         scope = viewModelScope,
@@ -30,11 +38,19 @@ class TableViewModel @Inject constructor(
         initialValue = null
     )
 
-    init { trackVisit() }
+    init {
+        if (!fromSelectionMode) trackVisit()
+    }
 
-    fun toggleFavoriteSabda(id: Int) {
+    fun toggleFavoriteSabda() {
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { repository.toggleFavorite(id, System.currentTimeMillis()) }.getOrElse {
+            runCatching {
+                val state = repository.toggleFavoriteAndGetState(id, System.currentTimeMillis())
+                val message = if (state == 0) "Removed from favorites"
+                else "Added to favorites"
+                _message.emit(message)
+            }.getOrElse {
+                _message.emit(it.message ?: "Unknown Error")
                 Log.d("ERROR", "Toggle Sabda Error", it)
             }
         }

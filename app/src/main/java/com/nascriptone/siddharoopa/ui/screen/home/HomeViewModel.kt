@@ -8,8 +8,10 @@ import androidx.paging.cachedIn
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
 import com.nascriptone.siddharoopa.domain.ControllerUseCase
+import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
 import com.nascriptone.siddharoopa.ui.state.Filter
+import com.nascriptone.siddharoopa.ui.state.TransferState
 import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -58,6 +61,18 @@ class HomeViewModel @Inject constructor(
                 initialValue = PagingData.empty()
             )
 
+    val hasSelectionChanged: StateFlow<Boolean> =
+        _uiState.map { it.selectedIds }.distinctUntilChanged().map { selectedIds ->
+            when (val dataSource = sharedDataRepo.dataSource.value) {
+                is DataSource.CustomList -> dataSource.hasChanged(selectedIds)
+                else -> false
+            }
+        }.distinctUntilChanged().stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = false
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val hasAnyNonFavorite: StateFlow<Boolean> = _uiState
         .map { it.selectedIds }
@@ -74,6 +89,14 @@ class HomeViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false
         )
+
+    init {
+        val dataSource = sharedDataRepo.dataSource.value
+        if (dataSource is DataSource.CustomList) {
+            enterSelectionMode(Trigger.INIT)
+            updateFavoriteSelectedSet(dataSource.ids)
+        }
+    }
 
     fun onClearQuery() {
         _uiState.update {
@@ -93,9 +116,7 @@ class HomeViewModel @Inject constructor(
 
     fun onClearFilter() {
         _uiState.update {
-            it.copy(
-                filter = Filter()
-            )
+            it.copy(filter = Filter())
         }
     }
 
@@ -125,16 +146,53 @@ class HomeViewModel @Inject constructor(
 
     fun addSelectedItemsToFavorites() = addItemsToFavorite(_uiState.value.selectedIds)
 
-    fun toggleSelectionMode(trigger: Trigger = Trigger.NONE) {
-        if (_uiState.value.isSelectMode) exitSelectionMode()
-        else enterSelectionMode(trigger = trigger)
-    }
-
     fun toggleSelectedId(id: Int) {
         if (!_uiState.value.isSelectMode) enterSelectionMode(Trigger.CARD)
         val selectedIds = _uiState.value.selectedIds.toggleInSet(id)
         updateFavoriteSelectedSet(selectedIds)
         if (_uiState.value.selectedIds.isEmpty() && _uiState.value.trigger == Trigger.CARD) exitSelectionMode()
+    }
+
+    fun toggleSelectionMode(trigger: Trigger = Trigger.NONE) {
+        if (_uiState.value.isSelectMode) exitSelectionMode()
+        else enterSelectionMode(trigger = trigger)
+    }
+
+    fun onDiscardChanges() {
+        val sourceWithData = sharedDataRepo.dataSource.value
+        if (sourceWithData !is DataSource.CustomList) return
+        updateFavoriteSelectedSet(sourceWithData.ids)
+    }
+
+    fun transferDialogDismiss() {
+        if (_uiState.value.transferState !is TransferState.Loading) {
+            _uiState.update { it.copy(transferState = null) }
+        }
+    }
+
+    fun onTakeQuizClick() {
+        if (_uiState.value.transferState is TransferState.Loading) return
+        val selectedIds = _uiState.value.selectedIds
+        _uiState.update { it.copy(transferState = TransferState.Loading) }
+        viewModelScope.launch {
+            try {
+                val dataSource = withContext(Dispatchers.IO) {
+                    val words = repository.getWords(selectedIds)
+                    val display = words.joinToString(", ")
+                    DataSource.CustomList(
+                        ids = selectedIds,
+                        display = display
+                    )
+                }
+                sharedDataRepo.updateDataSource(dataSource)
+                _uiState.update { it.copy(transferState = TransferState.Success) }
+            } catch (exception: Exception) {
+                val errorMessage = exception.message ?: "An unexpected error occurred"
+                _uiState.update {
+                    it.copy(transferState = TransferState.Error(errorMessage))
+                }
+            }
+        }
     }
 
     private fun enterSelectionMode(trigger: Trigger) {

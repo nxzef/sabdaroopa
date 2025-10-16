@@ -74,7 +74,7 @@ import com.nascriptone.siddharoopa.ui.component.getSupportingText
 
 @Composable
 fun FavoritesScreen(
-    onTableClick: (Int) -> Unit,
+    onTableClick: (Int, Boolean) -> Unit,
     snackbarHostState: SnackbarHostState,
     favoritesViewModel: FavoritesViewModel?,
     modifier: Modifier = Modifier
@@ -90,7 +90,8 @@ fun FavoritesScreen(
         FavoritesScreenContent(
             uiState = uiState,
             favorites = favorites,
-            onTableClick = onTableClick,
+            onTableClick = { id -> onTableClick(id, uiState.isSelectMode) },
+            onQuizClick = favoritesViewModel::onTakeQuizFromCard,
             favoritesViewModel = favoritesViewModel,
             modifier = modifier
         )
@@ -102,6 +103,7 @@ fun FavoritesScreenContent(
     uiState: FavoritesState,
     favorites: LazyPagingItems<Sabda>,
     onTableClick: (Int) -> Unit,
+    onQuizClick: (Int) -> Unit,
     favoritesViewModel: FavoritesViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -155,7 +157,7 @@ fun FavoritesScreenContent(
                         isInSelected = isInSelected,
                         currentDrop = currentDrop,
                         onTableClick = onTableClick,
-                        onQuizClick = {},
+                        onQuizClick = onQuizClick,
                         onDeleteClick = { id ->
                             deleteItem = DeleteDialogState(
                                 id = id, visible = true

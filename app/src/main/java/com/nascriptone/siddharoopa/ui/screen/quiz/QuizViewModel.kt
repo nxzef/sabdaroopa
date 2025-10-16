@@ -19,6 +19,7 @@ import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
 import com.nascriptone.siddharoopa.domain.SourceType
 import com.nascriptone.siddharoopa.domain.utils.ResourceProvider
+import com.nascriptone.siddharoopa.ui.state.Filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -169,8 +170,7 @@ class QuizViewModel @Inject constructor(
         _uiState.update { it.copy(range = range) }
     }
 
-//    fun updateFilter(filter: Filter) =
-//        sharedDataDomain.updateSourceWithData(Data.FilterData(filter))
+    fun onApplyFilter(filter: Filter) = sharedDataRepo.updateDataSource(DataSource.Table(filter))
 
     fun resetSource() = sharedDataRepo.resetToTable()
 

@@ -70,7 +70,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.component.DiscardDialog
 import com.nascriptone.siddharoopa.ui.screen.Routes
+import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,6 +87,7 @@ fun HomeTopBar(
     if (homeViewModel == null) return
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val hasAnyNonFavorite by homeViewModel.hasAnyNonFavorite.collectAsStateWithLifecycle()
+    val hasSelectionChanged by homeViewModel.hasSelectionChanged.collectAsStateWithLifecycle()
 
     AnimatedContent(
         targetState = uiState.isSelectMode,
@@ -95,15 +98,21 @@ fun HomeTopBar(
         if (state) SelectionBar(
             query = uiState.query,
             selectedIds = uiState.selectedIds,
+            filterCount = uiState.filter.activeFilterCount,
+            trigger = uiState.trigger,
             hasAnyNonFavorite = hasAnyNonFavorite,
             hasActiveFilters = uiState.filter.isActive,
-            filterCount = uiState.filter.activeFilterCount,
+            hasSelectionChanged = hasSelectionChanged,
             isSearchMode = uiState.isSearchMode,
             onQueryChange = homeViewModel::onQueryChange,
             onClearQuery = homeViewModel::onClearQuery,
             onFilterClick = homeViewModel::toggleBottomSheet,
             onFavoriteClick = homeViewModel::addSelectedItemsToFavorites,
+            navigateUp = { navHostController.navigateUp() },
             toggleSelectionSearchFocus = homeViewModel::toggleSearch,
+            onDiscardChanges = homeViewModel::onDiscardChanges,
+            toggleSelectionMode = homeViewModel::toggleSelectionMode,
+            navHostController = navHostController,
             modifier = modifier
         )
         else HomeMainBar(
@@ -172,17 +181,35 @@ fun HomeMainBar(
 fun SelectionBar(
     query: String,
     selectedIds: Set<Int>,
+    filterCount: Int,
+    trigger: Trigger,
     hasAnyNonFavorite: Boolean,
     isSearchMode: Boolean,
     hasActiveFilters: Boolean,
-    filterCount: Int,
+    hasSelectionChanged: Boolean,
     onQueryChange: (String) -> Unit,
     onClearQuery: () -> Unit,
     onFilterClick: () -> Unit,
     onFavoriteClick: () -> Unit,
+    navigateUp: () -> Unit,
     toggleSelectionSearchFocus: () -> Unit,
+    onDiscardChanges: () -> Unit,
+    toggleSelectionMode: () -> Unit,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+
+    var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
+
+    val onBack: () -> Unit = {
+        if (hasSelectionChanged) showDiscardDialog = true
+        else {
+            if (trigger == Trigger.INIT) navHostController.navigateUp()
+            toggleSelectionMode()
+        }
+    }
+
+    BackHandler { onBack() }
 
     Column(
         modifier = modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -200,7 +227,7 @@ fun SelectionBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CustomToolTip("Close") {
-                    IconButton(onClick = {}) {
+                    IconButton(onClick = onBack) {
                         val imageVector = Icons.Rounded.Close
                         Icon(imageVector, imageVector.name)
                     }
@@ -212,7 +239,7 @@ fun SelectionBar(
                 modifier = Modifier.animateContentSize()
             ) {
                 AnimatedVisibility(
-                    visible = hasAnyNonFavorite,
+                    visible = hasAnyNonFavorite && trigger != Trigger.INIT,
                     enter = fadeIn() + scaleIn(initialScale = 0.8f),
                     exit = fadeOut(animationSpec = tween(delayMillis = 1000)) + scaleOut(
                         targetScale = 0.8f,
@@ -318,6 +345,16 @@ fun SelectionBar(
 
         }
     }
+    DiscardDialog(
+        visible = showDiscardDialog,
+        onConfirm = {
+            onDiscardChanges()
+            showDiscardDialog = false
+            navigateUp()
+            toggleSelectionMode()
+        },
+        onDismissRequest = { showDiscardDialog = false }
+    )
 }
 
 @Composable

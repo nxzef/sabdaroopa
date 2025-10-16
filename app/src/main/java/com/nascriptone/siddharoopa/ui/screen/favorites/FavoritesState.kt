@@ -1,5 +1,6 @@
 package com.nascriptone.siddharoopa.ui.screen.favorites
 
+import com.nascriptone.siddharoopa.ui.state.TransferState
 import com.nascriptone.siddharoopa.ui.state.Trigger
 
 data class FavoritesState(
@@ -11,10 +12,4 @@ data class FavoritesState(
 ) {
     val areAllSelected: Boolean
         get() = selectedIds.isNotEmpty() && selectedIds.size == totalIds.size
-}
-
-sealed class TransferState {
-    data object Loading : TransferState()
-    data object Success : TransferState()
-    data class Error(val message: String) : TransferState()
 }

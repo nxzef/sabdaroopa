@@ -13,7 +13,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.asPaddingValues
@@ -30,19 +29,15 @@ import androidx.compose.material.icons.rounded.Mode
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.SelectAll
 import androidx.compose.material.icons.rounded.Update
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -58,7 +52,8 @@ import com.nascriptone.siddharoopa.ui.component.CustomDialog
 import com.nascriptone.siddharoopa.ui.component.CustomDialogDescription
 import com.nascriptone.siddharoopa.ui.component.CustomDialogHead
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
-import com.nascriptone.siddharoopa.ui.component.DialogLayout
+import com.nascriptone.siddharoopa.ui.component.DiscardDialog
+import com.nascriptone.siddharoopa.ui.component.TransferDialog
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
@@ -115,7 +110,8 @@ fun FavoritesTopBar(
                     launchSingleTop = true
                 }
                 favoritesViewModel.toggleSelectionMode()
-            })
+            }
+        )
     }
 }
 
@@ -234,90 +230,6 @@ fun FavoriteActionTopBar(
         navHostController.navigateUp()
         favoritesViewModel.toggleSelectionMode()
     }, onDismissRequest = { showDiscardDialog = false })
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TransferDialog(
-    transferState: TransferState,
-    onDismissRequest: () -> Unit,
-    onRetryClick: () -> Unit,
-    onSuccess: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (transferState is TransferState.Success) LaunchedEffect(Unit) { onSuccess() }
-    else BasicAlertDialog(
-        onDismissRequest = onDismissRequest, modifier = modifier
-    ) {
-        DialogLayout {
-            when (transferState) {
-                is TransferState.Loading -> Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(Modifier.width(16.dp))
-                    Text("Updating...")
-                }
-
-                is TransferState.Error -> Column(modifier = Modifier.padding(16.dp)) {
-                    CustomDialogHead("Error")
-                    Spacer(Modifier.height(4.dp))
-                    CustomDialogDescription(transferState.message)
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(onClick = onDismissRequest) {
-                            Text("Cancel")
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = onRetryClick) {
-                            Text("Retry")
-                        }
-                    }
-                }
-
-                else -> Unit
-            }
-        }
-    }
-}
-
-@Composable
-fun DiscardDialog(
-    visible: Boolean,
-    onConfirm: () -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    CustomDialog(
-        visible = visible, onDismissRequest = onDismissRequest, head = {
-            CustomDialogHead("Discard Changes?")
-        }, description = {
-            CustomDialogDescription("You've made changes to your selection. Discard them and go back?")
-        }, action = {
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier.fillMaxWidth()
-            ) {
-                TextButton(onClick = onDismissRequest) {
-                    Text("Cancel")
-                }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onConfirm) {
-                    Text(
-                        "Discard", color = Color.Red.copy(
-                            green = 0.3f, blue = 0.3f
-                        )
-                    )
-                }
-            }
-        }, modifier = modifier
-    )
 }
 
 @Composable

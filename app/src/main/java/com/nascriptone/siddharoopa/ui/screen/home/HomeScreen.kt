@@ -1,7 +1,9 @@
 package com.nascriptone.siddharoopa.ui.screen.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -30,7 +32,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.rounded.Close
@@ -39,31 +40,24 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.TableView
+import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -74,24 +68,26 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Gender
-import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CustomToolTip
+import com.nascriptone.siddharoopa.ui.component.FilterBottomSheet
+import com.nascriptone.siddharoopa.ui.component.TransferDialog
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
 import com.nascriptone.siddharoopa.ui.state.Filter
-import kotlinx.coroutines.launch
+import com.nascriptone.siddharoopa.ui.state.Trigger
 
 @Composable
 fun HomeScreen(
-    onItemClick: (Int) -> Unit,
+    onItemClick: (Int, Boolean) -> Unit,
+    navigateToQuiz: () -> Unit,
+    navigateUp: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     val sabdaList = homeViewModel.sabda.collectAsLazyPagingItems()
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val hasSelectionChanged by homeViewModel.hasSelectionChanged.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         homeViewModel.uiEvents.collect { message ->
@@ -114,22 +110,38 @@ fun HomeScreen(
             selectedIds = uiState.selectedIds,
             isSelectMode = uiState.isSelectMode,
             fabVisible = uiState.selectedIds.isNotEmpty(),
+            trigger = uiState.trigger,
+            hasSelectionChanged = hasSelectionChanged,
             onItemClick = { id ->
                 if (uiState.isSelectMode) {
                     homeViewModel.toggleSelectedId(id)
-                } else onItemClick(id)
+                } else onItemClick(id, false)
             },
             onItemLongClick = homeViewModel::toggleSelectedId,
-            onTableViewClick = onItemClick,
+            onTableViewClick = { id -> onItemClick(id, uiState.isSelectMode) },
+            onTakeQuizClick = homeViewModel::onTakeQuizClick,
             modifier = modifier
         )
     }
-    HomeBottomSheet(
+    FilterBottomSheet(
         visible = uiState.bottomSheetVisible,
         currentFilter = uiState.filter,
         onDismissRequest = homeViewModel::toggleBottomSheet,
-        onApplyFilter = homeViewModel::updateFilter
+        onApplyFilter = homeViewModel::updateFilter,
     )
+    uiState.transferState?.let { transferState ->
+        TransferDialog(
+            transferState = transferState,
+            onDismissRequest = homeViewModel::transferDialogDismiss,
+            onRetryClick = homeViewModel::onTakeQuizClick,
+            onSuccess = {
+                if (uiState.trigger == Trigger.INIT) navigateUp()
+                else navigateToQuiz()
+                homeViewModel.transferDialogDismiss()
+                homeViewModel.toggleSelectionMode()
+            }
+        )
+    }
 }
 
 
@@ -139,9 +151,12 @@ fun HomeScreenList(
     selectedIds: Set<Int>,
     isSelectMode: Boolean,
     fabVisible: Boolean,
+    trigger: Trigger,
+    hasSelectionChanged: Boolean,
     onItemClick: (Int) -> Unit,
     onItemLongClick: (Int) -> Unit,
     onTableViewClick: (Int) -> Unit,
+    onTakeQuizClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -151,7 +166,7 @@ fun HomeScreenList(
     ) {
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item { Spacer(Modifier.height(8.dp)) }
             items(
@@ -167,9 +182,7 @@ fun HomeScreenList(
                         onClick = onItemClick,
                         onLongClick = onItemLongClick,
                         onTableViewClick = onTableViewClick,
-                        modifier = Modifier
-                            .animateContentSize()
-                            .animateItem()
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
@@ -220,20 +233,49 @@ fun HomeScreenList(
                 )
             }
         }
-        AnimatedVisibility(
-            visible = fabVisible,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = (-16).dp, y = (-16).dp)
-        ) {
-            FloatingActionButton(onClick = {}) {
+
+        if (trigger == Trigger.INIT) {
+            val scale by animateFloatAsState(
+                targetValue = if (hasSelectionChanged) 1f else 0.9f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+            )
+            Button(
+                onClick = onTakeQuizClick,
+                shape = MaterialTheme.shapes.medium,
+                enabled = hasSelectionChanged,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-16).dp, y = (-16).dp)
+                    .scale(scale)
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(vertical = 8.dp)
                 ) {
-                    Icon(Icons.Rounded.Quiz, null)
-                    Spacer(Modifier.width(12.dp))
-                    Text("Take Quiz")
+                    Icon(Icons.Rounded.Update, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Update")
+                }
+            }
+        } else {
+            AnimatedVisibility(
+                visible = fabVisible,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-16).dp, y = (-16).dp)
+            ) {
+                FloatingActionButton(onClick = onTakeQuizClick) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        Icon(Icons.Rounded.Quiz, null)
+                        Spacer(Modifier.width(12.dp))
+                        Text("Take Quiz")
+                    }
                 }
             }
         }
@@ -268,19 +310,11 @@ fun SabdaItem(
                 shape = MaterialTheme.shapes.large
             )
             .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
-                onClick = { onClick(sabda.id) },
-                onLongClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongClick(sabda.id)
-                }
-            )
-            .padding(
-                start = 12.dp,
-                top = 12.dp,
-                end = 4.dp,
-                bottom = 4.dp
-            )
+            .combinedClickable(onClick = { onClick(sabda.id) }, onLongClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onLongClick(sabda.id)
+            })
+            .padding(start = 12.dp, top = 12.dp, end = 4.dp, bottom = 4.dp)
 
     ) {
         Row(
@@ -299,39 +333,36 @@ fun SabdaItem(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
-        Spacer(Modifier.height(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(text = sabda.translit)
-            Text("\u2022", modifier = Modifier.padding(horizontal = 8.dp))
-            Text(
-                text = sabda.meaning, color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-        }
+        Spacer(Modifier.height(12.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (sabda.isFavorite) {
-                    Icon(
-                        imageVector = Icons.Rounded.Favorite,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.surfaceTint,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
+            Column {
                 Text(
-                    text = getSupportingText(sabda),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7f)
+                    text = "${sabda.translit} \u2022 ${sabda.meaning}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    if (sabda.isFavorite) {
+                        Icon(
+                            imageVector = Icons.Rounded.Favorite,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.surfaceTint,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = getSupportingText(sabda),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .7f)
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -346,7 +377,6 @@ fun SabdaItem(
                 }
             }
         }
-        if (!isSelectMode) Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -410,139 +440,6 @@ fun ActiveFiltersRow(
                             Icons.Rounded.KeyboardArrowDown, contentDescription = null
                         )
                     })
-            }
-        }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomeBottomSheet(
-    visible: Boolean,
-    currentFilter: Filter,
-    onDismissRequest: () -> Unit,
-    onApplyFilter: (Filter) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (!visible) return
-    val sheetState = rememberModalBottomSheetState(true)
-    var tempFilter by remember { mutableStateOf(currentFilter) }
-    val scope = rememberCoroutineScope()
-
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest, sheetState = sheetState, modifier = modifier
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Filter Options", style = MaterialTheme.typography.titleLarge
-            )
-
-            // Category filter
-            FilterSection(
-                title = "Category",
-                options = Category.entries,
-                selectedOption = tempFilter.category,
-                onOptionSelected = { tempFilter = tempFilter.copy(category = it) },
-                onClear = {
-                    tempFilter = tempFilter.copy(category = null)
-                }) { category -> stringResource(category.skt) }
-
-            // Sound filter
-            FilterSection(
-                title = "Sound",
-                options = Sound.entries,
-                selectedOption = tempFilter.sound,
-                onOptionSelected = { tempFilter = tempFilter.copy(sound = it) },
-                onClear = { tempFilter = tempFilter.copy(sound = null) }) { sound ->
-                stringResource(
-                    sound.skt
-                )
-            }
-
-            // Gender filter
-            FilterSection(
-                title = "Gender",
-                options = Gender.entries,
-                selectedOption = tempFilter.gender,
-                onOptionSelected = { tempFilter = tempFilter.copy(gender = it) },
-                onClear = {
-                    tempFilter = tempFilter.copy(gender = null)
-                }) { gender -> stringResource(gender.skt) }
-
-            // Action buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {
-                        scope.launch {
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    }, modifier = Modifier.weight(1f)
-                ) {
-                    Text("Cancel")
-                }
-
-                Button(
-                    onClick = {
-                        scope.launch {
-                            onApplyFilter(tempFilter)
-                            sheetState.hide()
-                            onDismissRequest()
-                        }
-                    }, modifier = Modifier.weight(1f)
-                ) {
-                    Text("Apply")
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun <T> FilterSection(
-    title: String,
-    options: List<T>,
-    selectedOption: T?,
-    onOptionSelected: (T?) -> Unit,
-    onClear: () -> Unit,
-    modifier: Modifier = Modifier,
-    labelMapper: @Composable (T) -> String
-) {
-    Column(
-        modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title, style = MaterialTheme.typography.titleMedium
-            )
-            if (selectedOption != null) {
-                TextButton(onClick = onClear) {
-                    Text("Clear")
-                }
-            }
-        }
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(options) { option ->
-                FilterChip(selected = option == selectedOption, onClick = {
-                    onOptionSelected(if (option == selectedOption) null else option)
-                }, label = { Text(labelMapper(option)) })
             }
         }
     }

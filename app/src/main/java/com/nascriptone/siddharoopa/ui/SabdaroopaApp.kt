@@ -212,12 +212,18 @@ fun AppScaffold(
             ) {
                 composable(route = Routes.Main.withRoot) {
                     HomeScreen(
-                        onItemClick = { id ->
-                            val route = "${Routes.Table.withRoot}/$id"
+                        onItemClick = { id, sm ->
+                            val route = "${Routes.Table.withRoot}/$id?sm=$sm"
                             navController.navigate(route) {
                                 launchSingleTop = true
                             }
                         },
+                        navigateToQuiz = {
+                            navController.navigate(Navigation.Quiz.name) {
+                                launchSingleTop = true
+                            }
+                        },
+                        navigateUp = { navController.navigateUp() },
                         snackbarHostState = snackbarHostState
                     )
                 }
@@ -248,15 +254,17 @@ fun AppScaffold(
                     )
                 }
                 composable(
-                    route = "${Routes.Table.withRoot}/{id}", arguments = listOf(navArgument("id") {
-                        type = NavType.IntType
-                    })
-                ) {
-                    TableScreen(
-                        onQuizClick = { id -> },
-                        snackbarHostState = snackbarHostState
+                    route = "${Routes.Table.withRoot}/{id}?sm={sm}",
+                    arguments = listOf(
+                        navArgument("id") {
+                            type = NavType.IntType
+                        },
+                        navArgument("sm") {
+                            type = NavType.BoolType
+                            defaultValue = false
+                        }
                     )
-                }
+                ) { TableScreen(snackbarHostState = snackbarHostState) }
                 composable(
                     route = Routes.Search.withRoot,
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
@@ -278,8 +286,8 @@ fun AppScaffold(
                     }
                     val favoritesViewModel: FavoritesViewModel = hiltViewModel(viewModelStoreOwner)
                     FavoritesScreen(
-                        onTableClick = { id ->
-                            val route = "${Routes.Table.withRoot}/$id"
+                        onTableClick = { id, sm ->
+                            val route = "${Routes.Table.withRoot}/$id?sm=$sm"
                             navController.navigate(route)
                         },
                         snackbarHostState = snackbarHostState,
@@ -388,7 +396,14 @@ fun AppTopBar(
                 )
             }
 
-            Routes.Table -> TableScreenTopBar(onBackPress)
+            Routes.Table -> {
+                val fromSelectionMode: Boolean =
+                    backStackEntry?.arguments?.getBoolean("sm") ?: false
+                TableScreenTopBar(
+                    fromSelectionMode = fromSelectionMode,
+                    navHostController = navController
+                )
+            }
             Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
