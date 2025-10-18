@@ -1,6 +1,7 @@
 package com.nascriptone.siddharoopa.ui
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,7 +41,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -51,12 +52,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import com.nascriptone.siddharoopa.R
-import com.nascriptone.siddharoopa.data.model.Category
-import com.nascriptone.siddharoopa.data.model.Sound
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
-import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreen
-import com.nascriptone.siddharoopa.ui.screen.category.CategoryScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesTopBar
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesViewModel
@@ -72,13 +69,10 @@ import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreen
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizReviewScreenTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizTopBar
 import com.nascriptone.siddharoopa.ui.screen.quiz.QuizViewModel
-import com.nascriptone.siddharoopa.ui.screen.search.SearchScreen
-import com.nascriptone.siddharoopa.ui.screen.search.SearchScreenBar
 import com.nascriptone.siddharoopa.ui.screen.settings.SettingsTopBar
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreen
 import com.nascriptone.siddharoopa.ui.screen.table.TableScreenTopBar
 import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
-import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 import com.nascriptone.siddharoopa.utils.isDarkTheme
 import com.nascriptone.siddharoopa.viewmodel.SiddharoopaViewModel
 import kotlinx.coroutines.launch
@@ -110,6 +104,7 @@ fun DrawerNavigation(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
+
     val isInFocused by mainViewModel.controllerUseCase.isInFocused.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val config = LocalConfiguration.current
@@ -118,7 +113,7 @@ fun DrawerNavigation(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentNavigation by remember(backStackEntry) {
         derivedStateOf {
-            backStackEntry?.destination?.route.getNavigationOrDefault(Navigation.Home)
+            backStackEntry?.destination?.route.getNavigationOrDefault()
         }
     }
     val enabledRoutes = remember {
@@ -127,6 +122,9 @@ fun DrawerNavigation(
             Routes.FavoritesHome.withRoot
         )
     }
+
+    if (drawerState.isOpen) BackHandler { scope.launch { drawerState.close() } }
+
     Surface {
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -228,32 +226,6 @@ fun AppScaffold(
                     )
                 }
                 composable(
-                    route = "${Routes.SabdaList.withRoot}/{c}/{s}",
-                    arguments = listOf(navArgument("c") {
-                        type = NavType.IntType
-                    }, navArgument("s") {
-                        type = NavType.IntType
-                    })
-                ) { backStackEntry ->
-
-                    val categoryIndex = backStackEntry.arguments?.getInt("c") ?: return@composable
-                    val soundIndex = backStackEntry.arguments?.getInt("s") ?: return@composable
-                    val initialCategory =
-                        Category.entries.getOrElse(categoryIndex) { Category.GENERAL }
-                    val initialSound = Sound.entries.getOrElse(soundIndex) { Sound.VOWELS }
-
-                    CategoryScreen(
-                        category = initialCategory,
-                        initialSound = initialSound,
-                        onSabdaClick = { id ->
-                            val route = "${Routes.Table.withRoot}/$id"
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                            }
-                        },
-                    )
-                }
-                composable(
                     route = "${Routes.Table.withRoot}/{id}?sm={sm}",
                     arguments = listOf(
                         navArgument("id") {
@@ -265,17 +237,6 @@ fun AppScaffold(
                         }
                     )
                 ) { TableScreen(snackbarHostState = snackbarHostState) }
-                composable(
-                    route = Routes.Search.withRoot,
-                    enterTransition = { fadeIn() + scaleIn(initialScale = 0.8f) },
-                    exitTransition = { fadeOut() + scaleOut(targetScale = 0.8f) }) {
-                    SearchScreen(onItemClick = { id ->
-                        val route = "${Routes.Table.withRoot}/$id"
-                        navController.navigate(route) {
-                            launchSingleTop = true
-                        }
-                    })
-                }
             }
             navigation(
                 route = Navigation.Favorites.name, startDestination = Routes.FavoritesHome.withRoot
@@ -371,7 +332,7 @@ fun AppTopBar(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(backStackEntry) {
         derivedStateOf {
-            backStackEntry?.destination?.route.getRouteOrDefault(Routes.Main)
+            backStackEntry?.destination?.route.getRouteOrDefault()
         }
     }
     AnimatedContent(
@@ -385,17 +346,6 @@ fun AppTopBar(
                 navHostController = navController
             )
 
-            Routes.Search -> SearchScreenBar(navHostController = navController)
-            Routes.SabdaList -> {
-                val index = backStackEntry?.arguments?.getInt("c") ?: return@AnimatedContent
-                val title = Category.entries[index].toPascalCase()
-                CategoryScreenTopBar(
-                    title = title,
-                    onBackPress = onBackPress,
-                    onSearchClick = { navController.navigate(Routes.Search.withRoot) }
-                )
-            }
-
             Routes.Table -> {
                 val fromSelectionMode: Boolean =
                     backStackEntry?.arguments?.getBoolean("sm") ?: false
@@ -404,13 +354,11 @@ fun AppTopBar(
                     navHostController = navController
                 )
             }
+
             Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
 
             Routes.SettingsHome -> SettingsTopBar(onBackPress)
-            Routes.QuizHome -> QuizTopBar(
-                onBackPress = onBackPress,
-                onInfoActionClick = { navController.navigate(Routes.QuizInstruction.withRoot) }
-            )
+            Routes.QuizHome -> QuizTopBar(navHostController = navController)
 
             Routes.QuizResult -> QuizResultScreenTopBar()
             Routes.QuizReview -> QuizReviewScreenTopBar(onBackPress)
@@ -420,12 +368,20 @@ fun AppTopBar(
     }
 }
 
-private fun String?.getRouteOrDefault(default: Routes): Routes = this?.let {
-    val value = it.substringAfter("/").substringBefore("/").split("?")[0]
-    Routes.entries.firstOrNull { route -> route.name == value } ?: default
-} ?: default
+private fun String?.getRouteOrDefault(): Routes {
+    val default = Routes.Main
+    val route = this?.let {
+        val value = it.substringAfter("/").substringBefore("/").split("?")[0]
+        Routes.entries.firstOrNull { route -> route.name == value } ?: default
+    } ?: default
+    return route
+}
 
-private fun String?.getNavigationOrDefault(default: Navigation): Navigation = this?.let {
-    val value = it.substringBefore("/")
-    Navigation.entries.firstOrNull { route -> route.name == value } ?: default
-} ?: default
+private fun String?.getNavigationOrDefault(): Navigation {
+    val default = Navigation.Home
+    val navigation = this?.let {
+        val value = it.substringBefore("/")
+        Navigation.entries.firstOrNull { route -> route.name == value } ?: default
+    } ?: default
+    return navigation
+}
