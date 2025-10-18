@@ -47,13 +47,6 @@ class AppRepository @Inject constructor(
         ).flow
     }
 
-    fun searchSabda(query: String): Flow<List<Sabda>> {
-        val ftsQuery = SearchQueryHelper.prepareFtsQuery(query)
-        val exactMatch = SearchQueryHelper.prepareExactMatch(query)
-        return sabdaDao.searchSabda(ftsQuery, exactMatch)
-    }
-
-    fun getRecentlyVisited(limit: Int): Flow<List<Sabda>> = sabdaDao.getRecentlyVisited(limit)
     fun getFavoriteList(): Pager<Int, Sabda> {
         return Pager(
             config = PagingConfig(pageSize = 10),
@@ -79,22 +72,6 @@ class AppRepository @Inject constructor(
         sabdaDao.addItemsToFavorite(ids, timeStamp)
 
     fun findSabdaById(id: Int): Flow<Sabda?> = sabdaDao.findSabdaById(id)
-
-    fun getFilteredList(filter: Filter): Pager<Int, Sabda> {
-        return Pager(
-            config = PagingConfig(
-                pageSize = 12,
-                enablePlaceholders = false
-            ),
-            pagingSourceFactory = {
-                sabdaDao.getFilteredList(
-                    category = filter.category,
-                    sound = filter.sound,
-                    gender = filter.gender
-                )
-            }
-        )
-    }
 
     suspend fun getWords(ids: Set<Int>): Set<String> = sabdaDao.getWords(ids).toSet()
 
