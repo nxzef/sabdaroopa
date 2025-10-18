@@ -18,6 +18,6 @@ sealed class Phrase {
 
 
 data class QTemplate(
-    @StringRes val questionResId: Int,
+    @param:StringRes val questionResId: Int,
     val phrase: Phrase
 )
