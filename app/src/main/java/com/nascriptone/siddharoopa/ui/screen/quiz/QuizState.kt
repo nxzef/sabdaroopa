@@ -24,7 +24,7 @@ enum class Action {
     SUBMIT
 }
 
-enum class Mode(@StringRes val uiName: Int) {
+enum class Mode(@param:StringRes val uiName: Int) {
     All(R.string.all_question_type),
     MCQ(R.string.multiple_choice_question),
     MTF(R.string.match_the_following)
@@ -85,7 +85,7 @@ data class Result(
 
 data class Dashboard(
     val accuracy: Float = 0f,
-    @StringRes val message: Int = 0,
+    @param:StringRes val message: Int = 0,
     val mode: Mode = Mode.All,
     val score: Int = 0,
     val totalPossibleScore: Int = 0,

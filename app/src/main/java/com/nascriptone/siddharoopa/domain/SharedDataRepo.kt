@@ -53,7 +53,7 @@ sealed class DataSource {
     }
 }
 
-enum class SourceType(@StringRes val labelResId: Int) {
+enum class SourceType(@param:StringRes val labelResId: Int) {
     TABLE(labelResId = R.string.pick_from_table),
     FAVORITES(labelResId = R.string.pick_from_favorites),
     CUSTOM_LIST(labelResId = R.string.pick_from_list);
