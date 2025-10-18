@@ -144,7 +144,6 @@ fun HomeScreen(
     }
 }
 
-
 @Composable
 fun HomeScreenList(
     sabdaList: LazyPagingItems<Sabda>,
@@ -203,63 +202,29 @@ fun HomeScreenList(
                 Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight + 16.dp))
             }
         }
+
+        // Loading state - shown only during initial load
         if (sabdaList.loadState.refresh is LoadState.Loading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
 
-        if (sabdaList.loadState.refresh is LoadState.NotLoading && sabdaList.itemCount == 0) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SearchOff,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "No results found",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Try different search terms or filters",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        // Empty state - shown only when loaded successfully but no items
+        if (sabdaList.loadState.refresh is LoadState.NotLoading
+            && sabdaList.loadState.append.endOfPaginationReached
+            && sabdaList.itemCount == 0
+        ) {
+            EmptyState(modifier = Modifier.align(Alignment.Center))
         }
 
+        // Quiz/Update buttons
         if (trigger == Trigger.INIT) {
-            val scale by animateFloatAsState(
-                targetValue = if (hasSelectionChanged) 1f else 0.9f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-            )
-            Button(
+            UpdateButton(
+                hasSelectionChanged = hasSelectionChanged,
                 onClick = onTakeQuizClick,
-                shape = MaterialTheme.shapes.medium,
-                enabled = hasSelectionChanged,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = (-16).dp, y = (-16).dp)
-                    .scale(scale)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Icon(Icons.Rounded.Update, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Update")
-                }
-            }
+            )
         } else {
             AnimatedVisibility(
                 visible = fabVisible,
@@ -278,6 +243,62 @@ fun HomeScreenList(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.SearchOff,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "No results found",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = "Try different search terms or filters",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun UpdateButton(
+    hasSelectionChanged: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (hasSelectionChanged) 1f else 0.9f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+    )
+    Button(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        enabled = hasSelectionChanged,
+        modifier = modifier.scale(scale)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Icon(Icons.Rounded.Update, null)
+            Spacer(Modifier.width(8.dp))
+            Text("Update")
         }
     }
 }
