@@ -3,6 +3,7 @@ package com.nascriptone.siddharoopa.ui.screen.quiz
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -11,7 +12,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavHostController
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.ui.screen.Navigation
+import com.nascriptone.siddharoopa.ui.screen.Routes
+import com.nascriptone.siddharoopa.utils.extensions.sharedViewModelOrNull
 
 
 val imageVector = Icons.AutoMirrored.Rounded.ArrowBack
@@ -19,22 +24,27 @@ val imageVector = Icons.AutoMirrored.Rounded.ArrowBack
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizTopBar(
-    onBackPress: () -> Unit,
-    onInfoActionClick: () -> Unit,
+    navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val quizViewModel: QuizViewModel? =
+        navHostController.sharedViewModelOrNull(Navigation.Quiz.name)
+    if (quizViewModel == null) return
+
     val title = stringResource(R.string.start_your_quiz)
     TopAppBar(
         title = {
             Text(title)
         },
         navigationIcon = {
-            IconButton(onClick = onBackPress) {
+            IconButton(onClick = quizViewModel::onQuizHomeBack) {
                 Icon(imageVector, null)
             }
         },
         actions = {
-            IconButton(onClick = onInfoActionClick) {
+            IconButton(onClick = {
+                navHostController.navigate(Routes.QuizInstruction.withRoot)
+            }) {
                 Icon(Icons.Outlined.Info, null)
             }
         },
@@ -48,7 +58,7 @@ fun QuizResultScreenTopBar(
     modifier: Modifier = Modifier
 ) {
     val title = stringResource(R.string.quiz_result_title)
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             Text(title)
         },
