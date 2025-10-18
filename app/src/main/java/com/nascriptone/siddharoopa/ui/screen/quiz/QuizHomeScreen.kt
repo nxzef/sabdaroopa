@@ -84,6 +84,10 @@ fun QuizHomeScreen(
         is DataSource.Table -> dataSource.filter
         else -> Filter()
     }
+    val enableBeginQuiz: Boolean = when (val dataSource = uiState.dataSource) {
+        is DataSource.Table -> true
+        else -> dataSource.hasValidData()
+    }
 
     BackHandler(onBack = quizViewModel::onQuizHomeBack)
 
@@ -146,6 +150,7 @@ fun QuizHomeScreen(
             )
             Spacer(Modifier.height(28.dp))
             Button(
+                enabled = enableBeginQuiz,
                 onClick = {
                     showProgress = true
                     quizViewModel.createQuizQuestions()
