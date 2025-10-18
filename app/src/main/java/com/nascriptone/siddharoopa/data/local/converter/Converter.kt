@@ -32,6 +32,7 @@ class Converters {
     fun toCategory(data: String): Category = Category.valueOf(data)
 
      // Declension
+    @Suppress("unused")
     @TypeConverter
     fun fromDeclension(declension: Declension): String {
         return json.encodeToString(declension)
