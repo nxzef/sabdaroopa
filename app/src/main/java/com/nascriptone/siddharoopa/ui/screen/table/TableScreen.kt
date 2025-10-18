@@ -24,7 +24,6 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,10 +32,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nascriptone.siddharoopa.R
+import com.nascriptone.siddharoopa.data.model.CaseName
 import com.nascriptone.siddharoopa.data.model.Declension
+import com.nascriptone.siddharoopa.data.model.FormName
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.ui.component.CurrentState
 import com.nascriptone.siddharoopa.ui.component.getSupportingText
@@ -46,31 +47,36 @@ import com.nascriptone.siddharoopa.utils.extensions.toPascalCase
 fun TableScreen(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    tableViewModel: TableViewModel = hiltViewModel()
+    viewModel: TableViewModel = hiltViewModel()
 ) {
-    val sabda by tableViewModel.sabda.collectAsStateWithLifecycle()
-    sabda?.let { sabda ->
+    val sabda by viewModel.sabda.collectAsStateWithLifecycle()
+
+    sabda?.let {
         TableScreenContent(
-            sabda = sabda,
-            tableViewModel = tableViewModel,
+            sabda = it,
+            viewModel = viewModel,
             snackbarHostState = snackbarHostState,
             modifier = modifier
         )
-    } ?: CurrentState {
+    } ?: EmptyTableState()
+}
+
+@Composable
+private fun EmptyTableState() {
+    CurrentState {
         Text("Could not find declension table.")
     }
 }
 
 @Composable
-fun TableScreenContent(
+private fun TableScreenContent(
     sabda: Sabda,
-    tableViewModel: TableViewModel,
+    viewModel: TableViewModel,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
-
     LaunchedEffect(Unit) {
-        tableViewModel.message.collect { message ->
+        viewModel.message.collect { message ->
             snackbarHostState.showSnackbar(message)
         }
     }
@@ -83,31 +89,35 @@ fun TableScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(16.dp))
-            Text(
-                text = sabda.word,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Text(
-                text = getSupportingText(sabda),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontSize = 20.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+
+            WordHeader(sabda)
             DeclensionTable(sabda.declension)
-            Spacer(Modifier.height(16.dp))
+
             Text(
-                text = "Details",
+                text = stringResource(R.string.details),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(vertical = 16.dp)
+                modifier = Modifier.align(Alignment.Start)
             )
-            DetailView(sabda)
-            Spacer(Modifier.height((TopAppBarDefaults.TopAppBarExpandedHeight) * 2))
+            Spacer(Modifier.height(12.dp))
+
+            WordDetailsCard(sabda)
+            Spacer(Modifier.height(TopAppBarDefaults.TopAppBarExpandedHeight * 2))
         }
     }
+}
+
+@Composable
+private fun WordHeader(sabda: Sabda) {
+    Text(
+        text = sabda.word,
+        style = MaterialTheme.typography.headlineSmall,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+    Text(
+        text = getSupportingText(sabda),
+        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
@@ -115,7 +125,7 @@ fun DeclensionTable(
     declension: Declension,
     modifier: Modifier = Modifier
 ) {
-    val columnFirstItems = remember {
+    val tableHeaders = remember {
         listOf(
             R.string.vibakti,
             R.string.single,
@@ -123,95 +133,106 @@ fun DeclensionTable(
             R.string.plural
         )
     }
-    val rowFirstItems = remember {
-        listOf(
-            R.string.nominative,
-            R.string.vocative,
-            R.string.accusative,
-            R.string.instrumental,
-            R.string.dative,
-            R.string.ablative,
-            R.string.genitive,
-            R.string.locative
-        )
-    }
-    OutlinedCard(
-        modifier = modifier
-            .padding(vertical = 24.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .height(54.dp)
-        ) {
-            columnFirstItems.forEachIndexed { i, e ->
-                val cellValue = stringResource(e)
-                key(i to e) {
-                    DeclensionCell(cellValue, isPredefined = true, modifier = Modifier.weight(1f))
-                }
-                if (i != columnFirstItems.lastIndex) VerticalDivider()
-            }
-        }
+
+    val caseNames = remember { CaseName.entries }
+
+    OutlinedCard(modifier = modifier.padding(vertical = 24.dp)) {
+        TableHeaderRow(headers = tableHeaders)
         HorizontalDivider()
-        val caseEntries = declension.entries.toList()
-        caseEntries.forEachIndexed { i, case ->
-            Row(
-                modifier = Modifier.height(54.dp)
-            ) {
-                val predefinedId = rowFirstItems[i]
-                val cellValue = stringResource(predefinedId)
-                DeclensionCell(
-                    value = cellValue,
-                    isPredefined = true,
-                    modifier = Modifier.weight(1f)
-                )
-                VerticalDivider()
-                val formEntries = case.value.entries.toList()
-                formEntries.forEachIndexed { i, form ->
-                    val cellValue = form.value
-                    DeclensionCell(value = cellValue, modifier = Modifier.weight(1f))
-                    if (i != formEntries.lastIndex) VerticalDivider()
-                }
+
+        caseNames.forEachIndexed { index, caseName ->
+            TableDataRow(
+                caseName = caseName,
+                forms = declension[caseName] ?: emptyMap()
+            )
+            if (index != caseNames.lastIndex) {
+                HorizontalDivider()
             }
-            if (i != caseEntries.lastIndex) HorizontalDivider()
         }
     }
 }
 
 @Composable
-fun DeclensionCell(
+private fun TableHeaderRow(headers: List<Int>) {
+    Row(modifier = Modifier.height(54.dp)) {
+        headers.forEachIndexed { index, headerRes ->
+            TableCell(
+                value = stringResource(headerRes),
+                isHeader = true,
+                modifier = Modifier.weight(1f)
+            )
+            if (index != headers.lastIndex) {
+                VerticalDivider()
+            }
+        }
+    }
+}
+
+@Composable
+private fun TableDataRow(
+    caseName: CaseName,
+    forms: Map<FormName, String?>
+) {
+    Row(modifier = Modifier.height(54.dp)) {
+        // Case name cell
+        TableCell(
+            value = stringResource(caseName.skt),
+            isHeader = true,
+            modifier = Modifier.weight(1f)
+        )
+        VerticalDivider()
+
+        // Form cells (SINGLE, DUAL, PLURAL)
+        val formEntries = FormName.entries
+        formEntries.forEachIndexed { index, formName ->
+            TableCell(
+                value = forms[formName],
+                modifier = Modifier.weight(1f)
+            )
+            if (index != formEntries.lastIndex) {
+                VerticalDivider()
+            }
+        }
+    }
+}
+
+@Composable
+private fun TableCell(
     value: String?,
     modifier: Modifier = Modifier,
-    isPredefined: Boolean = false,
+    isHeader: Boolean = false,
 ) {
-    val sepColor = if (isPredefined) {
+    val backgroundColor = if (isHeader) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         MaterialTheme.colorScheme.surfaceContainerLow
     }
-    val setFontWeight = if (isPredefined) {
+
+    val fontWeight = if (isHeader) {
         FontWeight.W700
     } else {
         LocalTextStyle.current.fontWeight
     }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(sepColor),
+            .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         value?.let {
             Text(
-                it,
+                text = it,
                 overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = setFontWeight
+                fontWeight = fontWeight
             )
         }
     }
 }
 
 @Composable
-fun DetailView(
+private fun WordDetailsCard(
     sabda: Sabda,
     modifier: Modifier = Modifier
 ) {
@@ -224,29 +245,35 @@ fun DetailView(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        RowItem("Word", sabda.word)
+        DetailRow(stringResource(R.string.word), sabda.word)
         HorizontalDivider()
-        RowItem("Meaning", sabda.meaning)
+        DetailRow(stringResource(R.string.meaning), sabda.meaning)
         HorizontalDivider()
-        RowItem("Roman (IAST)", sabda.translit)
+        DetailRow(stringResource(R.string.roman_iast), sabda.translit)
         HorizontalDivider()
-        RowItem("End Sound", sabda.anta)
+        DetailRow(stringResource(R.string.end_sound), sabda.anta)
         HorizontalDivider()
-        RowItem(
-            "Category",
+        DetailRow(
+            stringResource(R.string.category),
             "${stringResource(sabda.category.skt)}\t-\t${sabda.category.toPascalCase()}"
         )
         HorizontalDivider()
-        RowItem("Gender", "${stringResource(sabda.gender.skt)}\t-\t${sabda.gender.toPascalCase()}")
+        DetailRow(
+            stringResource(R.string.gender),
+            "${stringResource(sabda.gender.skt)}\t-\t${sabda.gender.toPascalCase()}"
+        )
         HorizontalDivider()
-        RowItem("Sound", "${stringResource(sabda.sound.skt)}\t-\t${sabda.sound.toPascalCase()}")
+        DetailRow(
+            stringResource(R.string.sound),
+            "${stringResource(sabda.sound.skt)}\t-\t${sabda.sound.toPascalCase()}"
+        )
     }
 }
 
 @Composable
-fun RowItem(
-    lead: String,
-    tail: String,
+private fun DetailRow(
+    label: String,
+    value: String,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -255,12 +282,15 @@ fun RowItem(
             .padding(4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Box(Modifier.weight(1f)) {
-            Text(text = lead, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Box(Modifier.weight(1f)) {
-            Text(text = tail, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = value,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
-
