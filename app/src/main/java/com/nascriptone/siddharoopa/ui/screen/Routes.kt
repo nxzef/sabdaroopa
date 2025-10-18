@@ -16,9 +16,7 @@ enum class Navigation(val icon: ImageVector) {
 
 enum class Routes(val navigation: Navigation?) {
     Main(Navigation.Home),
-    SabdaList(Navigation.Home),
     Table(Navigation.Home),
-    Search(Navigation.Home),
     FavoritesHome(Navigation.Favorites),
     QuizHome(Navigation.Quiz),
     QuizQuestion(Navigation.Quiz),
