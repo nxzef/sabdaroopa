@@ -4,37 +4,23 @@
 
     <!-- General -->
     <string name="general_table">साधारण शब्द विभागः</string>
-    <string name="general_subhead_eng">General word category</string>
-
 
     <!-- Specific -->
     <string name="specific_table">विशॆष शब्द विभागः</string>
-    <string name="specific_subhead_eng">Specific word category</string>
 
     <!-- Pronouns -->
-    <string name="pronouns">सर्वनाम शब्दप्रकरणम्</string>
-    <string name="pronouns_subhead_eng">Pronouns</string>
 
     <!-- Numerals -->
-    <string name="numerals">सङ्ख्या शब्दप्रकरणम्</string>
-    <string name="numerals_subhead_eng">Numerals</string>
 
     <!-- Vowels/Consonants -->
     <string name="vowel_skt">अजन्तः</string>
     <string name="consonant_skt">हलन्तः</string>
-    <string name="vowel_eng">vowels</string>
-    <string name="consonant_eng">consonants</string>
 
 
     <!-- Buttons -->
-    <string name="see_all">See all</string>
 
 
     <!-- Table labels examples -->
-    <string name="general_vowel">राम, हरि, पति, सखि, रमा, मति, नदी, फल, वारि, शुचि</string>
-    <string name="general_consonant">चलमुच्, वणिज्, राज्, मरुत्, सीमन्, सरित्, शरत्, जगत्, ददत्</string>
-    <string name="specific_vowel">निर्जर, प्रधी, वातप्रमी, क्रॊष्ड, सुधी, सॆनानी, मास, जरा, अजर</string>
-    <string name="specific_consonant">प्राञ्च्, प्रत्यञ्च्, उदञ्च्, तिर्यञ्च्, सुपाद्, पुषन्, अर्वन्, अनर्वन्, तुरासाह्, सजुष्, उष्णिह्</string>
 
 
     <!-- Vibakti -->
@@ -58,18 +44,21 @@
 
     <!-- Gender Skt / Eng -->
 
-    <string name="all_skt">सर्व</string>
     <string name="masculine_skt">पुल्लिङ्गः</string>
     <string name="feminine_skt">स्त्रीलिङ्गः</string>
     <string name="neuter_skt"> नपुंसकलिङ्गः</string>
 
-    <string name="all_eng">All</string>
-    <string name="masculine_eng">Masculine</string>
-    <string name="feminine_eng">Feminine</string>
-    <string name="neuter_eng">Neuter</string>
-
 
     <!-- General words -->
+
+    <string name="details">Details</string>
+    <string name="word">Word</string>
+    <string name="meaning">Meaning</string>
+    <string name="roman_iast">Roman (IAST)</string>
+    <string name="end_sound">End Sound</string>
+    <string name="category">Category</string>
+    <string name="gender">Gender</string>
+    <string name="sound">Sound</string>
 
     <string name="sabda">शब्दः</string>
 
@@ -82,13 +71,6 @@
 
 
     <!-- Favorite Screen -->
-
-
-    <string name="add_favorite_msg">Add to Favorites</string>
-    <string name="remove_favorite_msg">Remove from Favorites</string>
-
-    <string name="added_favorite_msg">Added to Favorites</string>
-    <string name="removed_favorite_msg">Removed from Favorites</string>
 
 
     <!-- Quiz Screen -->
