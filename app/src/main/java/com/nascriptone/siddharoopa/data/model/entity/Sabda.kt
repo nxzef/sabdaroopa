@@ -8,7 +8,7 @@ import com.nascriptone.siddharoopa.data.model.Declension
 import com.nascriptone.siddharoopa.data.model.Gender
 import com.nascriptone.siddharoopa.data.model.Sound
 
-@Entity("sabda")
+@Entity(tableName = "sabda")
 data class Sabda(
     @PrimaryKey(autoGenerate = true) val id: Int,
     val anta: String,
