@@ -3,7 +3,6 @@ package com.nascriptone.siddharoopa.di
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.nascriptone.siddharoopa.data.local.AppDatabase
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
@@ -13,10 +12,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-
-
-private const val USER_PREFERENCE_NAME = "user_preferences"
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(USER_PREFERENCE_NAME)
 
 @Module
 @InstallIn(SingletonComponent::class)
