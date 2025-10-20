@@ -144,5 +144,50 @@
     <string name="instruction_intro_title">Welcome to the Quiz!</string>
     <string name="instruction_intro">This page contains everything you need to know before you start. Read through the instructions carefully to understand how the quiz works, how to answer, and how your score is calculated.</string>
 
+    <!-- Quiz Instruction Screen Strings -->
+    <string name="instruction_marking_system_title">Marking System</string>
+    <string name="instruction_marking_mcq">MCQ: 2 marks for each correct answer</string>
+    <string name="instruction_marking_mtf">MTF: 1 mark per correct match (up to 3 marks/set)</string>
+    <string name="instruction_marking_no_negative">No negative marking</string>
+    <string name="instruction_marking_skip">Skipped questions don\'t affect your score</string>
+
+    <string name="instruction_categories_title">Quiz Categories</string>
+    <string name="instruction_categories_general">General Sabda Table – Standard words across all types</string>
+    <string name="instruction_categories_specific">Specific Sabda Table – Topic-focused words (e.g., special categories)</string>
+    <string name="instruction_categories_all">You can also choose \"All\" to mix questions from both tables</string>
+
+    <string name="instruction_modes_title">Quiz Modes</string>
+    <string name="instruction_modes_mcq">MCQ Only – Multiple Choice Questions only</string>
+    <string name="instruction_modes_mtf">MTF Only – Match the Following only</string>
+    <string name="instruction_modes_all">All Categories – Mixes both types:\n→ 70% MCQ &amp; 30% MTF</string>
+
+    <string name="instruction_range_title">Question Range Selection</string>
+    <string name="instruction_range_description">Choose how many questions you want:</string>
+    <string name="instruction_range_options">Options: 5, 10, 15, 20 (Default: 10)</string>
+    <string name="instruction_range_example_label">Example:</string>
+    <string name="instruction_range_example_text">If you choose "All Categories" with 10 questions:\n→ You\'ll get 7 MCQs + 3 MTF sets</string>
+
+    <string name="instruction_mtf_notes_title">Special Notes (MTF)</string>
+    <string name="instruction_mtf_notes_trap">Some MTF sets have 4 options but only 3 correct matches</string>
+    <string name="instruction_mtf_notes_extra">The extra option is a "trap" and not part of scoring</string>
+    <string name="instruction_mtf_notes_marks">Each correct match = 1 mark</string>
+    <string name="instruction_mtf_notes_partial">Partial marks are possible (e.g., 2 correct = 2 marks)</string>
+
+    <string name="instruction_time_limit_title">Time Limit</string>
+    <string name="instruction_time_no_limit">No time restrictions</string>
+    <string name="instruction_time_take_time">Take your time to understand and answer each question</string>
+
+    <string name="instruction_tips_title">Answering Tips</string>
+    <string name="instruction_tips_skip">You can skip any question if you\'re unsure</string>
+    <string name="instruction_tips_submit">Once you submit, you\'ll see your score + detailed stats</string>
+    <string name="instruction_tips_review">Review your weak areas to improve faster</string>
+
+    <string name="instruction_scoring_title">Scoring Example</string>
+    <string name="instruction_scoring_example_label">Example Quiz: 10 Questions (All Mode)</string>
+    <string name="instruction_scoring_mcq">7 MCQs → 5 correct → 10 marks</string>
+    <string name="instruction_scoring_mtf">3 MTF sets → 7 correct matches → 7 marks</string>
+    <string name="instruction_scoring_total">Total Score = 17 / 35</string>
+
+    <string name="instruction_button_start">Got It! Let\'s Start Quiz</string>
 
 </resources>
