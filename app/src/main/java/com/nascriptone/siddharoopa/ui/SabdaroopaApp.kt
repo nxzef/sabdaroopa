@@ -297,15 +297,8 @@ fun AppScaffold(
                     val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
                     QuizReviewScreen(uiState = uiState)
                 }
-                composable(route = Routes.QuizInstruction.withRoot) { backStackEntry ->
-                    val viewModelStoreOwner = remember(backStackEntry) {
-                        navController.getBackStackEntry(Navigation.Quiz.name)
-                    }
-                    val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
-                    QuizInstructionScreen(
-                        onBackPress = { navController.navigateUp() },
-                        quizViewModel = quizViewModel
-                    )
+                composable(route = Routes.QuizInstruction.withRoot) {
+                    QuizInstructionScreen(onBackPress = { navController.navigateUp() })
                 }
             }
             navigation(

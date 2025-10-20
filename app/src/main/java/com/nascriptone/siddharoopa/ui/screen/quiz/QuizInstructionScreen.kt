@@ -28,10 +28,8 @@ import com.nascriptone.siddharoopa.R
 @Composable
 fun QuizInstructionScreen(
     onBackPress: () -> Unit,
-    quizViewModel: QuizViewModel,
     modifier: Modifier = Modifier
 ) {
-    val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
     Surface {
         Column(
             modifier = modifier
