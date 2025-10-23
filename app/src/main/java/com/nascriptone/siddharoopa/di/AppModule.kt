@@ -2,10 +2,13 @@ package com.nascriptone.siddharoopa.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import com.nascriptone.siddharoopa.data.local.AppDatabase
+import com.nascriptone.siddharoopa.data.local.UserPreferencesSerializer
 import com.nascriptone.siddharoopa.data.local.dao.SabdaDao
+import com.nascriptone.siddharoopa.data.model.UserPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,8 +38,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
-        return context.dataStore
+    fun provideUserPreferencesDataStore(
+        @ApplicationContext context: Context
+    ): DataStore<UserPreferences> {
+        return DataStoreFactory.create(
+            serializer = UserPreferencesSerializer,
+            produceFile = {
+                context.dataStoreFile("user_preferences.json")
+            }
+        )
     }
 
 }
