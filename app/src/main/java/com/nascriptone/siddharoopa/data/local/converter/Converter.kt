@@ -29,7 +29,7 @@ class Converters {
     @TypeConverter
     fun toCategory(data: String): Category = Category.valueOf(data)
 
-     // Declension
+    // Declension
     @Suppress("unused")
     @TypeConverter
     fun fromDeclension(declension: Declension): String {
