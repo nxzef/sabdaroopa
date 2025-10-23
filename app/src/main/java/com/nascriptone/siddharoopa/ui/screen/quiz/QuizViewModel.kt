@@ -15,10 +15,10 @@ import com.nascriptone.siddharoopa.data.model.Phrase
 import com.nascriptone.siddharoopa.data.model.QTemplate
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
+import com.nascriptone.siddharoopa.data.utils.ResourceProvider
 import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
 import com.nascriptone.siddharoopa.domain.SourceType
-import com.nascriptone.siddharoopa.domain.utils.ResourceProvider
 import com.nascriptone.siddharoopa.ui.state.Filter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
