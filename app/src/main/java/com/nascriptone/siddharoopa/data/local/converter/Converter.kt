@@ -9,9 +9,7 @@ import kotlinx.serialization.json.Json
 
 class Converters {
 
-    companion object {
-        private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
-    }
+    private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
 
     @TypeConverter
     fun fromSound(sound: Sound): String = sound.name
