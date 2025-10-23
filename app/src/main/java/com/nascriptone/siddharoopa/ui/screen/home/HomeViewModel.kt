@@ -7,9 +7,9 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
-import com.nascriptone.siddharoopa.domain.ControllerUseCase
 import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
+import com.nascriptone.siddharoopa.domain.manager.FocusManager
 import com.nascriptone.siddharoopa.ui.state.Filter
 import com.nascriptone.siddharoopa.ui.state.TransferState
 import com.nascriptone.siddharoopa.ui.state.Trigger
@@ -40,7 +40,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val repository: AppRepository,
     private val sharedDataRepo: SharedDataRepo,
-    private val controllerUseCase: ControllerUseCase
+    private val focusManager: FocusManager
 ) : ViewModel() {
 
     private val _uiEvents = MutableSharedFlow<String>()
@@ -202,7 +202,7 @@ class HomeViewModel @Inject constructor(
                 trigger = trigger
             )
         }
-        controllerUseCase.enableFocus()
+        focusManager.enableFocus()
     }
 
     private fun exitSelectionMode() {
@@ -213,7 +213,7 @@ class HomeViewModel @Inject constructor(
                 trigger = Trigger.NONE
             )
         }
-        controllerUseCase.disableFocus()
+        focusManager.disableFocus()
     }
 
     private fun addItemsToFavorite(ids: Set<Int>) {
