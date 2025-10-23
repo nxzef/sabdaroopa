@@ -5,6 +5,7 @@ package com.nascriptone.siddharoopa.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -17,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.nascriptone.siddharoopa.data.model.Theme
+import com.nascriptone.siddharoopa.domain.platform.SystemCapabilities
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -259,13 +262,25 @@ val unspecified_scheme = ColorFamily(
 
 @Composable
 fun SabdaroopaTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    userTheme: Theme = Theme.SYSTEM,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val context = LocalContext.current
+    val view = LocalView.current
+    val isSystemInDarkTheme = isSystemInDarkTheme()
+
+    val darkTheme = when (userTheme) {
+        Theme.LIGHT -> false
+        Theme.DARK -> true
+        Theme.SYSTEM -> {
+            if (SystemCapabilities.supportsSystemTheme) isSystemInDarkTheme
+            else false
+        }
+    }
+
+    val colorScheme: ColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
@@ -273,18 +288,17 @@ fun SabdaroopaTheme(
         else -> lightScheme
     }
 
-    val view = LocalView.current
+
     if (!view.isInEditMode) {
-        runCatching {
-            val window = (view.context as Activity).window
-            SideEffect {
-                val windowCompat = WindowCompat.getInsetsController(window, view)
-                windowCompat.isAppearanceLightStatusBars = !darkTheme
-                windowCompat.isAppearanceLightNavigationBars = !darkTheme
+        SideEffect {
+            runCatching {
+                val window = (view.context as Activity).window
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !darkTheme
+                controller.isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
-
 
     MaterialTheme(
         colorScheme = colorScheme,
