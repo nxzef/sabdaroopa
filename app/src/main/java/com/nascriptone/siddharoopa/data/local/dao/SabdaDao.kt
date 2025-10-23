@@ -15,7 +15,8 @@ interface SabdaDao {
     @Query("SELECT * FROM sabda")
     suspend fun getEntireList(): List<Sabda>
 
-    @Query("""
+    @Query(
+        """
     SELECT *
     FROM (
         SELECT * FROM sabda
@@ -45,7 +46,8 @@ interface SabdaDao {
             ELSE 5
         END,
         word ASC
-""")
+"""
+    )
     fun getSabdaWithFilters(
         query: String?,
         exactMatch: String?,
@@ -54,12 +56,14 @@ interface SabdaDao {
         gender: Gender?
     ): PagingSource<Int, Sabda>
 
-    @Query("""
+    @Query(
+        """
         UPDATE sabda 
         SET visit_count = visit_count + 1,
             last_visited = :timestamp
         WHERE id = :sabdaId
-    """)
+    """
+    )
     suspend fun incrementVisitCount(sabdaId: Int, timestamp: Long = System.currentTimeMillis())
 
     @Query("SELECT * FROM sabda WHERE is_favorite = 1 ORDER BY favorite_since DESC")
