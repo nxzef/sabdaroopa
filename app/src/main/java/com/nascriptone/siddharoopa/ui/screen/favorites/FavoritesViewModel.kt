@@ -7,9 +7,9 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.nascriptone.siddharoopa.data.model.entity.Sabda
 import com.nascriptone.siddharoopa.data.repository.AppRepository
-import com.nascriptone.siddharoopa.domain.ControllerUseCase
 import com.nascriptone.siddharoopa.domain.DataSource
 import com.nascriptone.siddharoopa.domain.SharedDataRepo
+import com.nascriptone.siddharoopa.domain.manager.FocusManager
 import com.nascriptone.siddharoopa.ui.state.TransferState
 import com.nascriptone.siddharoopa.ui.state.Trigger
 import com.nascriptone.siddharoopa.utils.extensions.toggleInSet
@@ -35,7 +35,7 @@ import javax.inject.Inject
 class FavoritesViewModel @Inject constructor(
     private val repository: AppRepository,
     private val sharedDataRepo: SharedDataRepo,
-    private val controllerUseCase: ControllerUseCase
+    private val focusManager: FocusManager
 ) : ViewModel() {
 
     val favorites: Flow<PagingData<Sabda>> =
@@ -155,7 +155,7 @@ class FavoritesViewModel @Inject constructor(
                 isSelectMode = true, trigger = trigger
             )
         }
-        controllerUseCase.enableFocus()
+        focusManager.enableFocus()
     }
 
     private fun exitSelectionMode() {
@@ -164,7 +164,7 @@ class FavoritesViewModel @Inject constructor(
                 isSelectMode = false, selectedIds = emptySet(), trigger = Trigger.NONE
             )
         }
-        controllerUseCase.disableFocus()
+        focusManager.disableFocus()
     }
 
     private fun removeItemsFromFavorite(ids: Set<Int>) {
