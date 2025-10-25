@@ -8,15 +8,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +30,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -54,6 +56,7 @@ import androidx.navigation.navigation
 import com.nascriptone.siddharoopa.R
 import com.nascriptone.siddharoopa.data.model.UserPreferences
 import com.nascriptone.siddharoopa.di.AppEntryPoint
+import com.nascriptone.siddharoopa.domain.manager.FocusManager
 import com.nascriptone.siddharoopa.ui.screen.Navigation
 import com.nascriptone.siddharoopa.ui.screen.Routes
 import com.nascriptone.siddharoopa.ui.screen.favorites.FavoritesScreen
@@ -79,147 +82,160 @@ import com.nascriptone.siddharoopa.ui.theme.SabdaroopaTheme
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
 
-/**
- * Top-level composable for Sabdaroopa app.
- *
- * This composable manages app-wide state (theme, focus) and provides
- * the navigation structure without resetting state on theme changes.
- */
+private val LocalUserPreferences = compositionLocalOf { UserPreferences() }
+
+@Stable
+private data class ThemeConfig(
+    val theme: com.nascriptone.siddharoopa.data.model.Theme,
+    val dynamicColorEnabled: Boolean
+)
+
 @Composable
 fun SabdaroopaApp() {
     val context = LocalContext.current
 
-    // --- Hilt Entry Points ---
     val appEntryPoint = remember {
         EntryPointAccessors.fromApplication(
             context.applicationContext,
             AppEntryPoint::class.java
         )
     }
+
     val focusManager = remember { appEntryPoint.focusManager() }
     val userPreferencesRepository = remember { appEntryPoint.userPreferencesRepository() }
 
-    // --- App-wide State ---
-    val isFocused by focusManager.isFocused.collectAsStateWithLifecycle()
     val userPreferences by userPreferencesRepository.userPreferencesFlow.collectAsStateWithLifecycle(
         initialValue = UserPreferences()
     )
 
-    // --- Navigation & Drawer State ---
+    val themeConfig by remember {
+        derivedStateOf {
+            ThemeConfig(userPreferences.theme, userPreferences.dynamicColorEnabled)
+        }
+    }
+
+    CompositionLocalProvider(LocalUserPreferences provides userPreferences) {
+        SabdaroopaTheme(
+            userTheme = themeConfig.theme,
+            dynamicColor = themeConfig.dynamicColorEnabled
+        ) {
+            AppContent(focusManager = focusManager)
+        }
+    }
+}
+
+@Composable
+private fun AppContent(
+    focusManager: FocusManager
+) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     val backStackEntry by navController.currentBackStackEntryAsState()
 
-    // Compute current navigation when backstack changes
     val currentNavigation by remember(backStackEntry) {
-        derivedStateOf { backStackEntry?.destination?.route.getNavigationOrDefault() }
+        derivedStateOf {
+            backStackEntry?.destination?.route.getNavigationOrDefault()
+        }
     }
 
-    // Drawer gestures only for allowed routes
+    val isFocused by focusManager.isFocused.collectAsStateWithLifecycle()
+
     val drawerEnabledRoutes = remember {
         setOf(Routes.Main.withRoot, Routes.FavoritesHome.withRoot)
     }
-    val isDrawerGestureEnabled = remember(backStackEntry, isFocused) {
-        backStackEntry?.destination?.route in drawerEnabledRoutes && !isFocused
+
+    val isDrawerGestureEnabled by remember(backStackEntry, isFocused) {
+        derivedStateOf {
+            backStackEntry?.destination?.route in drawerEnabledRoutes && !isFocused
+        }
     }
 
-    // --- Back Handling ---
     if (drawerState.isOpen) {
         BackHandler { scope.launch { drawerState.close() } }
     }
 
-    // --- Theming & Content ---
-    SabdaroopaTheme(
-        userTheme = userPreferences.theme,
-        dynamicColor = userPreferences.dynamicColorEnabled
-    ) {
-        Surface {
-            ModalNavigationDrawer(
-                drawerState = drawerState,
-                gesturesEnabled = isDrawerGestureEnabled,
-                drawerContent = {
-                    DrawerContent(
-                        currentNavigation = currentNavigation,
-                        onNavigationClick = { navigation ->
-                            scope.launch { drawerState.close() }.invokeOnCompletion {
-                                navController.navigate(navigation.name) {
-                                    popUpTo(Routes.Main.withRoot) { inclusive = false }
-                                    launchSingleTop = true
-                                }
+    Surface {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = isDrawerGestureEnabled,
+            drawerContent = {
+                DrawerContent(
+                    currentNavigation = currentNavigation,
+                    onNavigationClick = { navigation ->
+                        scope.launch {
+                            drawerState.close()
+                            navController.navigate(navigation.name) {
+                                popUpTo(Routes.Main.withRoot) { inclusive = false }
+                                launchSingleTop = true
                             }
                         }
-                    )
-                }
-            ) {
-                AppScaffold(
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    navController = navController
+                    }
                 )
             }
+        ) {
+            AppScaffold(
+                onMenuClick = { scope.launch { drawerState.open() } },
+                navController = navController
+            )
         }
     }
 }
 
-/**
- * Drawer content composable.
- *
- * Separated for better composition and reusability.
- */
 @Composable
 private fun DrawerContent(
     currentNavigation: Navigation,
     onNavigationClick: (Navigation) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val config = LocalConfiguration.current
-    val isLandscape = config.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     ModalDrawerSheet(
         modifier = modifier
             .fillMaxWidth(fraction = if (isLandscape) 0.4f else 0.8f)
             .fillMaxHeight()
-            .verticalScroll(rememberScrollState())
     ) {
-        // Header
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(16.dp)
-        )
+        LazyColumn {
+            item {
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
 
-        Spacer(Modifier.height(16.dp))
-        HorizontalDivider()
+            item { Spacer(Modifier.height(16.dp)) }
+            item { HorizontalDivider() }
+            item { Spacer(Modifier.height(16.dp)) }
 
-        // Navigation items
-        Column(Modifier.padding(horizontal = 8.dp)) {
-            Spacer(Modifier.height(16.dp))
-
-            Navigation.entries.forEach { navigation ->
+            items(
+                items = Navigation.entries,
+                key = { it.name }
+            ) { navigation ->
                 NavigationDrawerItem(
                     label = { Text(navigation.name) },
                     icon = {
                         Icon(
-                            imageVector = navigation.icon, contentDescription = navigation.name
+                            imageVector = navigation.icon,
+                            contentDescription = navigation.name
                         )
                     },
                     selected = navigation == currentNavigation,
-                    onClick = { onNavigationClick(navigation) })
+                    onClick = { onNavigationClick(navigation) },
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
             }
         }
     }
 }
 
-/**
- * Main scaffold with top bar and navigation host.
- *
- * Separated to isolate scaffold-specific logic.
- */
 @Composable
 private fun AppScaffold(
-    onMenuClick: () -> Unit, navController: NavHostController, modifier: Modifier = Modifier
+    onMenuClick: () -> Unit,
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -229,7 +245,9 @@ private fun AppScaffold(
                 onMenuClick = onMenuClick,
                 navController = navController
             )
-        }, snackbarHost = { SnackbarHost(snackbarHostState) }, modifier = modifier
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier
     ) { paddingValues ->
         AppNavHost(
             navController = navController,
@@ -241,11 +259,6 @@ private fun AppScaffold(
     }
 }
 
-/**
- * Navigation host with all app routes.
- *
- * Separated to reduce complexity in AppScaffold.
- */
 @Composable
 private fun AppNavHost(
     navController: NavHostController,
@@ -259,12 +272,14 @@ private fun AppNavHost(
     ) {
         // Home navigation graph
         navigation(
-            route = Navigation.Home.name, startDestination = Routes.Main.withRoot
+            route = Navigation.Home.name,
+            startDestination = Routes.Main.withRoot
         ) {
             composable(route = Routes.Main.withRoot) {
                 HomeScreen(
                     onItemClick = { id, sm ->
-                        navController.navigate("${Routes.Table.withRoot}/$id?sm=$sm") {
+                        val route = "${Routes.Table.withRoot}/$id?sm=$sm"
+                        navController.navigate(route) {
                             launchSingleTop = true
                         }
                     },
@@ -273,17 +288,20 @@ private fun AppNavHost(
                             launchSingleTop = true
                         }
                     },
-                    navigateUp = { navController.navigateUp() },
+                    navigateUp = navController::navigateUp,
                     snackbarHostState = snackbarHostState
                 )
             }
 
             composable(
                 route = "${Routes.Table.withRoot}/{id}?sm={sm}",
-                arguments = listOf(navArgument("id") { type = NavType.IntType }, navArgument("sm") {
-                    type = NavType.BoolType
-                    defaultValue = false
-                })
+                arguments = listOf(
+                    navArgument("id") { type = NavType.IntType },
+                    navArgument("sm") {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
             ) {
                 TableScreen(snackbarHostState = snackbarHostState)
             }
@@ -291,34 +309,42 @@ private fun AppNavHost(
 
         // Favorites navigation graph
         navigation(
-            route = Navigation.Favorites.name, startDestination = Routes.FavoritesHome.withRoot
+            route = Navigation.Favorites.name,
+            startDestination = Routes.FavoritesHome.withRoot
         ) {
             composable(route = Routes.FavoritesHome.withRoot) { backStackEntry ->
                 val viewModelStoreOwner = remember(backStackEntry) {
                     navController.getBackStackEntry(Navigation.Favorites.name)
                 }
-                val viewModel: FavoritesViewModel = hiltViewModel(viewModelStoreOwner)
+                val favoritesViewModel: FavoritesViewModel = hiltViewModel(viewModelStoreOwner)
 
                 FavoritesScreen(
                     onTableClick = { id, sm ->
-                        navController.navigate("${Routes.Table.withRoot}/$id?sm=$sm")
-                    }, snackbarHostState = snackbarHostState, favoritesViewModel = viewModel
+                        val route = "${Routes.Table.withRoot}/$id?sm=$sm"
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                    },
+                    snackbarHostState = snackbarHostState,
+                    favoritesViewModel = favoritesViewModel
                 )
             }
         }
 
         // Quiz navigation graph
         navigation(
-            route = Navigation.Quiz.name, startDestination = Routes.QuizHome.withRoot
+            route = Navigation.Quiz.name,
+            startDestination = Routes.QuizHome.withRoot
         ) {
             composable(route = Routes.QuizHome.withRoot) { backStackEntry ->
                 val viewModelStoreOwner = remember(backStackEntry) {
                     navController.getBackStackEntry(Navigation.Quiz.name)
                 }
-                val viewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
 
                 QuizHomeScreen(
-                    quizViewModel = viewModel, navHostController = navController
+                    quizViewModel = quizViewModel,
+                    navHostController = navController
                 )
             }
 
@@ -326,10 +352,11 @@ private fun AppNavHost(
                 val viewModelStoreOwner = remember(backStackEntry) {
                     navController.getBackStackEntry(Navigation.Quiz.name)
                 }
-                val viewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
 
                 QuizQuestionScreen(
-                    quizViewModel = viewModel, navHostController = navController
+                    quizViewModel = quizViewModel,
+                    navHostController = navController
                 )
             }
 
@@ -337,10 +364,11 @@ private fun AppNavHost(
                 val viewModelStoreOwner = remember(backStackEntry) {
                     navController.getBackStackEntry(Navigation.Quiz.name)
                 }
-                val viewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
 
                 QuizResultScreen(
-                    quizViewModel = viewModel, navHostController = navController
+                    quizViewModel = quizViewModel,
+                    navHostController = navController
                 )
             }
 
@@ -348,21 +376,23 @@ private fun AppNavHost(
                 val viewModelStoreOwner = remember(backStackEntry) {
                     navController.getBackStackEntry(Navigation.Quiz.name)
                 }
-                val viewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                val quizViewModel: QuizViewModel = hiltViewModel(viewModelStoreOwner)
+                val uiState by quizViewModel.uiState.collectAsStateWithLifecycle()
 
                 QuizReviewScreen(uiState = uiState)
             }
 
             composable(route = Routes.QuizInstruction.withRoot) {
                 QuizInstructionScreen(
-                    onBackPress = { navController.navigateUp() })
+                    onBackPress = navController::navigateUp
+                )
             }
         }
 
         // Settings navigation graph
         navigation(
-            route = Navigation.Settings.name, startDestination = Routes.SettingsHome.withRoot
+            route = Navigation.Settings.name,
+            startDestination = Routes.SettingsHome.withRoot
         ) {
             composable(route = Routes.SettingsHome.withRoot) {
                 SettingsScreen()
@@ -371,11 +401,6 @@ private fun AppNavHost(
     }
 }
 
-/**
- * Animated top bar that changes based on current route.
- *
- * Uses AnimatedContent for smooth transitions between different top bars.
- */
 @Composable
 private fun AppTopBar(
     onMenuClick: () -> Unit,
@@ -383,45 +408,49 @@ private fun AppTopBar(
     modifier: Modifier = Modifier
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
+
+    // FIXED: Added backStackEntry as key
     val currentRoute by remember(backStackEntry) {
-        derivedStateOf { backStackEntry?.destination?.route.getRouteOrDefault() }
-    }
-    val onBackPress: () -> Unit = remember(navController) {
-        {
-            navController.navigateUp()
+        derivedStateOf {
+            backStackEntry?.destination?.route.getRouteOrDefault()
         }
     }
 
     AnimatedContent(
-        targetState = currentRoute, transitionSpec = {
-            (fadeIn() + scaleIn(initialScale = 0.8f)) togetherWith (fadeOut() + scaleOut(targetScale = 1.2f))
-        }, label = "TopBarAnimation", modifier = modifier
+        targetState = currentRoute,
+        transitionSpec = {
+            (fadeIn() + scaleIn(initialScale = 0.8f)) togetherWith
+                    (fadeOut() + scaleOut(targetScale = 1.2f))
+        },
+        label = "TopBarAnimation",
+        modifier = modifier
     ) { route ->
         when (route) {
-            Routes.Main -> HomeTopBar(onMenuClick = onMenuClick, navHostController = navController)
+            Routes.Main -> HomeTopBar(
+                onMenuClick = onMenuClick,
+                navHostController = navController
+            )
+
             Routes.Table -> {
                 val fromSelectionMode = backStackEntry?.arguments?.getBoolean("sm") ?: false
                 TableScreenTopBar(
-                    fromSelectionMode = fromSelectionMode, navHostController = navController
+                    fromSelectionMode = fromSelectionMode,
+                    navHostController = navController
                 )
             }
 
             Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
-            Routes.SettingsHome -> SettingsTopBar(onBackPress)
+            Routes.SettingsHome -> SettingsTopBar(navController::navigateUp)
             Routes.QuizHome -> QuizTopBar(navHostController = navController)
             Routes.QuizResult -> QuizResultScreenTopBar()
-            Routes.QuizReview -> QuizReviewScreenTopBar(onBackPress)
-            Routes.QuizInstruction -> QuizInstructionScreenTopBar(onBackPress)
+            Routes.QuizReview -> QuizReviewScreenTopBar(navController::navigateUp)
+            Routes.QuizInstruction -> QuizInstructionScreenTopBar(navController::navigateUp)
             else -> {} // No top bar for other routes
         }
     }
 }
 
-/**
- * Extracts route from navigation destination path.
- *
- * Example: "Home/main/123?param=value" -> Routes.Main
- */
+@Stable
 private fun String?.getRouteOrDefault(): Routes {
     val default = Routes.Main
     return this?.let {
@@ -430,11 +459,7 @@ private fun String?.getRouteOrDefault(): Routes {
     } ?: default
 }
 
-/**
- * Extracts navigation section from destination path.
- *
- * Example: "Home/main" -> Navigation.Home
- */
+@Stable
 private fun String?.getNavigationOrDefault(): Navigation {
     val default = Navigation.Home
     return this?.let {
