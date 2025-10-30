@@ -12,8 +12,10 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        setContent { SabdaroopaApp() }
+        enableEdgeToEdge()
+        setContent {
+            SabdaroopaApp()
+        }
     }
 }
