@@ -64,12 +64,6 @@
 
     <!-- Settings Screen -->
 
-    <string name="choose_theme">Choose theme</string>
-    <string name="system_default">System default</string>
-    <string name="light">Light</string>
-    <string name="dark">Dark</string>
-
-
     <!-- Favorite Screen -->
 
 
@@ -189,5 +183,94 @@
     <string name="instruction_scoring_total">Total Score = 17 / 35</string>
 
     <string name="instruction_button_start">Got It! Let\'s Start Quiz</string>
+
+
+    <!-- About Screen -->
+    <string name="about_app_name">सब्दरूप</string>
+    <string name="about_subtitle">Sanskrit Declension Tables</string>
+    <string name="about_tagline">Your offline companion for learning Sanskrit grammar</string>
+
+    <!-- Section Titles -->
+    <string name="section_story">The Story</string>
+    <string name="section_features">Features</string>
+    <string name="section_built_with">Built With</string>
+    <string name="section_credits">Credits &amp; Thanks</string>
+    <string name="section_developer">Developer</string>
+    <string name="section_app_info">App Information</string>
+
+    <!-- Story Section -->
+    <string name="story_intro">This app was born from a unique vision during my final year as a BA Sanskrit student at SNGS College, Pattambi (2022-2025).</string>
+    <string name="story_unique">While my peers wrote traditional books on Mahabharata and Ramayana, I chose to do something different—something that had never been done in our college before. I built an Android app.</string>
+    <string name="story_journey_title">🎯 The Journey</string>
+    <string name="story_started">Started: December 2024</string>
+    <string name="story_duration">Development Time: 6-7 months of learning &amp; building</string>
+    <string name="story_challenges">Challenges: Late nights, health struggles, Learning Challenges</string>
+    <string name="story_data_source">Data Source: Manually extracted from \'Sabda Manjari\' book</string>
+    <string name="story_conclusion">My programming journey started in 10th standard with HTML/CSS, evolved through React, React Native, Flutter, and finally found its home in Kotlin. This app represents not just code, but a bridge between ancient Sanskrit wisdom and modern technology.</string>
+
+    <!-- Features Section -->
+    <string name="feature_words">📚 130+ Sanskrit words with complete declension tables</string>
+    <string name="feature_search">🔍 Search by meaning, Devanagari, or IAST transliteration</string>
+    <string name="feature_offline">📱 100% offline - no internet required</string>
+    <string name="feature_quiz">🎯 Quiz mode for interactive learning</string>
+    <string name="feature_favorites">⭐ Save favorites for quick access</string>
+    <string name="feature_material">🎨 Modern Material Design 3 interface</string>
+    <string name="feature_theme">🌓 Dark &amp; Light theme support</string>
+    <string name="feature_customizable">⚙️ Customizable font sizes and preferences</string>
+
+    <!-- Technology Section -->
+    <string name="tech_intro">Built with modern Android technologies:</string>
+    <string name="tech_kotlin">Kotlin</string>
+    <string name="tech_kotlin_desc">Programming language</string>
+    <string name="tech_compose">Jetpack Compose</string>
+    <string name="tech_compose_desc">Modern declarative UI</string>
+    <string name="tech_room">Room Database</string>
+    <string name="tech_room_desc">Offline data storage (SQLite)</string>
+    <string name="tech_hilt">Hilt</string>
+    <string name="tech_hilt_desc">Dependency injection</string>
+    <string name="tech_mvvm">MVVM Architecture</string>
+    <string name="tech_mvvm_desc">Clean code structure</string>
+    <string name="tech_material">Material Design 3</string>
+    <string name="tech_material_desc">Beautiful UI components</string>
+
+    <!-- Credits Section -->
+    <string name="credits_guide_title">Project Guide</string>
+    <string name="credits_guide_name">Dr. Rajalakshmy M</string>
+    <string name="credits_guide_role">Associate Professor, Dept. of Sanskrit\nSNGS College, Pattambi</string>
+    <string name="credits_thanks_title">Special Thanks To:</string>
+    <string name="credits_varsha">Varsha - For providing \'Sabda Manjari\' book</string>
+    <string name="credits_gopi">Gopi Krishnan - For continuous support</string>
+    <string name="credits_friends">All friends who encouraged this journey</string>
+    <string name="credits_sources_title">Data Sources:</string>
+    <string name="credits_sabda_manjari">Sabda Manjari (Primary reference)</string>
+    <string name="credits_my_coaching">My Coaching - Sanskrit grammar lessons</string>
+    <string name="credits_learn_sanskrit">Learn Sanskrit - Grammar resources</string>
+    <string name="credits_abhyas">Sanskrit Abhyas - Practice materials</string>
+
+    <!-- Developer Section -->
+    <string name="developer_name">Mohammed Naseef V M</string>
+    <string name="developer_education">BA Sanskrit (2022-2025)\nSNGS College, Pattambi\nUniversity of Calicut</string>
+    <string name="developer_bio">A student developer passionate about merging traditional Sanskrit learning with modern technology. This is my first complete Android app, built while learning Kotlin and Jetpack Compose.</string>
+    <string name="developer_connect">Connect:</string>
+    <string name="developer_email">scriptgoat609@gmail.com</string>
+    <string name="developer_github">GitHub: @nxzef</string>
+    <string name="developer_linkedin">LinkedIn: nxzef</string>
+
+    <!-- App Info Section -->
+    <string name="info_version">Version</string>
+    <string name="info_release">Release Date</string>
+    <string name="info_release_year">2025</string>
+    <string name="info_database">Database Size</string>
+    <string name="info_database_value">130 words</string>
+    <string name="info_platform">Platform</string>
+    <string name="info_platform_value">Android</string>
+    <string name="info_language">Language</string>
+    <string name="info_language_value">Kotlin</string>
+    <string name="info_copyright">© 2025 Mohammed Naseef V M</string>
+    <string name="info_academic">Academic project submitted to University of Calicut</string>
+
+    <!-- Accessibility -->
+    <string name="cd_expand">Expand</string>
+    <string name="cd_collapse">Collapse</string>
 
 </resources>
