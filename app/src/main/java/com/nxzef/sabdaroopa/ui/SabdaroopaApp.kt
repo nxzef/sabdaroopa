@@ -58,18 +58,26 @@ import com.nxzef.sabdaroopa.di.AppEntryPoint
 import com.nxzef.sabdaroopa.ui.screen.Navigation
 import com.nxzef.sabdaroopa.ui.screen.Routes
 import com.nxzef.sabdaroopa.ui.screen.about.AboutScreen
+import com.nxzef.sabdaroopa.ui.screen.about.AboutTopBar
 import com.nxzef.sabdaroopa.ui.screen.favorites.FavoritesScreen
+import com.nxzef.sabdaroopa.ui.screen.favorites.FavoritesTopBar
 import com.nxzef.sabdaroopa.ui.screen.favorites.FavoritesViewModel
 import com.nxzef.sabdaroopa.ui.screen.home.HomeScreen
+import com.nxzef.sabdaroopa.ui.screen.home.HomeTopBar
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizHomeScreen
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizInstructionScreen
+import com.nxzef.sabdaroopa.ui.screen.quiz.QuizInstructionScreenTopBar
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizQuestionScreen
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizResultScreen
+import com.nxzef.sabdaroopa.ui.screen.quiz.QuizResultScreenTopBar
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizReviewScreen
+import com.nxzef.sabdaroopa.ui.screen.quiz.QuizReviewScreenTopBar
+import com.nxzef.sabdaroopa.ui.screen.quiz.QuizTopBar
 import com.nxzef.sabdaroopa.ui.screen.quiz.QuizViewModel
 import com.nxzef.sabdaroopa.ui.screen.settings.SettingsScreen
-import com.nxzef.sabdaroopa.ui.screen.settings.SettingsTopBar2
+import com.nxzef.sabdaroopa.ui.screen.settings.SettingsTopBar
 import com.nxzef.sabdaroopa.ui.screen.table.TableScreen
+import com.nxzef.sabdaroopa.ui.screen.table.TableScreenTopBar
 import com.nxzef.sabdaroopa.ui.theme.SabdaroopaTheme
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
@@ -407,43 +415,22 @@ private fun AppTopBar(
         modifier = modifier
     ) { route ->
         when (route) {
-            Routes.Main -> {
-//                HomeTopBar(
-//                    onMenuClick = onMenuClick,
-//                    navHostController = navController
-//                )
-            }
-
+            Routes.Main -> HomeTopBar(onMenuClick = onMenuClick, navHostController = navController)
             Routes.Table -> {
-//                val fromSelectionMode = backStackEntry?.arguments?.getBoolean("sm") ?: false
-//                TableScreenTopBar(
-//                    fromSelectionMode = fromSelectionMode,
-//                    navHostController = navController
-//                )
+                val fromSelectionMode = backStackEntry?.arguments?.getBoolean("sm") ?: false
+                TableScreenTopBar(
+                    fromSelectionMode = fromSelectionMode,
+                    navHostController = navController
+                )
             }
 
-            Routes.FavoritesHome -> {
-
-//                FavoritesTopBar(navHostController = navController)
-            }
-            Routes.SettingsHome -> {
-                SettingsTopBar2(navController::navigateUp)
-            }
-            Routes.About -> {
-//                AboutTopBar(navController::navigateUp)
-            }
-            Routes.QuizHome -> {
-//                QuizTopBar(navHostController = navController)
-            }
-            Routes.QuizResult -> {
-//                QuizResultScreenTopBar()
-            }
-            Routes.QuizReview -> {
-//                QuizReviewScreenTopBar(navController::navigateUp)
-            }
-            Routes.QuizInstruction -> {
-//                QuizInstructionScreenTopBar(navController::navigateUp)
-            }
+            Routes.FavoritesHome -> FavoritesTopBar(navHostController = navController)
+            Routes.SettingsHome -> SettingsTopBar(navController::navigateUp)
+            Routes.About -> AboutTopBar(navController::navigateUp)
+            Routes.QuizHome -> QuizTopBar(navHostController = navController)
+            Routes.QuizResult -> QuizResultScreenTopBar()
+            Routes.QuizReview -> QuizReviewScreenTopBar(navController::navigateUp)
+            Routes.QuizInstruction -> QuizInstructionScreenTopBar(navController::navigateUp)
             Routes.QuizQuestion -> {} // No top bar for other routes
         }
     }
