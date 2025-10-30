@@ -1,0 +1,27 @@
+package com.nxzef.sabdaroopa.ui.state
+
+import com.nxzef.sabdaroopa.data.model.Category
+import com.nxzef.sabdaroopa.data.model.Gender
+import com.nxzef.sabdaroopa.data.model.Sound
+
+data class Filter(
+    val category: Category? = null,
+    val sound: Sound? = null,
+    val gender: Gender? = null,
+) {
+    val isActive: Boolean
+        get() = category != null || sound != null || gender != null
+
+    val activeFilterCount: Int
+        get() = listOfNotNull(category, sound, gender).size
+}
+
+enum class Trigger {
+    NONE, INIT, CARD, TOOLBAR
+}
+
+sealed class TransferState {
+    data object Loading : TransferState()
+    data object Success : TransferState()
+    data class Error(val message: String) : TransferState()
+}
