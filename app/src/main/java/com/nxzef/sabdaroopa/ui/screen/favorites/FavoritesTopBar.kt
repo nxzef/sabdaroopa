@@ -64,9 +64,8 @@ fun FavoritesTopBar(
     navHostController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    val favoritesViewModel: FavoritesViewModel? =
-        navHostController.sharedViewModelOrNull(Navigation.Favorites.name)
-    if (favoritesViewModel == null) return
+    val favoritesViewModel: FavoritesViewModel =
+        navHostController.sharedViewModelOrNull(Navigation.Favorites.name) ?: return
     val uiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
     AnimatedContent(
         targetState = uiState.isSelectMode, transitionSpec = {

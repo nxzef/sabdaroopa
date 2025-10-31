@@ -82,9 +82,8 @@ fun HomeTopBar(
     navHostController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    val homeViewModel: HomeViewModel? =
-        navHostController.sharedViewModelOrNull(Routes.Main.withRoot)
-    if (homeViewModel == null) return
+    val homeViewModel: HomeViewModel =
+        navHostController.sharedViewModelOrNull(Routes.Main.withRoot) ?: return
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val hasAnyNonFavorite by homeViewModel.hasAnyNonFavorite.collectAsStateWithLifecycle()
     val hasSelectionChanged by homeViewModel.hasSelectionChanged.collectAsStateWithLifecycle()
