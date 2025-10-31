@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,12 +9,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val localProperties = gradleLocalProperties(rootDir, providers)
+
 android {
     namespace = "com.nxzef.sabdaroopa"
     compileSdk {
         version = release(36)
     }
-
     defaultConfig {
         applicationId = "com.nxzef.sabdaroopa"
         minSdk = 24
@@ -26,7 +29,21 @@ android {
             useSupportLibrary = true
         }
     }
+    signingConfigs {
+        create("release") {
 
+            storeFile = file(localProperties.getProperty("RELEASE_STORE_FILE"))
+            storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+            keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
+
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -35,6 +52,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false
