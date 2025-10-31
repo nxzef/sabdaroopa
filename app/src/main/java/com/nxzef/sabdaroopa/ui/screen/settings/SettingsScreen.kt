@@ -435,7 +435,9 @@ private fun SectionDetails(
             .padding(12.dp)
     ) {
         Column(
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .weight(1f)
         ) {
             Text(text = headline, fontWeight = FontWeight.Medium)
             supportingText?.let {

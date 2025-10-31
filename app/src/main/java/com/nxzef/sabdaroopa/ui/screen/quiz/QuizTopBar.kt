@@ -27,9 +27,8 @@ fun QuizTopBar(
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val quizViewModel: QuizViewModel? =
-        navHostController.sharedViewModelOrNull(Navigation.Quiz.name)
-    if (quizViewModel == null) return
+    val quizViewModel: QuizViewModel =
+        navHostController.sharedViewModelOrNull(Navigation.Quiz.name) ?: return
 
     val title = stringResource(R.string.start_your_quiz)
     TopAppBar(

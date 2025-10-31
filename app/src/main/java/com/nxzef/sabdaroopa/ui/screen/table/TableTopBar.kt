@@ -30,9 +30,8 @@ fun TableScreenTopBar(
     navHostController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    val tableViewModel: TableViewModel? =
-        navHostController.sharedViewModelOrNull("${Routes.Table.withRoot}/{id}?sm={sm}")
-    if (tableViewModel == null) return
+    val tableViewModel: TableViewModel =
+        navHostController.sharedViewModelOrNull("${Routes.Table.withRoot}/{id}?sm={sm}") ?: return
 
     val sabda by tableViewModel.sabda.collectAsStateWithLifecycle()
 
