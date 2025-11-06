@@ -439,7 +439,7 @@ private fun SectionDetails(
                 .padding(end = 16.dp)
                 .weight(1f)
         ) {
-            Text(text = headline, fontWeight = FontWeight.Medium)
+            Text(text = headline)
             supportingText?.let {
                 Text(
                     text = it,
