@@ -251,8 +251,8 @@ fun MatchTheFollowingReview(
                         if (outerIndex != 0 && answer != null && innerIndex < 4) {
                             val afterIndex = (innerIndex - 1).coerceAtLeast(0)
                             if (trueOption[afterIndex] == answer[afterIndex]) ExtendedMaterialTheme.success.colorContainer
-                            else Color(0x16FF0000)
-                        } else ExtendedMaterialTheme.wrong.colorContainer
+                            else ExtendedMaterialTheme.wrong.colorContainer
+                        } else MaterialTheme.colorScheme.surfaceContainer
 
                     val backgroundColor: Color =
                         if (isHeader) MaterialTheme.colorScheme.surfaceContainerHighest
