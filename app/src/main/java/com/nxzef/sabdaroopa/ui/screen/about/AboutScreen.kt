@@ -300,6 +300,7 @@ private fun TechnologySection() {
 @Composable
 private fun CreditsSection() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Project Guide
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = stringResource(R.string.credits_guide_title),
@@ -315,6 +316,39 @@ private fun CreditsSection() {
                 text = stringResource(R.string.credits_guide_role),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(R.string.credits_guide_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // Head of Department
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(R.string.credits_hod_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = stringResource(R.string.credits_hod_name),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = stringResource(R.string.credits_hod_role),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = stringResource(R.string.credits_hod_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
             )
         }
 
