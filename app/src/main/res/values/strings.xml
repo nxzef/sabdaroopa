@@ -199,11 +199,11 @@
     <string name="section_app_info">App Information</string>
 
     <!-- Story Section -->
-    <string name="story_intro">This app was born from a unique vision during my final year as a BA Sanskrit student at SNGS College, Pattambi (2022-2025).</string>
+    <string name="story_intro">This app was born from a unique vision during my final year as a BA Sanskrit student at SNGS College, Pattambi (2022–2025).</string>
     <string name="story_unique">While my peers wrote traditional books on Mahabharata and Ramayana, I chose to do something different—something that had never been done in our college before. I built an Android app.</string>
     <string name="story_journey_title">🎯 The Journey</string>
     <string name="story_started">Started: December 2024</string>
-    <string name="story_duration">Development Time: 6-7 months of learning &amp; building</string>
+    <string name="story_duration">Development Time: 6–7 months of learning &amp; building</string>
     <string name="story_challenges">Challenges: Late nights, health struggles, Learning Challenges</string>
     <string name="story_data_source">Data Source: Manually extracted from \'Sabda Manjari\' book</string>
     <string name="story_conclusion">My programming journey started in 10th standard with HTML/CSS, evolved through React, React Native, Flutter, and finally found its home in Kotlin. This app represents not just code, but a bridge between ancient Sanskrit wisdom and modern technology.</string>
@@ -246,13 +246,21 @@
     <string name="credits_my_coaching">My Coaching - Sanskrit grammar lessons</string>
     <string name="credits_learn_sanskrit">Learn Sanskrit - Grammar resources</string>
     <string name="credits_abhyas">Sanskrit Abhyas - Practice materials</string>
+    <!-- HOD Section -->
+    <string name="credits_hod_title">Head of Department</string>
+    <string name="credits_hod_name">Dr. A. Vasu</string>
+    <string name="credits_hod_role">Head of Department, Sanskrit\nSNGS College, Pattambi</string>
+    <string name="credits_hod_note">For approving this innovative project and providing valuable suggestions that shaped its direction.</string>
+
+    <!-- Guide Note -->
+    <string name="credits_guide_note">For her invaluable guidance, continuous support, and encouragement throughout the development of this project.</string>
 
     <!-- Developer Section -->
     <string name="developer_name">Mohammed Naseef V M</string>
-    <string name="developer_education">BA Sanskrit (2022-2025)\nSNGS College, Pattambi\nUniversity of Calicut</string>
+    <string name="developer_education">BA Sanskrit (2022–2025)\nSNGS College, Pattambi\nUniversity of Calicut</string>
     <string name="developer_bio">A student developer passionate about merging traditional Sanskrit learning with modern technology. This is my first complete Android app, built while learning Kotlin and Jetpack Compose.</string>
     <string name="developer_connect">Connect:</string>
-    <string name="developer_email">scriptgoat609@gmail.com</string>
+    <string name="developer_email">nx.naseef@gmail.com</string>
     <string name="developer_github">GitHub: @nxzef</string>
     <string name="developer_linkedin">LinkedIn: nxzef</string>
 
