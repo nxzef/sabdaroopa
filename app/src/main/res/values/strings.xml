@@ -269,7 +269,7 @@
     <string name="info_release">Release Date</string>
     <string name="info_release_year">2025</string>
     <string name="info_database">Database Size</string>
-    <string name="info_database_value">130 words</string>
+    <string name="info_database_value">125 words</string>
     <string name="info_platform">Platform</string>
     <string name="info_platform_value">Android</string>
     <string name="info_language">Language</string>
