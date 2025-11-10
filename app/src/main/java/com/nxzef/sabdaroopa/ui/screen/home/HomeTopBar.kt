@@ -63,8 +63,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -369,13 +371,31 @@ fun SearchBar(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
+    var textFieldValueState by remember {
+        mutableStateOf(TextFieldValue(text = query, selection = TextRange(query.length)))
+    }
+
+    LaunchedEffect(query) {
+        if (textFieldValueState.text != query) {
+            textFieldValueState = TextFieldValue(
+                text = query,
+                selection = TextRange(query.length)
+            )
+        }
+    }
+
     BackHandler { onCloseSearch() }
+
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
+
     TextField(
-        value = query,
-        onValueChange = onQueryChange,
+        value = textFieldValueState,
+        onValueChange = { newValue ->
+            textFieldValueState = newValue
+            onQueryChange(newValue.text)
+        },
         placeholder = {
             Text("Search")
         },
@@ -406,7 +426,7 @@ fun SearchBar(
         ),
         keyboardActions = KeyboardActions(
             onSearch = {
-                onQueryChange(query)
+                onQueryChange(textFieldValueState.text)
                 keyboardController?.hide()
             }
         ),
