@@ -2,7 +2,7 @@
 
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://www.android.com/)
 [![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
-[![Status](https://img.shields.io/badge/Status-Academic%20Project-orange.svg)](https://github.com/nxzef/sabdaroopa)
+[![Status](https://img.shields.io/badge/Status-Coming%20Soon-orange.svg)](https://github.com/nxzef/sabdaroopa)
 [![Copyright](https://img.shields.io/badge/Copyright-All%20Rights%20Reserved-red.svg)](COPYRIGHT)
 
 > Your offline companion for learning Sanskrit grammar
@@ -23,31 +23,23 @@ This project is **All Rights Reserved**. The code is publicly viewable for **por
 - ❌ Republishing on app stores
 - ❌ Creating derivative works
 
-**Contact scriptgoat609@gmail.com for permissions.**
+**Contact nx.naseef@gmail.com for permissions.**
 
 ---
 
 ## 📱 Screenshots
 
-<!-- TODO: Add screenshots here -->
-<!-- Recommended screenshots:
-1. Home Screen (Word List) - Main screen showing all words with search
-2. Declension Table - Full table view of a word
-3. Category Filter - Filter interface showing categories and filters
-4. Quiz Screen - Quiz interface
-5. Settings Screen - App preferences
-6. Dark Theme - App in dark mode
--->
+<div align="center">
+  <img src="screenshots/home_word_list.png" width="250" alt="Home Screen - Word List"/>
+  <img src="screenshots/declension_table.png" width="250" alt="Declension Table"/>
+  <img src="screenshots/category_filter.png" width="250" alt="Category Filters"/>
+</div>
 
-```
-📸 Add screenshots in /screenshots folder:
-   - home_word_list.png (Main word list screen)
-   - declension_table.png (Table view)
-   - category_filter.png (Filters applied)
-   - quiz_screen.png (Quiz interface)
-   - settings_screen.png (Preferences)
-   - dark_theme.png (Dark mode example)
-```
+<div align="center">
+  <img src="screenshots/quiz_screen.png" width="250" alt="Quiz Mode"/>
+  <img src="screenshots/settings_screen.png" width="250" alt="Settings"/>
+  <img src="screenshots/dark_theme.png" width="250" alt="Dark Theme"/>
+</div>
 
 ---
 
@@ -327,7 +319,7 @@ This repository is public to:
 ### For Permissions:
 
 For licensing inquiries, collaboration, or usage permissions:
-- 📧 Email: scriptgoat609@gmail.com
+- 📧 Email: nx.naseef@gmail.com
 - 💼 LinkedIn: [linkedin.com/in/nxzef](https://www.linkedin.com/in/nxzef/)
 - 🐙 GitHub: [@nxzef](https://github.com/nxzef)
 
@@ -338,7 +330,7 @@ For licensing inquiries, collaboration, or usage permissions:
 **Mohammed Naseef V M**  
 BA Sanskrit Student (2022-2025) | Android Developer
 
-- 📧 **Email**: [scriptgoat609@gmail.com](mailto:scriptgoat609@gmail.com)
+- 📧 **Email**: [nx.naseef@gmail.com](mailto:nx.naseef@gmail.com)
 - 💻 **GitHub**: [@nxzef](https://github.com/nxzef)
 - 💼 **LinkedIn**: [nxzef](https://www.linkedin.com/in/nxzef/)
 - 🎓 **Institution**: SNGS College, Pattambi | University of Calicut
@@ -364,20 +356,27 @@ BA Sanskrit Student (2022-2025) | Android Developer
 | **Primary Language** | Kotlin |
 | **UI Framework** | Jetpack Compose |
 
-<!-- TODO: Update these after building:
-- Lines of Code: Run `find app/src -name "*.kt" | xargs wc -l`
-- Number of Files: Run `find app/src -name "*.kt" | wc -l`
-- Commit Count: Run `git log --oneline | wc -l`
-- APK Size: Check release APK properties
+<!-- TODO: Update these after final build:
+To get these values, run in your project folder:
+- Lines of Code: `find app/src -name "*.kt" | xargs wc -l`
+- Number of Files: `find app/src -name "*.kt" | wc -l`
+- Commit Count: `git log --oneline | wc -l`
+- APK Size: Check release APK file properties
+
+Then add to table above:
+| **Lines of Code** | ~XX,XXX lines |
+| **Kotlin Files** | XX files |
+| **Commits** | XXX commits |
+| **APK Size** | XX.X MB |
 -->
 
 ---
 
 ## 🐛 Known Issues
 
-No known critical issues at this time. 
+No known critical issues at this time. The app has been thoroughly tested and is production-ready.
 
-If you discover a bug or unexpected behavior, please report it via email: **scriptgoat609@gmail.com**
+If you discover a bug or unexpected behavior, please report it via email: **nx.naseef@gmail.com**
 
 Include:
 - Description of the issue
@@ -388,15 +387,17 @@ Include:
 
 ---
 
-## 📱 Installation & Usage
+## 📱 Download & Installation
 
-### For End Users:
+### 🚀 Coming Soon on Google Play Store!
 
-**Coming Soon on Google Play Store!**
+The app is **production-ready** and will be available for download on Google Play Store shortly, following academic submission and evaluation.
 
-The app will be available for download once the academic submission process is complete.
+**Status**: ✅ Development Complete | 🔄 Awaiting Play Store Submission
 
-### For Developers (Reference Only):
+---
+
+### For Developers (Educational Reference):
 
 **Prerequisites**:
 - Android Studio Hedgehog (2023.1.1) or later
@@ -404,7 +405,7 @@ The app will be available for download once the academic submission process is c
 - Android SDK (Min: 24, Target: 34)
 - Kotlin 1.9.0+
 
-**Note**: This is for educational reference only. Creating derivative works or redistributing is not permitted without explicit permission.
+**Note**: This repository is for educational reference and portfolio demonstration. Creating derivative works or redistributing is not permitted without explicit permission. See [COPYRIGHT](COPYRIGHT) for full terms.
 
 ---
 
@@ -421,16 +422,16 @@ For the first time in SNGS College Pattambi's history, a student chose to build 
 
 ### Impact
 
-- 📱 **First of its kind** - No comparable offline Sanskrit declension app existed
+- 📱 **First of its kind** - First Android app academic project in college history
 - 🎓 **Educational tool** - Helps students learn grammar interactively
 - 🌍 **Accessible** - Works offline, no internet barriers
-- 💡 **Innovative** - Shows tech can enhance traditional subjects
+- 💡 **Innovative** - Demonstrates tech can enhance traditional subjects
 
 ---
 
 ## 🔮 Project Status
 
-**Current Status**: ✅ **Completed & Ready for Submission**
+**Current Status**: ✅ **Production Ready**
 
 - [x] Core features implemented
 - [x] 125+ words with complete declensions
@@ -441,13 +442,14 @@ For the first time in SNGS College Pattambi's history, a student chose to build 
 - [x] Dark/Light themes
 - [x] Offline support
 - [x] Testing completed
-- [ ] Play Store submission (post-academic evaluation)
+- [x] Academic submission complete
+- [ ] Google Play Store publication (in progress)
 
 **Next Steps**:
-1. Academic submission and evaluation (2025)
-2. Signed APK release on GitHub
-3. Google Play Store publication
-4. Post-launch improvements based on user feedback
+1. Google Play Store submission
+2. Public release
+3. User feedback collection
+4. Continuous improvements
 
 ---
 
@@ -457,7 +459,7 @@ For detailed information about the project, see:
 
 - [COPYRIGHT](COPYRIGHT) - Full copyright and usage terms
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- Academic Report (Submitted to University of Calicut)
+- Academic Project Report (Submitted to University of Calicut, 2025)
 
 ---
 
@@ -487,6 +489,7 @@ This project demonstrates:
 - Academic deadline adherence
 - Quality-focused development
 - User-centric design approach
+- Production-ready delivery
 
 **Available for**: Full-time Android Developer roles, internships, or freelance projects.
 
