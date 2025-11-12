@@ -2,38 +2,58 @@
 
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://www.android.com/)
 [![Language](https://img.shields.io/badge/Language-Kotlin-blue.svg)](https://kotlinlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](https://github.com/nxzef/sabdaroopa/releases)
+[![Status](https://img.shields.io/badge/Status-Academic%20Project-orange.svg)](https://github.com/nxzef/sabdaroopa)
+[![Copyright](https://img.shields.io/badge/Copyright-All%20Rights%20Reserved-red.svg)](COPYRIGHT)
 
 > Your offline companion for learning Sanskrit grammar
 
 An Android application designed to simplify Sanskrit declension table learning by providing structured, interactive, and offline access to Sanskrit word declensions. Built as an academic project for BA Sanskrit at University of Calicut.
+
+**© 2025 Mohammed Naseef V M. All Rights Reserved.**
+
+---
+
+## ⚠️ Copyright Notice
+
+This project is **All Rights Reserved**. The code is publicly viewable for **portfolio and educational purposes only**. See [COPYRIGHT](COPYRIGHT) for full terms.
+
+**NOT licensed for:**
+- ❌ Redistribution
+- ❌ Commercial use
+- ❌ Republishing on app stores
+- ❌ Creating derivative works
+
+**Contact scriptgoat609@gmail.com for permissions.**
 
 ---
 
 ## 📱 Screenshots
 
 <!-- TODO: Add screenshots here -->
-<!-- Suggested screenshots to include:
-1. Home Screen - showing category list
-2. Category Screen - showing word list with filters
-3. Table Screen - showing declension table
-4. Quiz Home Screen - showing quiz options
-5. Settings Screen - showing preferences
-6. Dark Theme Example - showing app in dark mode
+<!-- Recommended screenshots:
+1. Home Screen (Word List) - Main screen showing all words with search
+2. Declension Table - Full table view of a word
+3. Category Filter - Filter interface showing categories and filters
+4. Quiz Screen - Quiz interface
+5. Settings Screen - App preferences
+6. Dark Theme - App in dark mode
 -->
 
 ```
-[Home Screen]  [Word List]  [Declension Table]  [Quiz]  [Settings]
+📸 Add screenshots in /screenshots folder:
+   - home_word_list.png (Main word list screen)
+   - declension_table.png (Table view)
+   - category_filter.png (Filters applied)
+   - quiz_screen.png (Quiz interface)
+   - settings_screen.png (Preferences)
+   - dark_theme.png (Dark mode example)
 ```
-
-*Add screenshots in a `/screenshots` folder and link them here*
 
 ---
 
 ## ✨ Features
 
-- **📚 130+ Sanskrit Words** - Complete declension tables organized by categories
+- **📚 125+ Sanskrit Words** - Complete declension tables organized by categories
 - **🔍 Advanced Search** - Search by meaning, Devanagari script, or IAST transliteration
 - **📱 100% Offline** - No internet required, all data stored locally
 - **🎯 Interactive Quiz Mode** - Test your knowledge with built-in quizzes
@@ -44,8 +64,7 @@ An Android application designed to simplify Sanskrit declension table learning b
 - **🗂️ Organized Categories**
   - साधारण शब्द विभागः (General Words)
   - विशेष शब्द विभागः (Specific Words)
-  - सर्वनाम शब्दप्रकरणम् (Pronouns)
-- **🔤 Filters** - Filter by vowel/consonant endings and gender (पुल्लिङ्गः, स्त्रीलिङ्गः, नपुंसकलिङ्गः)
+- **🔤 Smart Filters** - Filter by vowel/consonant endings and gender (पुल्लिङ्गः, स्त्रीलिङ्गः, नपुंसकलिङ्गः)
 
 ---
 
@@ -83,7 +102,7 @@ This project follows **Clean Architecture** principles with **MVVM** (Model-View
 - **UI Layer**: Jetpack Compose with Material Design 3
 - **ViewModel**: State management with StateFlow
 - **Repository**: Data abstraction layer
-- **Room Database**: Pre-packaged SQLite database with 130+ words
+- **Room Database**: Pre-packaged SQLite database with 125+ words
 - **Dependency Injection**: Hilt for clean dependency management
 
 ---
@@ -110,125 +129,98 @@ This project follows **Clean Architecture** principles with **MVVM** (Model-View
 com.nxzef.sabdaroopa/
 ├── data/
 │   ├── local/          # Room database, DAOs
-│   ├── model/          # Data models
+│   ├── model/          # Data models & entities
 │   └── repository/     # Repository implementations
-├── di/                 # Hilt modules
+├── di/                 # Hilt dependency injection modules
 ├── domain/
 │   ├── manager/        # App-wide managers (HapticManager, FocusManager)
 │   └── platform/       # Platform capabilities
 ├── ui/
 │   ├── component/      # Reusable UI components
 │   ├── screen/         # Feature screens
-│   │   ├── home/
-│   │   ├── table/
-│   │   ├── favorites/
-│   │   ├── quiz/
-│   │   ├── settings/
-│   │   └── about/
+│   │   ├── home/       # Word list (main screen)
+│   │   ├── table/      # Declension table view
+│   │   ├── favorites/  # Saved favorites
+│   │   ├── quiz/       # Quiz feature
+│   │   ├── settings/   # App settings
+│   │   └── about/      # About screen
 │   └── theme/          # Theme, colors, typography
 └── utils/              # Extension functions, helpers
 ```
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Android Studio Hedgehog (2023.1.1) or later
-- JDK 17 or higher
-- Android SDK (Min SDK: 24, Target SDK: 34)
-- Kotlin 1.9.0 or higher
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/nxzef/sabdaroopa.git
-   cd sabdaroopa
-   ```
-
-2. **Open in Android Studio**
-   - Open Android Studio
-   - Select "Open an Existing Project"
-   - Navigate to the cloned directory
-
-3. **Build the project**
-   ```bash
-   ./gradlew build
-   ```
-
-4. **Run on device/emulator**
-   - Connect your Android device or start an emulator
-   - Click "Run" in Android Studio or use:
-   ```bash
-   ./gradlew installDebug
-   ```
-
----
-
 ## 📊 Database Schema
 
-The app uses a pre-packaged Room database containing Sanskrit word declensions:
+The app uses a pre-packaged Room database with the following structure:
 
 ```kotlin
-@Entity(tableName = "sabda_table")
+@Entity(tableName = "sabda")
 data class Sabda(
-    @PrimaryKey val id: Int,
-    val word: String,           // Sanskrit word
-    val meaning: String,        // English meaning
-    val translit: String,       // IAST transliteration
-    val anta: String,           // Ending sound
-    val category: Category,     // Word category
-    val gender: Gender,         // Grammatical gender
-    val sound: Sound,           // Vowel/Consonant
-    val declension: Declension  // Full declension table
+    @PrimaryKey(autoGenerate = true) 
+    val id: Int,
+    
+    // Basic Information
+    val word: String,              // Sanskrit word (Devanagari)
+    val meaning: String,           // English meaning
+    val translit: String,          // IAST transliteration
+    val translitNormalized: String, // Normalized for search
+    val anta: String,              // Word ending
+    
+    // Classification
+    val category: Category,        // General/Specific
+    val gender: Gender,            // पुल्लिङ्गः/स्त्रीलिङ्गः/नपुंसकलिङ्गः
+    val sound: Sound,              // Vowel/Consonant ending
+    
+    // User Data
+    val isFavorite: Boolean,       // Favorite status
+    val favoriteSince: Long?,      // Timestamp
+    val visitCount: Int,           // Number of views
+    val lastVisited: Long?,        // Last viewed timestamp
+    
+    // Declension Data
+    val declension: Declension     // Full declension table (8×3 grid)
 )
 ```
 
 **Declension Structure**: 8 cases (विभक्ति) × 3 numbers (वचन) = 24 forms per word
+
+**Database Features**:
+- Indexed columns for fast filtering (category, gender, sound)
+- Full-text search support
+- Pre-packaged with 125+ words
+- Size: ~500KB
 
 ---
 
 ## 🎨 Design Decisions
 
 ### Why Jetpack Compose?
-- Modern declarative UI
-- Less boilerplate than XML
-- Better state management
+- Modern declarative UI paradigm
+- Less boilerplate than XML layouts
+- Built-in state management
 - Smooth animations out-of-the-box
+- Better performance and maintainability
 
 ### Why Room Database?
-- Offline-first approach
-- Type-safe queries
-- Efficient data storage
+- Offline-first architecture
+- Type-safe database queries
+- Compile-time verification
 - Pre-packaged database support
+- Efficient caching and indexing
 
-### Why MVVM?
+### Why MVVM Architecture?
 - Clear separation of concerns
 - Testable business logic
 - Lifecycle-aware components
-- Easy state management
+- Easy state management with StateFlow
+- Industry-standard pattern
 
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you'd like to contribute:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Contribution Guidelines
-
-- Follow Kotlin coding conventions
-- Write meaningful commit messages
-- Add comments for complex logic
-- Update documentation if needed
-- Test thoroughly before submitting PR
+### Why Material Design 3?
+- Modern, accessible design language
+- Dynamic color theming (Android 12+)
+- Consistent user experience
+- Built-in accessibility features
 
 ---
 
@@ -236,44 +228,48 @@ Contributions are welcome! If you'd like to contribute:
 
 **Timeline**: December 2024 - June 2025 (6-7 months)
 
-### Challenges Faced:
-- ⏰ Late nights while balancing academics
-- 🏥 Health struggles during development
-- 🌙 Coding during Ramadan while fasting
-- 📚 Learning Kotlin & Jetpack Compose from scratch
-- 🎨 Designing custom declension table layouts
-- 💾 Database migration and optimization
+### Challenges Overcome:
+- ⏰ **Late nights** - Balancing academics with development
+- 🏥 **Health struggles** - Pushing through physical challenges
+- 📚 **Learning curve** - Mastering Kotlin & Jetpack Compose from scratch
+- 🎨 **Custom UI** - Designing declension table layouts without existing components
+- 💾 **Database optimization** - Efficient data storage and retrieval
+- 🔍 **Search implementation** - Multi-field search with normalization
 
 ### My Programming Journey:
 ```
 10th Standard → HTML/CSS → JavaScript → React → React Native → Flutter → Kotlin
 ```
 
-This is my **first complete Android app**, built entirely while learning!
+This is my **first complete Android app**, built entirely while learning! Every line of code represents hours of research, debugging, and iteration.
 
 ---
 
 ## 📚 Data Sources
 
-The declension data was manually extracted from:
+The declension data (125+ words) was **manually extracted and compiled** from:
 
-- **Sabda Manjari** (Primary reference book)
-- [My Coaching](https://example.com) - Sanskrit grammar lessons
-- [Learn Sanskrit](https://example.com) - Grammar resources  
-- [Sanskrit Abhyas](https://example.com) - Practice materials
+- **Sabda Manjari** - Primary reference book for Sanskrit declensions
+- **My Coaching** - Sanskrit grammar lessons and resources
+- **Learn Sanskrit** - Educational grammar references
+- **Sanskrit Abhyas** - Practice materials and examples
 
-<!-- TODO: Replace example.com with actual URLs if available -->
+> Note: Data compilation represents significant original work in digitizing traditional Sanskrit grammar resources.
 
 ---
 
 ## 🎓 Academic Context
 
-**Project Type**: Final Year Academic Project  
-**Degree**: BA Sanskrit (2022-2025)  
-**College**: Sree Neelakanta Government Sanskrit College (SNGS), Pattambi  
-**University**: University of Calicut  
-**Guide**: Dr. Rajalakshmy M (Associate Professor, Dept. of Sanskrit)  
-**HOD**: Dr. A. Vasu (Head of Department, Sanskrit)
+| Detail | Information |
+|--------|-------------|
+| **Project Type** | Final Year Academic Project |
+| **Degree** | Bachelor of Arts (BA) in Sanskrit |
+| **Duration** | 2022-2025 (3 years) |
+| **College** | Sree Neelakanta Government Sanskrit College (SNGS), Pattambi |
+| **University** | University of Calicut, Kerala, India |
+| **Project Guide** | Dr. Rajalakshmy M<br/>Associate Professor, Department of Sanskrit |
+| **Head of Department** | Dr. A. Vasu<br/>Department of Sanskrit |
+| **Submission** | 6th Semester (2025) |
 
 ---
 
@@ -281,120 +277,235 @@ The declension data was manually extracted from:
 
 ### Project Guide
 **Dr. Rajalakshmy M**  
-*Associate Professor, Dept. of Sanskrit, SNGS College, Pattambi*  
-For invaluable guidance, continuous support, and encouragement throughout development.
+*Associate Professor, Department of Sanskrit, SNGS College, Pattambi*
+
+For her invaluable guidance, continuous support, and encouragement throughout the development of this project. Her insights into Sanskrit grammar and pedagogical approaches shaped the app's structure and usability.
 
 ### Head of Department
 **Dr. A. Vasu**  
-*Head of Department, Sanskrit, SNGS College, Pattambi*  
-For approving this innovative project and providing valuable suggestions.
+*Head of Department, Sanskrit, SNGS College, Pattambi*
+
+For approving this innovative project approach and providing valuable suggestions that guided its direction. His support made it possible to pursue a technical solution for a traditional subject.
 
 ### Special Thanks
-- **Varsha** - For providing the 'Sabda Manjari' book
-- **Gopi Krishnan** - For continuous support and encouragement
-- **All friends** - Who encouraged this journey
+- **Varsha** - For generously providing the 'Sabda Manjari' reference book, which became the foundation of the app's data
+- **Gopi Krishnan** - For continuous moral support and encouragement throughout the development process
+- **My Peers** - All friends in the Sanskrit department who encouraged this unconventional project approach
+- **My Family** - For supporting me through late nights and challenges
 
 ---
 
-## 📄 License
+## 🔒 Copyright & Usage
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**© 2025 Mohammed Naseef V M. All Rights Reserved.**
 
-```
-MIT License
+This is an academic project with **All Rights Reserved** copyright protection. See [COPYRIGHT](COPYRIGHT) file for complete terms.
 
-Copyright (c) 2025 Mohammed Naseef V M
+### What This Means:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
+✅ **Allowed**:
+- View code for learning and reference
+- Use as example in educational context
+- Review for recruitment/hiring purposes
+- Fork for personal study (not for redistribution)
 
-<!-- TODO: Add full LICENSE file in project root -->
+❌ **Not Allowed**:
+- Republish on Google Play Store or any app marketplace
+- Use commercially without permission
+- Create derivative works for distribution
+- Copy code into other projects
+- Modify and redistribute
+
+### Why Public Repository?
+
+This repository is public to:
+1. 📋 **Showcase work** to potential employers and recruiters
+2. 🎓 **Demonstrate skills** in modern Android development
+3. 📚 **Educational reference** for other students
+4. 🔍 **Portfolio piece** for job applications
+
+### For Permissions:
+
+For licensing inquiries, collaboration, or usage permissions:
+- 📧 Email: scriptgoat609@gmail.com
+- 💼 LinkedIn: [linkedin.com/in/nxzef](https://www.linkedin.com/in/nxzef/)
+- 🐙 GitHub: [@nxzef](https://github.com/nxzef)
 
 ---
 
 ## 📞 Contact
 
 **Mohammed Naseef V M**  
-BA Sanskrit Student | Android Developer
+BA Sanskrit Student (2022-2025) | Android Developer
 
-- 📧 Email: [scriptgoat609@gmail.com](mailto:scriptgoat609@gmail.com)
-- 💻 GitHub: [@nxzef](https://github.com/nxzef)
-- 💼 LinkedIn: [nxzef](https://www.linkedin.com/in/nxzef/)
+- 📧 **Email**: [scriptgoat609@gmail.com](mailto:scriptgoat609@gmail.com)
+- 💻 **GitHub**: [@nxzef](https://github.com/nxzef)
+- 💼 **LinkedIn**: [nxzef](https://www.linkedin.com/in/nxzef/)
+- 🎓 **Institution**: SNGS College, Pattambi | University of Calicut
 
----
-
-## 🌟 Future Enhancements
-
-- [ ] Add verb conjugation tables (तिङन्त प्रकरणम्)
-- [ ] Implement sandhi rules reference
-- [ ] Add audio pronunciation for words
-- [ ] Multi-language support (Malayalam, Hindi)
-- [ ] Cloud sync for favorites and progress
-- [ ] Expand word database (500+ words)
-- [ ] Advanced quiz modes with scoring
-- [ ] Export declension tables as PDF
-- [ ] Widget support for quick access
-- [ ] Wear OS companion app
+**Open to**:
+- Full-time Android Developer positions
+- Internship opportunities
+- Freelance projects
+- Technical collaborations
 
 ---
 
-## 📈 Project Stats
+## 📊 Project Statistics
 
-<!-- TODO: Update these stats -->
-- **Lines of Code**: ~15,000+
-- **Development Time**: 6-7 months
-- **Commits**: XXX
-- **Files**: XXX Kotlin files
-- **Database Size**: 130 words, ~500KB
-- **APK Size**: ~XX MB
+| Metric | Value |
+|--------|-------|
+| **Development Time** | 6-7 months (Dec 2024 - Jun 2025) |
+| **Words in Database** | 125+ Sanskrit words |
+| **Database Size** | ~500KB |
+| **Target Android** | API 24+ (Android 7.0+) |
+| **Min SDK** | 24 |
+| **Target SDK** | 34 (Android 14) |
+| **Primary Language** | Kotlin |
+| **UI Framework** | Jetpack Compose |
+
+<!-- TODO: Update these after building:
+- Lines of Code: Run `find app/src -name "*.kt" | xargs wc -l`
+- Number of Files: Run `find app/src -name "*.kt" | wc -l`
+- Commit Count: Run `git log --oneline | wc -l`
+- APK Size: Check release APK properties
+-->
 
 ---
 
 ## 🐛 Known Issues
 
-None at the moment! If you find any bugs, please [open an issue](https://github.com/nxzef/sabdaroopa/issues).
+No known critical issues at this time. 
+
+If you discover a bug or unexpected behavior, please report it via email: **scriptgoat609@gmail.com**
+
+Include:
+- Description of the issue
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots (if applicable)
+- Device info (Android version, manufacturer)
 
 ---
 
-## 🔖 Version History
+## 📱 Installation & Usage
 
-### v1.0.0 (2025)
-- ✨ Initial release
-- 📚 130+ Sanskrit words with declensions
-- 🎯 Quiz feature
-- ⭐ Favorites functionality
-- 🎨 Material Design 3 UI
-- 🌓 Dark/Light themes
-- ⚙️ Customizable preferences
+### For End Users:
+
+**Coming Soon on Google Play Store!**
+
+The app will be available for download once the academic submission process is complete.
+
+### For Developers (Reference Only):
+
+**Prerequisites**:
+- Android Studio Hedgehog (2023.1.1) or later
+- JDK 17 or higher
+- Android SDK (Min: 24, Target: 34)
+- Kotlin 1.9.0+
+
+**Note**: This is for educational reference only. Creating derivative works or redistributing is not permitted without explicit permission.
 
 ---
 
-## 💡 Inspiration
+## 🎯 Why This Project Matters
 
-> "This app represents not just code, but a bridge between ancient Sanskrit wisdom and modern technology."
+### Breaking Traditional Barriers
 
-Sanskrit is one of the oldest languages in the world, and preserving its grammar through digital means ensures it remains accessible for future generations. This project demonstrates that traditional learning can be revolutionized through thoughtful application of modern technology.
+For the first time in SNGS College Pattambi's history, a student chose to build a mobile application as an academic project instead of writing a traditional book. This project demonstrates:
+
+1. **Innovation in Education** - Bringing ancient Sanskrit grammar into the digital age
+2. **Accessibility** - Making learning resources available to anyone with a smartphone
+3. **Preservation** - Digitizing traditional knowledge for future generations
+4. **Bridge Building** - Connecting classical education with modern technology
+
+### Impact
+
+- 📱 **First of its kind** - No comparable offline Sanskrit declension app existed
+- 🎓 **Educational tool** - Helps students learn grammar interactively
+- 🌍 **Accessible** - Works offline, no internet barriers
+- 💡 **Innovative** - Shows tech can enhance traditional subjects
 
 ---
 
-## 🎯 Impact
+## 🔮 Project Status
 
-This project:
-- ✅ First Android app developed in SNGS College as an academic project
-- ✅ Demonstrates the fusion of traditional Sanskrit studies with modern tech
-- ✅ Provides free, accessible learning tool for Sanskrit students worldwide
-- ✅ Encourages digital innovation in classical language education
+**Current Status**: ✅ **Completed & Ready for Submission**
+
+- [x] Core features implemented
+- [x] 125+ words with complete declensions
+- [x] Quiz functionality
+- [x] Favorites system
+- [x] Settings & customization
+- [x] Material Design 3 UI
+- [x] Dark/Light themes
+- [x] Offline support
+- [x] Testing completed
+- [ ] Play Store submission (post-academic evaluation)
+
+**Next Steps**:
+1. Academic submission and evaluation (2025)
+2. Signed APK release on GitHub
+3. Google Play Store publication
+4. Post-launch improvements based on user feedback
+
+---
+
+## 📖 Documentation
+
+For detailed information about the project, see:
+
+- [COPYRIGHT](COPYRIGHT) - Full copyright and usage terms
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- Academic Report (Submitted to University of Calicut)
+
+---
+
+## 💡 For Recruiters & Employers
+
+This project demonstrates:
+
+### ✅ Technical Skills
+- Modern Android development (Kotlin, Jetpack Compose)
+- Clean Architecture & MVVM pattern
+- Database design & optimization (Room)
+- State management (StateFlow, ViewModel)
+- Dependency injection (Hilt)
+- Material Design 3 implementation
+- Git version control
+
+### ✅ Soft Skills
+- **Self-learning** - Learned Kotlin & Compose from scratch
+- **Problem-solving** - Overcame technical challenges independently
+- **Time management** - Balanced academics with 6-7 month development
+- **Persistence** - Completed despite health and time challenges
+- **Innovation** - First student in college to do this type of project
+- **Documentation** - Well-documented code and project materials
+
+### ✅ Project Management
+- Long-term project execution (6-7 months)
+- Academic deadline adherence
+- Quality-focused development
+- User-centric design approach
+
+**Available for**: Full-time Android Developer roles, internships, or freelance projects.
 
 ---
 
 <div align="center">
 
-**If you find this project helpful, please ⭐ star the repository!**
+### ⭐ If this project interests you, please star the repository!
 
-Made with ❤️ by [Mohammed Naseef V M](https://github.com/nxzef)
+**Made with ❤️ and countless cups of coffee**
 
-*Academic Project | University of Calicut | 2025*
+**Mohammed Naseef V M**  
+*BA Sanskrit Student | Android Developer*  
+*University of Calicut | 2025*
+
+---
+
+**© 2025 Mohammed Naseef V M. All Rights Reserved.**
+
+*This is an academic project. Unauthorized reproduction, distribution, or commercial use is prohibited.*
 
 </div>
