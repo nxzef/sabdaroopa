@@ -355,20 +355,10 @@ BA Sanskrit Student (2022-2025) | Android Developer
 | **Target SDK** | 34 (Android 14) |
 | **Primary Language** | Kotlin |
 | **UI Framework** | Jetpack Compose |
-
-<!-- TODO: Update these after final build:
-To get these values, run in your project folder:
-- Lines of Code: `find app/src -name "*.kt" | xargs wc -l`
-- Number of Files: `find app/src -name "*.kt" | wc -l`
-- Commit Count: `git log --oneline | wc -l`
-- APK Size: Check release APK file properties
-
-Then add to table above:
-| **Lines of Code** | ~XX,XXX lines |
-| **Kotlin Files** | XX files |
-| **Commits** | XXX commits |
-| **APK Size** | XX.X MB |
--->
+| **Lines of Code** | ~10,022 lines |
+| **Kotlin Files** | 70 files |
+| **Commits** | 605 commits |
+| **APK Size** | 2.0 MB |
 
 ---
 
