@@ -11,7 +11,7 @@
         android:scaleX="1"
         android:scaleY="1">
         <path
-            android:pathData="@string/ic_splash_dark_path"
+            android:pathData="@string/ic_splash_path"
             android:strokeWidth="0.264583"
             android:fillColor="@color/splash_foreground"/>
     </group>
